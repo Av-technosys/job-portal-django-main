@@ -1,0 +1,50 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+
+# Environment variables
+.env
+
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+.virtualenv/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Coverage reports
+.coverage
+*.cover
+*.py,cover
+
+# Migrations
+*/migrations/*
+!*/migrations/__init__.py
+
+# Pytest
+.cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+.dmypy.json
