@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view,permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
 from django.core.exceptions import ObjectDoesNotExist
-from .models import CustomUser
+from .models import User
 
 @api_view(['POST'])
 def register_user(request):
@@ -26,7 +26,7 @@ def user_login(request):
         user = None
         if '@' in username:
             try:
-                user = CustomUser.objects.get(email=username)
+                user = User.objects.get(email=username)
             except ObjectDoesNotExist:
                 pass
 
