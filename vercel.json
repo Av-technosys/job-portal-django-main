@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "job_portal_django/wsgi.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "job_portal_django/wsgi.py"
+    }
+  ]
+}
