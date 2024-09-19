@@ -1,9 +1,7 @@
 # accounts/serializers.py
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from rest_framework import serializers
 from .models import User
-from constants.errors import EMAIL_VALIDATE_ERROR, ERROR_INVALID_CREDENTIALS
+from constants.errors import ERROR_INVALID_CREDENTIALS
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 
