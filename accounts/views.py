@@ -6,8 +6,6 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer,LoginSerializer
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
-from functions.common import get_login_request_payload
-
 
 @api_view(['POST'])
 def register_user(request):
