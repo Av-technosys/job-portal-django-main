@@ -41,11 +41,8 @@ class AcademicQualification(models.Model):
     )
     institution_name = models.CharField(max_length=200)
     specialization = models.CharField(max_length=100)  
-    start_year = models.PositiveIntegerField(validators=[MinValueValidator(1900),
-                                                    MaxValueValidator(datetime.datetime.now().year)])
-    end_year = models.PositiveIntegerField(validators=[MinValueValidator(1900),
-                                                    MaxValueValidator(datetime.datetime.now().year)],
-                                                    null=True, blank=True)
+    start_year = models.DateField()
+    end_year = models.DateField()
     
     def __str__(self):
         return f"{self.institution_name} - {self.specialization}"

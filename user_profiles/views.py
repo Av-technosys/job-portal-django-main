@@ -53,6 +53,7 @@ def social_urls(request):
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def get_student_profile(request):
+    request.user=2
     try:
         profile = StudentProfile.objects.get(user=request.user)
     except StudentProfile.DoesNotExist:
@@ -63,6 +64,7 @@ def get_student_profile(request):
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def get_academic_qualification(request):
+    request.user=2
 
     qualification = AcademicQualification.objects.filter(user=request.user)
     serializer = AcademicQualificationSerializer(qualification, many=True)
@@ -71,6 +73,7 @@ def get_academic_qualification(request):
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def get_work_experience(request):
+    request.user=2
     experiences = WorkExperience.objects.filter(user=request.user)
     serializer = WorkExperienceSerializer(experiences, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -78,6 +81,7 @@ def get_work_experience(request):
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def get_skill_set(request):
+    request.user=2
     skills = SkillSet.objects.filter(user=request.user)
     serializer = SkillSetSerializer(skills, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -85,6 +89,7 @@ def get_skill_set(request):
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def get_projects(request):
+    request.user=2
     print(request)
     projects = Projects.objects.filter(user=request.user)
     serializer = ProjectsSerializer(projects, many=True)
@@ -93,6 +98,7 @@ def get_projects(request):
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def get_certifications(request):
+    request.user=2
     certifications = Certifications.objects.filter(user=request.user)
     serializer = CertificationsSerializer(certifications, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -100,6 +106,7 @@ def get_certifications(request):
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def get_social_urls(request):
+    request.user=2
     urls = SocialUrls.objects.filter(user=request.user)
     serializer = SocialUrlsSerializer(urls, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)

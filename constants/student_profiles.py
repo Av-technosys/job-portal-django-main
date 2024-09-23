@@ -7,7 +7,7 @@ STUDENT_PROFILE_FIELDS = [
 
 ACADEMIC_QUALIFICATION_FIELDS = [
             'id', 'user', 'institution_name', 'start_year', 
-            'end_year', 'degree_status', 'specialization'
+            'end_year', 'specialization'
         ]
 
 WORK_EXPERIENCE_FIELD =  [
