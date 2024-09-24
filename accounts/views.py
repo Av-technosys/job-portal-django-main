@@ -2,8 +2,8 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer,LoginSerializer
+from rest_framework.permissions import IsAuthenticated,AllowAny
+from .serializers import UserSerializer,LoginSerializer,VerifyOtpSerializer
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
 
@@ -31,3 +31,14 @@ def user_logout(request):
         return Response({'message': SUCCESS_LOGOUT}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': ERROR_LOGOUT_FAILED}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # OTP verification should not require the user to be authenticated
+def verify_otp(request):
+    serializer = VerifyOtpSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        result = serializer.save()  # Serializer handles the logic
+        return Response(result, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
