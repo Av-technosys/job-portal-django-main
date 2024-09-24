@@ -1,36 +1,36 @@
-STUDENT_PROFILE_FIELDS = [
+STUDENT_PROFILE_META_FIELDS = [
             'id','user','first_name', 'last_name', 'designation', 
             'address_line_1', 'address_line_2', 'city', 'state', 'postal_code', 
             'country', 'experience', 'gender', 'current_salary', 'expecting_salary',
             'job_search_status', 'interests', 'notice_period', 'short_bio'
         ]
 
-ACADEMIC_QUALIFICATION_FIELDS = [
-            'id', 'user', 'institution_name', 'start_year', 
-            'end_year', 'specialization'
+ACADEMIC_QUALIFICATIONE_META_FIELDS = [
+            'id', 'user', 'institution_name', 'start_date', 
+            'end_date', 'specialization'
         ]
 
-WORK_EXPERIENCE_FIELD =  [
+WORK_EXPERIENCEE_META_FIELDS =  [
             'id', 'user', 'organization_name', 'designation', 
             'start_date', 'end_date'
         ]
 
-SKILL_SET_FIELD =  [
+SKILL_SETE_META_FIELDS =  [
             'id', 'user', 'skill_name', 'proficiency_level', 'experience'
         ]
 
-CERTIFICATIONS_FIEDL = [
+CERTIFICATIONSE_META_FIELDS = [
             'id', 'user', 'certification_name', 'start_date', 
             'end_date', 'certificate_url'
         ]
 
-PROJECT_FIELD = [
+PROJECTE_META_FIELDS = [
             'id', 'user', 'project_name', 'description', 'project_url'
         ]
 
 
 
-SOCIAL_FIEDL =  [
+SOCIALE_META_FIELDS =  [
             'id', 'user', 'link','link_title'
         ]
 

@@ -1,4 +1,5 @@
 ERROR_INVALID_CREDENTIALS = 'Invalid credentials'
 ERROR_USER_NOT_FOUND = 'User not found'
 ERROR_LOGOUT_FAILED = 'Failed to log out. Please try again later.'
-EMAIL_VALIDATE_ERROR='Invalid email format.'
+ERROR_EMAIL_INVALID = 'Invalid email format.'
+ERROR_NOT_FOUND = 'not found.'
