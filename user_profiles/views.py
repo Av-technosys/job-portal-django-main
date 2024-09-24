@@ -10,7 +10,6 @@ from .serializers import *
 @api_view(['GET', 'POST', 'PATCH'])
 # @permission_classes([IsAuthenticated])
 def student_profile(request):
-    request.user=2
     if request.method == 'GET':
         try:
             profile = StudentProfile.objects.get(user=request.user)
@@ -30,7 +29,6 @@ def student_profile(request):
 @api_view(['GET', 'POST', 'PATCH'])
 # @permission_classes([IsAuthenticated])
 def academic_qualification(request):
-    request.user=2
     if request.method == 'GET':
         qualification = AcademicQualification.objects.filter(user=request.user)
         serializer = AcademicQualificationSerializer(qualification, many=True)
@@ -47,7 +45,6 @@ def academic_qualification(request):
 @api_view(['GET', 'POST', 'PATCH'])
 # @permission_classes([IsAuthenticated])
 def work_experience(request):
-    request.user=2
     if request.method == 'GET':
         experiences = WorkExperience.objects.filter(user=request.user)
         serializer = WorkExperienceSerializer(experiences, many=True)
@@ -64,7 +61,6 @@ def work_experience(request):
 @api_view(['GET', 'POST', 'PATCH'])
 # @permission_classes([IsAuthenticated])
 def skill_set(request):
-    request.user=2
     if request.method == 'GET':
         skills = SkillSet.objects.filter(user=request.user)
         serializer = SkillSetSerializer(skills, many=True)
@@ -81,7 +77,6 @@ def skill_set(request):
 @api_view(['GET', 'POST', 'PATCH'])
 # @permission_classes([IsAuthenticated])
 def projects(request):
-    request.user=2
     if request.method == 'GET':
         projects = Projects.objects.filter(user=request.user)
         serializer = ProjectsSerializer(projects, many=True)
@@ -98,7 +93,6 @@ def projects(request):
 @api_view(['GET', 'POST', 'PATCH'])
 # @permission_classes([IsAuthenticated])
 def certifications(request):
-    request.user=2
     if request.method == 'GET':
         certifications = Certifications.objects.filter(user=request.user)
         serializer = CertificationsSerializer(certifications, many=True)
@@ -115,7 +109,6 @@ def certifications(request):
 @api_view(['GET', 'POST', 'PATCH'])
 # @permission_classes([IsAuthenticated])
 def social_urls(request):
-    request.user=2
     if request.method == 'GET':
         urls = SocialUrls.objects.filter(user=request.user)
         serializer = SocialUrlsSerializer(urls, many=True)
