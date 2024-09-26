@@ -6,11 +6,11 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from twilio.rest import Client
 from django.conf import settings
-from twilio.base.exceptions import TwilioRestException
-import random
-from constants.accounts import SUCCESS_OTP_VERIFICATION,OTP_MESSAGE
+from functions.common import generate_otp
+from constants.accounts import SUCCESS_OTP_VERIFICATION,OTP_MESSAGE,EMAIL_OTP_SUBJECT,USER_REGISTERED,EMAIL_OTP_MESSAGE_TEMPLATE
 from dotenv import load_dotenv
 import os
+from django.core.mail import send_mail
 
 load_dotenv()
 
@@ -22,31 +22,52 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        otp = str(random.randint(100000, 999999))  # Generate a 6-digit OTP
+         # Generate phone OTP
+        phone_otp = generate_otp()
+        email_otp = generate_otp()
+
+
+        #ensuring both otp are not same
+        while email_otp == phone_otp:
+            email_otp = generate_otp()
+
+        validated_data['username'] = validated_data.get('email')
+
         # Create user
-        user = User(
-            email=validated_data['email'],
-            username=validated_data['email'],  
-            phone_number=validated_data['phone_number'],
-            otp=otp
-        )
+        user = User(**validated_data, phone_otp=phone_otp, email_otp=email_otp)
         user.set_password(validated_data['password'])
-        user.is_active = False  # User account inactive until OTP verification
+        user.is_active = False
         user.save()
 
-        # Generate OTP
-      
-        
         # Send OTP via SMS
-        self.send_phone_otp(user.phone_number, otp)
-       
-        return {
-            'email':user.email
+        self.send_phone_otp(user.phone_number,phone_otp )
+
+        # Send OTP via Email
+        self.send_email_otp(user.email, email_otp)
+
+        return {   
+            'email':validated_data.get('email')
         }
 
+
+
     def send_email_otp(self, email, otp):
-        # Implement email sending logic here
-        pass
+        load_dotenv()
+        subject = EMAIL_OTP_SUBJECT
+        message = EMAIL_OTP_MESSAGE_TEMPLATE.format(otp=otp) 
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [email]
+
+        try:
+            send_mail(
+                subject,
+                message,
+                from_email,
+                recipient_list,
+                fail_silently=False,
+            )
+        except Exception as e:
+            raise serializers.ValidationError({'error': f"Failed to send OTP via email: {str(e)}"})
 
     def send_phone_otp(self, phone_number, otp):
         client = Client(
@@ -59,7 +80,6 @@ class UserSerializer(serializers.ModelSerializer):
                 from_=os.getenv('TWILIO_PHONE_NUMBER'),
                 to=phone_number
             )
-            return message.sid  # Return SID to confirm message was sent
         except Exception as e:
             raise serializers.ValidationError({'error': FAILED_SEND_OTP.format(e)})
 
@@ -80,31 +100,40 @@ class LoginSerializer(serializers.Serializer):
         raise serializers.ValidationError({'error': ERROR_INVALID_CREDENTIALS})
     
 class VerifyOtpSerializer(serializers.Serializer):
+
     email = serializers.EmailField()
-    otp = serializers.CharField(max_length=6)
+    email_otp = serializers.CharField(max_length=6)  
+    phone_otp = serializers.CharField(max_length=6)  
 
     def validate(self, data):
-        email = data['email']
-        otp = data['otp']
+
+        email, email_otp, phone_otp = data.values()
 
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             raise serializers.ValidationError({'error': ERROR_USER_NOT_FOUND})
 
-
-        if user.otp != otp:
+        # Validate email OTP
+        if user.email_otp != email_otp:
             raise serializers.ValidationError({'error': ERROR_OTP_VERIFICATION_FAILED})
-        
+
+        # Validate phone OTP
+        if user.phone_otp != phone_otp:
+            raise serializers.ValidationError({'error': ERROR_OTP_VERIFICATION_FAILED})
+
         return data
 
     def save(self):
         email = self.validated_data['email']
         user = User.objects.get(email=email)
 
-        # Activate user account after successful OTP verification
+        # Activate user account after both OTPs are successfully verified
         user.is_active = True
-        user.otp = None  
+
+        # Clear both OTPs after successful verification
+        user.phone_otp = None
+        user.email_otp = None
         user.save()
 
         return {
