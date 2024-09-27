@@ -1,54 +1,52 @@
 STUDENT_PROFILE_META_FIELDS = [
-            'id','user','first_name', 'last_name', 'designation', 
-            'address_line_1', 'address_line_2', 'city', 'state', 'postal_code', 
-            'country', 'experience', 'gender', 'current_salary', 'expecting_salary',
-            'job_search_status', 'interests', 'notice_period', 'short_bio'
-        ]
+    'id', 'user', 'first_name', 'last_name', 'designation', 
+    'address_line_1', 'address_line_2', 'city', 'state', 'postal_code', 
+    'country', 'experience', 'gender', 'current_salary', 'expecting_salary',
+    'job_search_status', 'interests', 'notice_period', 'short_bio'
+]
 
-ACADEMIC_QUALIFICATIONE_META_FIELDS = [
-            'id', 'user', 'institution_name', 'start_date', 
-            'end_date', 'specialization'
-        ]
+ACADEMIC_QUALIFICATION_META_FIELDS = [
+    'id', 'user', 'institution_name', 'start_date', 
+    'end_date', 'specialization'
+]
 
-WORK_EXPERIENCEE_META_FIELDS =  [
-            'id', 'user', 'organization_name', 'designation', 
-            'start_date', 'end_date'
-        ]
+WORK_EXPERIENCE_META_FIELDS = [
+    'id', 'user', 'organization_name', 'designation', 
+    'start_date', 'end_date'
+]  
 
-SKILL_SETE_META_FIELDS =  [
-            'id', 'user', 'skill_name', 'proficiency_level', 'experience'
-        ]
+SKILL_SET_META_FIELDS = [
+    'id', 'user', 'skill_name', 'proficiency_level', 'experience'
+]  #
 
-CERTIFICATIONSE_META_FIELDS = [
-            'id', 'user', 'certification_name', 'start_date', 
-            'end_date', 'certificate_url'
-        ]
+CERTIFICATIONS_META_FIELDS = [
+    'id', 'user', 'certification_name', 'start_date', 
+    'end_date', 'certificate_url'
+]  
 
-PROJECTE_META_FIELDS = [
-            'id', 'user', 'project_name', 'description', 'project_url'
-        ]
+PROJECT_META_FIELDS = [
+    'id', 'user', 'project_name', 'description', 'project_url'
+]  
 
-
-
-SOCIALE_META_FIELDS =  [
-            'id', 'user', 'link','link_title'
-        ]
+SOCIAL_META_FIELDS = [
+    'id', 'user', 'link', 'link_title'
+] 
 
 GENDER_CHOICES = [
-        (0, 'Male'),
-        (1, 'Female'),
-        (2, 'Other'),
-    ]
+    (0, 'Male'),
+    (1, 'Female'),
+    (2, 'Other'),
+]
 
 NOTICE_PERIOD_CHOICES = [
-        (0, "Immediately"),
-        (1, "15 days"),
-        (2, "30 days"),
-        (3, "30+ days"),
-    ]
-    
+    (0, "Immediately"),
+    (1, "15 days"),
+    (2, "30 days"),
+    (3, "30+ days"),
+]
+
 SEARCH_STATUS_CHOICES = [
-        (0, "Actively Looking"),
-        (1, "Passively Looking"),
-        (2, "Not Looking"),
-    ]
+    (0, "Actively Looking"),
+    (1, "Passively Looking"),
+    (2, "Not Looking"),
+]
