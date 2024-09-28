@@ -1,50 +1,37 @@
-# views.py
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated,AllowAny
-from .serializers import UserSerializer,LoginSerializer,VerifyOtpSerializer
-from constants.errors import ERROR_LOGOUT_FAILED,FAILED_REGISTRATION
-from constants.accounts import SUCCESS_LOGOUT,SUCCESS_REGISTRATION
+from rest_framework import status  
+from rest_framework.decorators import api_view, permission_classes  
+from rest_framework.permissions import IsAuthenticated, AllowAny  
+from .serializers import UserSerializer, LoginSerializer, VerifyOtpSerializer  
+from constants.errors import ERROR_LOGOUT_FAILED
+from constants.accounts import SUCCESS_LOGOUT
+from functions.common import ResponseHandler, serializer_handle  
 
 @api_view(['POST'])  
 def register_user(request):  
-    serializer = UserSerializer(data=request.data)  
+    return serializer_handle(UserSerializer, request)  
+
+@api_view(['POST'])  
+def user_login(request):  
     try:  
-        if serializer.is_valid():  
-            serializer.save()  
-            return Response({"message": SUCCESS_REGISTRATION}, status=status.HTTP_201_CREATED)  
-        else:  
-            return Response({"message": FAILED_REGISTRATION, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)  
+        serializer = LoginSerializer(data=request.data)  
+        serializer.is_valid(raise_exception=True)  # This will raise an error automatically  
+        token_data = serializer.authenticate_user(serializer.validated_data)  
+        return ResponseHandler.success(data=token_data, status_code=status.HTTP_200_OK)  
+    
     except Exception as e:  
-        return Response({ "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
+        # You can log the exception if needed  
+        return ResponseHandler.error(message=str(e), status_code=status.HTTP_400_BAD_REQUEST)  
 
-@api_view(['POST'])
-def user_login(request):
-    serializer = LoginSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    token_data = serializer.authenticate_user(serializer.validated_data)
-    return Response(token_data, status=status.HTTP_200_OK)
+@api_view(['POST'])  
+@permission_classes([IsAuthenticated])  
+def user_logout(request):  
+    try:  
+        request.user.auth_token.delete()  
+        return ResponseHandler.success(data={"message": SUCCESS_LOGOUT}, status_code=status.HTTP_200_OK)  
+    except Exception as e:  
+        return ResponseHandler.error(message=ERROR_LOGOUT_FAILED, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)  
 
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def user_logout(request):
-    try:
-        request.user.auth_token.delete()
-        return Response({"message": SUCCESS_LOGOUT}, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response(
-            {"error": ERROR_LOGOUT_FAILED}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-@api_view(['POST'])
+@api_view(['POST'])  
 @permission_classes([AllowAny])  
-def verify_otp(request):
-    serializer = VerifyOtpSerializer(data=request.data)
-    
-    if serializer.is_valid():
-        result = serializer.save()  # Serializer handles the logic
-        return Response(result, status=status.HTTP_200_OK)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def verify_otp(request):  
+    return serializer_handle(VerifyOtpSerializer, request)
