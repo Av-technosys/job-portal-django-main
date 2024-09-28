@@ -1,41 +1,68 @@
 STUDENT_PROFILE_META_FIELDS = [
-    'id', 'user', 'first_name', 'last_name', 'designation', 
-    'address_line_1', 'address_line_2', 'city', 'state', 'postal_code', 
-    'country', 'experience', 'gender', 'current_salary', 'expecting_salary',
-    'job_search_status', 'interests', 'notice_period', 'short_bio'
+    "id",
+    "user",
+    "first_name",
+    "last_name",
+    "designation",
+    "address_line_1",
+    "address_line_2",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+    "experience",
+    "gender",
+    "current_salary",
+    "expecting_salary",
+    "job_search_status",
+    "interests",
+    "notice_period",
+    "short_bio",
 ]
 
 ACADEMIC_QUALIFICATION_META_FIELDS = [
-    'id', 'user', 'institution_name', 'start_date', 
-    'end_date', 'specialization'
+    "id",
+    "user",
+    "institution_name",
+    "start_date",
+    "end_date",
+    "specialization",
 ]
 
 WORK_EXPERIENCE_META_FIELDS = [
-    'id', 'user', 'organization_name', 'designation', 
-    'start_date', 'end_date'
-]  
+    "id",
+    "user",
+    "organization_name",
+    "designation",
+    "start_date",
+    "end_date",
+]
 
 SKILL_SET_META_FIELDS = [
-    'id', 'user', 'skill_name', 'proficiency_level', 'experience'
+    "id",
+    "user",
+    "skill_name",
+    "proficiency_level",
+    "experience",
 ]  #
 
 CERTIFICATIONS_META_FIELDS = [
-    'id', 'user', 'certification_name', 'start_date', 
-    'end_date', 'certificate_url'
-]  
+    "id",
+    "user",
+    "certification_name",
+    "start_date",
+    "end_date",
+    "certificate_url",
+]
 
-PROJECT_META_FIELDS = [
-    'id', 'user', 'project_name', 'description', 'project_url'
-]  
+PROJECT_META_FIELDS = ["id", "user", "project_name", "description", "project_url"]
 
-SOCIAL_META_FIELDS = [
-    'id', 'user', 'link', 'link_title'
-] 
+SOCIAL_META_FIELDS = ["id", "user", "link", "link_title"]
 
 GENDER_CHOICES = [
-    (0, 'Male'),
-    (1, 'Female'),
-    (2, 'Other'),
+    (0, "Male"),
+    (1, "Female"),
+    (2, "Other"),
 ]
 
 NOTICE_PERIOD_CHOICES = [

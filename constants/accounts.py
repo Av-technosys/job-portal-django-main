@@ -1,1 +1,1 @@
-SUCCESS_LOGOUT = 'Successfully logged out.'
+SUCCESS_LOGOUT = "Successfully logged out."
