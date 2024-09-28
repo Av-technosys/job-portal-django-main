@@ -39,7 +39,7 @@ def user_logout(request):
         )
 
 @api_view(['POST'])
-@permission_classes([AllowAny])  # OTP verification should not require the user to be authenticated
+@permission_classes([AllowAny])  
 def verify_otp(request):
     serializer = VerifyOtpSerializer(data=request.data)
     

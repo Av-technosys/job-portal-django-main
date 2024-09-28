@@ -1,6 +1,5 @@
 # accounts/serializers.py
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError  
 from .models import User
 from constants.errors import ERROR_INVALID_CREDENTIALS,FAILED_SEND_OTP,ERROR_OTP_VERIFICATION_FAILED,ERROR_USER_NOT_FOUND,ERROR_USER_EXIST
 from rest_framework.authtoken.models import Token
