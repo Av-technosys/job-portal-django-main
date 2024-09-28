@@ -1,7 +1,8 @@
 # accounts/serializers.py
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError  
 from .models import User
-from constants.errors import ERROR_INVALID_CREDENTIALS,FAILED_SEND_OTP,ERROR_OTP_VERIFICATION_FAILED,ERROR_USER_NOT_FOUND
+from constants.errors import ERROR_INVALID_CREDENTIALS,FAILED_SEND_OTP,ERROR_OTP_VERIFICATION_FAILED,ERROR_USER_NOT_FOUND,ERROR_USER_EXIST
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from twilio.rest import Client
@@ -26,6 +27,9 @@ class UserSerializer(serializers.ModelSerializer):
         phone_otp = generate_otp()
         email_otp = generate_otp()
 
+        if User.objects.filter(email=validated_data['email']).exists():  
+            raise serializers.ValidationError({"message": ERROR_USER_EXIST })  
+
 
         #ensuring both otp are not same
         while email_otp == phone_otp:
@@ -44,11 +48,6 @@ class UserSerializer(serializers.ModelSerializer):
 
         # Send OTP via Email
         self.send_email_otp(user.email, email_otp)
-
-        return {   
-            'email':validated_data.get('email')
-        }
-
 
 
     def send_email_otp(self, email, otp):
@@ -100,8 +99,6 @@ class LoginSerializer(serializers.Serializer):
         raise serializers.ValidationError({'error': ERROR_INVALID_CREDENTIALS})
     
 class VerifyOtpSerializer(serializers.Serializer):
-
-    email = serializers.EmailField()
     email_otp = serializers.CharField(max_length=6)  
     phone_otp = serializers.CharField(max_length=6)  
 
@@ -122,7 +119,6 @@ class VerifyOtpSerializer(serializers.Serializer):
         if user.phone_otp != phone_otp:
             raise serializers.ValidationError({'error': ERROR_OTP_VERIFICATION_FAILED})
 
-        return data
 
     def save(self):
         email = self.validated_data['email']
