@@ -29,12 +29,14 @@ def user_login(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def user_logout(request): 
+def user_logout(request):
     try:
         request.user.auth_token.delete()
-        return Response({'message': SUCCESS_LOGOUT}, status=status.HTTP_200_OK)
+        return Response({"message": SUCCESS_LOGOUT}, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({'error': ERROR_LOGOUT_FAILED}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(
+            {"error": ERROR_LOGOUT_FAILED}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 @api_view(['POST'])
 @permission_classes([AllowAny])  # OTP verification should not require the user to be authenticated

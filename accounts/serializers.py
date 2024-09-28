@@ -19,8 +19,8 @@ load_dotenv()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email', 'password', 'phone_number']
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ["email", "password", 'phone_number']
+        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
          # Generate phone OTP
@@ -41,6 +41,8 @@ class UserSerializer(serializers.ModelSerializer):
         user = User(**validated_data, phone_otp=phone_otp, email_otp=email_otp)
         user.set_password(validated_data['password'])
         user.is_active = False
+        user = User(username=validated_data["email"], email=validated_data["email"])
+        user.set_password(validated_data["password"])
         user.save()
 
         # Send OTP via SMS
@@ -82,19 +84,20 @@ class UserSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise serializers.ValidationError({'error': FAILED_SEND_OTP.format(e)})
 
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
     def authenticate_user(self, validated_data):
-        email = validated_data['email']
-        password = validated_data['password']
+        email = validated_data["email"]
+        password = validated_data["password"]
 
         user = authenticate(username=email, password=password)
 
         if user:
             token, _ = Token.objects.get_or_create(user=user)
-            return {'token': token.key}
+            return {"token": token.key}
 
         raise serializers.ValidationError({'error': ERROR_INVALID_CREDENTIALS})
     
