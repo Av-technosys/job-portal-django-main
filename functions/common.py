@@ -1,4 +1,9 @@
 from rest_framework.request import Request
+import random
+
+def generate_otp():
+    """Generate a 6-digit OTP."""
+    return str(random.randint(100000, 999999))
 from constants.errors import *
 from rest_framework.response import Response
 from rest_framework import status
