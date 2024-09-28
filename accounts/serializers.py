@@ -20,14 +20,14 @@ from constants.accounts import (
     USER_REGISTERED,
     EMAIL_OTP_MESSAGE_TEMPLATE,
 )
-from dotenv import load_dotenv
-import os
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
-
-
-load_dotenv()
+from constants.env_data import (
+    TWILIO_ACCOUNT_SID,
+    TWILIO_PHONE_NUMBER,
+    TWILIO_AUTH_TOKEN,
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -117,11 +117,11 @@ class UserSerializer(serializers.ModelSerializer):
             )
 
     def send_phone_otp(self, phone_number, otp):
-        client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
         try:
             message = client.messages.create(
                 body=f"{OTP_MESSAGE} {otp}",
-                from_=os.getenv("TWILIO_PHONE_NUMBER"),
+                from_=TWILIO_PHONE_NUMBER,
                 to=phone_number,
             )
         except Exception as e:
@@ -136,6 +136,16 @@ class LoginSerializer(serializers.Serializer):
         email = validated_data["email"]
         password = validated_data["password"]
 
+        try:
+            user = User.objects.get(email=email)  # Retrieve user by email
+        except User.DoesNotExist:
+            return serializers.ValidationError(message=ERROR_INVALID_CREDENTIALS)
+
+        # Check if the user is active
+        if not user.is_active:
+            return serializers.ValidationError({"message": ERROR_USER_NOT_FOUND})
+
+        # Authenticate the user if they are active
         user = authenticate(username=email, password=password)
 
         if user:
@@ -184,9 +194,5 @@ class VerifyOtpSerializer(serializers.Serializer):
         return ResponseHandler.success(
             data={
                 "message": SUCCESS_OTP_VERIFICATION,
-                "user": {
-                    "email": user.email,
-                    "phone_number": user.phone_number,
-                },
             }
         )
