@@ -25,7 +25,12 @@ SECRET_KEY = "django-insecure-vsces(rrqaxqgd#@j=pn(8$s(8ii*zr)dy3l(p4)db*e@n$&_%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [".vercel.app", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    ".vercel.app",
+    "127.0.0.1",
+    "localhost",
+    "aws-0-ap-southeast-1.pooler.supabase.com",
+]
 
 
 # Application definition
