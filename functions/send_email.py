@@ -17,7 +17,7 @@ def send_email_core_fucntion(subject, message, from_email, recipient_list):
     )
 
 
-def send_email_otp(self, email, otp):
+def send_email_otp(email, otp):
     subject = EMAIL_OTP_SUBJECT
     message = EMAIL_OTP_MESSAGE_TEMPLATE.format(otp=otp)
     from_email = settings.DEFAULT_FROM_EMAIL
