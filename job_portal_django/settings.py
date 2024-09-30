@@ -36,7 +36,7 @@ ALLOWED_HOSTS = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://job-portal-next-ten.vercel.app/",
+    "https://job-portal-next-ten.vercel.app",
 ]
 
 # Application definition

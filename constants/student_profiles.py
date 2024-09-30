@@ -1,8 +1,6 @@
 STUDENT_PROFILE_META_FIELDS = [
     "id",
     "user",
-    "first_name",
-    "last_name",
     "designation",
     "address_line_1",
     "address_line_2",

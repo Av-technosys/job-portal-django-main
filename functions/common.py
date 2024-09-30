@@ -1,15 +1,25 @@
 from rest_framework.request import Request
 import random
+from rest_framework import status
+from rest_framework.exceptions import APIException
+
 
 def generate_otp():
     """Generate a 6-digit OTP."""
     return str(random.randint(100000, 999999))
+
+
 from constants.errors import *
 from rest_framework.response import Response
 from rest_framework import status
 
 
+def get_flattened_error_message(message):
+    return next(iter(message.values()))[0]
+
+
 class ResponseHandler:
+
     @staticmethod
     def success(data=None, status_code=200):
         response_data = {
@@ -22,9 +32,13 @@ class ResponseHandler:
     def error(message=RESPONSE_ERROR, status_code=400):
         response_data = {
             "success": False,
-            "message": message,
+            "message": get_flattened_error_message(message),
         }
         return Response(response_data, status=status_code)
+
+    @staticmethod
+    def api_exception_error(message=RESPONSE_ERROR):
+        return APIException({"message": message, "success": False})
 
 
 def get_login_request_payload(request: Request, key: str, default=None):
@@ -37,6 +51,30 @@ def serializer_handle(Serializers, request):
         serializer.save()
         return ResponseHandler.success(
             serializer.data, status_code=status.HTTP_201_CREATED
+        )
+    return ResponseHandler.error(
+        serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
+    )
+
+
+def serializer_handle_customize_response_only_validate(Serializers, request):
+    serializer = Serializers(data=request.data)
+    if serializer.is_valid():
+        responseData = serializer.return_response(serializer.data)
+        return ResponseHandler.success(
+            responseData, status_code=status.HTTP_201_CREATED
+        )
+    return ResponseHandler.error(
+        serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
+    )
+
+
+def serializer_handle_customize_response(Serializers, request):
+    serializer = Serializers(data=request.data)
+    if serializer.is_valid():
+        responseData = serializer.save()
+        return ResponseHandler.success(
+            responseData, status_code=status.HTTP_201_CREATED
         )
     return ResponseHandler.error(
         serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
