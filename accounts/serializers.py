@@ -69,14 +69,14 @@ class UserSerializer(serializers.ModelSerializer):
 
         # Send OTP via SMS and Email
         # send_phone_otp(phone_number, phone_otp)
-        # send_email_otp(email, email_otp)
+        send_email_otp(email, email_otp)
 
         return user
 
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField()
+    password = serializers.CharField(write_only=True)
 
     def validate(self, data):
         email, _ = data.values()
