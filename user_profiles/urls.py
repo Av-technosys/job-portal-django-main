@@ -9,4 +9,7 @@ urlpatterns = [
     path("certifications/", certifications),
     path("projects/", projects),
     path("social_urls/", social_urls),
+    path("company_profile/", company_profile),
+    path("job_details/", job_details),
+    path("company_id/", company_id),
 ]

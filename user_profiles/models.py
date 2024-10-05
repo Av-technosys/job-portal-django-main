@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
-from constants.student_profiles import *
+from constants.user_profiles import *
 
 
 class StudentProfile(models.Model):
@@ -128,3 +128,41 @@ class SocialUrls(models.Model):
 
     def __str__(self):
         return f"{self.link} - {self.link_title}"
+
+class CompanyProfile(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    company_email = models.EmailField()
+    company_name = models.CharField(max_length=200)
+    company_description = models.TextField(max_length=300)
+    company_url = models.URLField(blank=True)
+    address_line_1 = models.CharField(max_length=100)
+    address_line_2 = models.CharField(max_length=100, blank=True, null=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.IntegerField(validators=[MaxValueValidator(999999)])
+    country = models.CharField(max_length=100)
+    
+class JobDetails (models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    industry = models.CharField(max_length=200) 
+    location = models.CharField(max_length=200)
+    job_type = models.PositiveSmallIntegerField(choices=JOB_TYPE_CHOICES)
+    company_size = models.PositiveSmallIntegerField()
+    mission = models.TextField()
+
+class CompanyId (models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    registeration_number = models.PositiveSmallIntegerField()
+    firm_id = models.PositiveSmallIntegerField()

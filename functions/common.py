@@ -82,9 +82,8 @@ def serializer_handle_customize_response(Serializers, request):
 
 
 def update_handle(model_class, serializer_class, request):
-    instance_id = request.data.get("id")
     try:
-        instance = model_class.objects.get(id=instance_id)
+        instance = model_class.objects.get(id=request.id)
     except model_class.DoesNotExist:
         return ResponseHandler.error(
             f"{model_class.__name__} {ERROR_NOT_FOUND}",
@@ -102,7 +101,7 @@ def update_handle(model_class, serializer_class, request):
 
 def get_handle_profile(model, serializer_class, request):
     try:
-        instance = model.objects.get(user=request.user)
+        instance = model.objects.get(id=request.id)
         serializer = serializer_class(instance)
         return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
     except model.DoesNotExist:
@@ -112,7 +111,7 @@ def get_handle_profile(model, serializer_class, request):
 
 
 def get_handle(model, serializer_class, request):
-    instances = model.objects.filter(user=request.id)
+    instances = model.objects.filter(id=request.id)
     serializer = serializer_class(instances, many=True)
     return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
 
