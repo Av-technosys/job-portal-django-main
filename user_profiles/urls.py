@@ -12,4 +12,5 @@ urlpatterns = [
     path("company_profile/", company_profile),
     path("job_details/", job_details),
     path("company_id/", company_id),
+    path('upload-document/', file_upload)
 ]

@@ -166,3 +166,15 @@ class CompanyId (models.Model):
     )
     registeration_number = models.PositiveSmallIntegerField()
     firm_id = models.PositiveSmallIntegerField()
+class Document(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    pdf_file = models.FileField(upload_to='documents/pdfs/')
+    image_file = models.ImageField(upload_to='documents/images/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Document: {self.id}'

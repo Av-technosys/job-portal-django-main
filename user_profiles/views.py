@@ -1,8 +1,9 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from functions.common import *
 from .serializers import *
 from handlers.user_profiles import *
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
@@ -68,3 +69,7 @@ def job_details(request):
 # @permission_classes([IsAuthenticated])
 def company_id(request):
     return request_handler(CompanyId, CompanyIdSerializer, request)
+@api_view(["GET", "POST"])
+# @permission_classes([IsAuthenticated])
+def file_upload(request):
+    return upload_handler(Document, DocumentSerializer, request)

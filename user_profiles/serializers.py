@@ -109,3 +109,8 @@ class CompanyIdSerializer(serializers.ModelSerializer):
         company_id = CompanyId(**validated_data)
         company_id.save()
         return company_id
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = "__al__"
+        read_only_fields = ['user'] 
