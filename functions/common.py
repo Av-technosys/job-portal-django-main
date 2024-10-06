@@ -2,10 +2,9 @@ from rest_framework.request import Request
 import random
 from rest_framework import status
 from rest_framework.exceptions import APIException
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 import os
-User = get_user_model()  
+
 
 def generate_otp():
     """Generate a 6-digit OTP."""
