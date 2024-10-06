@@ -112,5 +112,10 @@ class CompanyIdSerializer(serializers.ModelSerializer):
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
-        fields = "__al__"
-        read_only_fields = ['user'] 
+        fields = '__all__'
+        read_only_fields = ['user']
+        
+#     def create(self, validated_data):
+#         upload = Document(**validated_data)
+#         upload.save()
+#         return upload
