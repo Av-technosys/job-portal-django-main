@@ -6,12 +6,15 @@ from constants.errors import (
     ERROR_USER_NOT_FOUND,
     ERROR_USER_EXIST,
     ERROR_OTP_EXPIRED,
+    ERROR_NEW_PASSWORD_NOT_FOUND,
 )
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from functions.common import generate_otp, ResponseHandler
 from constants.accounts import (
     REGISTRATION_META_FIELDS,
+    PASSWORD_RESET,
+    SUCCESS_SENDING_OTP,
 )
 from django.utils import timezone
 from datetime import timedelta
@@ -148,3 +151,84 @@ class VerifyOtpSerializer(serializers.Serializer):
             return {"token": token.key}
         else:
             raise ResponseHandler.api_exception_error()
+
+
+class ResetPasswordSendOtpSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            user = User.objects.get(email=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"message": ERROR_USER_NOT_FOUND})
+        return value
+
+    def save(self):
+        email = self.validated_data["email"]
+        user = User.objects.get(email=email)
+
+        # Generate OTP and set OTP expiration time (10 minutes from now)
+        # phone_otp = generate_otp()
+        email_otp = generate_otp()
+        otp_expiration = timezone.now() + timedelta(minutes=10)
+
+        user.email_otp = email_otp
+        user.otp_expiration = otp_expiration
+        user.save()
+
+        # Send OTP via email or phone
+        send_email_otp(email, email_otp)
+        # send_phone_otp(user.phone_number, user.phone_otp)
+
+        return {"message": SUCCESS_SENDING_OTP}
+
+
+class VerifyOtpAndChangePasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    email_otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, data):
+        email = data.get("email")
+        email_otp = data.get("email_otp")
+        new_password = data.get("new_password")
+
+        if not new_password:
+            return serializers.ValidationError(
+                {"message": ERROR_NEW_PASSWORD_NOT_FOUND}
+            )
+
+        # Retrieve user
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"message": ERROR_USER_NOT_FOUND})
+
+        # Check if OTP is valid and not expired
+        if user.email_otp != email_otp:
+            raise serializers.ValidationError(
+                {"message": ERROR_OTP_VERIFICATION_FAILED}
+            )
+        if not user.otp_expiration or timezone.now() > user.otp_expiration:
+            raise serializers.ValidationError({"message": ERROR_OTP_EXPIRED})
+
+        # if user.phone_otp != phone_otp:
+        #     raise serializers.ValidationError({"message": "Invalid OTP"})
+        # if not user.otp_expiration or timezone.now() > user.otp_expiration:
+        #     raise serializers.ValidationError({"message": "OTP has expired"})
+
+        return data
+
+    def save(self):
+        email = self.validated_data["email"]
+        new_password = self.validated_data["new_password"]
+
+        user = User.objects.get(email=email)
+
+        # Set new password and clear OTP fields
+        user.set_password(new_password)
+        user.email_otp = None
+        user.otp_expiration = None
+        user.save()
+
+        return {"message": PASSWORD_RESET}
