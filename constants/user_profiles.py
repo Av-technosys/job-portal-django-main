@@ -22,3 +22,10 @@ JOB_TYPE_CHOICES = [
     (1, 'Part Time'),   
     (2, 'Full Time'),    
 ]
+
+DOCUMENT_TYPES = [
+        ('resume', 'Resume'),
+        ('cover_letter', 'Cover Letter'),
+        ('profile_image', 'Profile Image'),
+        ('typescript', 'Typescript'),
+    ]

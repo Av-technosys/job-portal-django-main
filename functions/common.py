@@ -3,6 +3,8 @@ import random
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+import os
 User = get_user_model()  
 
 def generate_otp():
@@ -135,7 +137,9 @@ def upload_handler(model, serializer_class, request):
         return Response(serializer.data)
     elif request.method == "POST":
         data = request.data.copy()
-        user = User.objects.get(id=29)
+        user = request.user 
+        if user.is_anonymous:
+            return Response({"error": ERROR_USER_NOT_FOUND}, status=status.HTTP_401_UNAUTHORIZED)
         data['user'] = user.id 
         serializer = serializer_class(data=data)
         
@@ -143,3 +147,9 @@ def upload_handler(model, serializer_class, request):
             serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def file_rename(instance, filename):
+    ext = filename.split('.')[-1]
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+    new_filename = f"{timestamp}.{ext}"
+    return os.path.join(f'documents/{instance.file_type}/', new_filename)

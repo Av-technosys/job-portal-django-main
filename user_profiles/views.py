@@ -1,9 +1,8 @@
-from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.decorators import api_view, permission_classes
 from functions.common import *
 from .serializers import *
 from handlers.user_profiles import *
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
@@ -53,7 +52,7 @@ def social_urls(request):
     return request_handler(SocialUrls, SocialUrlsSerializer, request)
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def company_profile(request):
     if request.method == "GET":
         return get_handle_profile(CompanyProfile, CompanyProfileSerializer, request)
@@ -61,15 +60,16 @@ def company_profile(request):
         return request_handler(CompanyProfile, CompanyProfileSerializer, request)
     
 @api_view(["GET", "POST", "PATCH", "DELETE"])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def job_details(request):
     return request_handler(JobDetails, JobDetailsSerializer, request)
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def company_id(request):
     return request_handler(CompanyId, CompanyIdSerializer, request)
+
 @api_view(["GET", "POST"])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def file_upload(request):
-    return upload_handler(Document, DocumentSerializer, request)
+    return upload_handler(UploadedFile, UploadedFileSerializer, request)

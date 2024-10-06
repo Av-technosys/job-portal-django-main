@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from constants.user_profiles import *
+from functions.common import file_rename
 
 
 class StudentProfile(models.Model):
@@ -145,6 +146,8 @@ class CompanyProfile(models.Model):
     state = models.CharField(max_length=100)
     postal_code = models.IntegerField(validators=[MaxValueValidator(999999)])
     country = models.CharField(max_length=100)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
     
 class JobDetails (models.Model):
     id = models.AutoField(primary_key=True)
@@ -157,6 +160,8 @@ class JobDetails (models.Model):
     job_type = models.PositiveSmallIntegerField(choices=JOB_TYPE_CHOICES)
     company_size = models.PositiveSmallIntegerField()
     mission = models.TextField()
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
 class CompanyId (models.Model):
     id = models.AutoField(primary_key=True)
@@ -166,15 +171,19 @@ class CompanyId (models.Model):
     )
     registeration_number = models.PositiveSmallIntegerField()
     firm_id = models.PositiveSmallIntegerField()
-class Document(models.Model):
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    
+class UploadedFile(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
-    pdf_file = models.FileField(upload_to='documents/pdfs/')
-    image_file = models.ImageField(upload_to='documents/images/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    file_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
+    file = models.FileField(upload_to=file_rename)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'Document: {self.id}'
+        return f'{self.file_type} for user {self.user.username}'

@@ -109,13 +109,12 @@ class CompanyIdSerializer(serializers.ModelSerializer):
         company_id = CompanyId(**validated_data)
         company_id.save()
         return company_id
-class DocumentSerializer(serializers.ModelSerializer):
+class UploadedFileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Document
+        model = UploadedFile
         fields = '__all__'
-        read_only_fields = ['user']
-        
-#     def create(self, validated_data):
-#         upload = Document(**validated_data)
-#         upload.save()
-#         return upload
+        read_only_fields = ['user'] 
+def create(self, validated_data):
+        uploaded_file = UploadedFile(**validated_data)
+        uploaded_file.save()
+        return uploaded_file
