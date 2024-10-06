@@ -1,7 +1,13 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import UserSerializer, LoginSerializer, VerifyOtpSerializer
+from .serializers import (
+    UserSerializer,
+    LoginSerializer,
+    VerifyOtpSerializer,
+    ResetPasswordSendOtpSerializer,
+    VerifyOtpAndChangePasswordSerializer,
+)
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
 from functions.common import (
@@ -41,3 +47,17 @@ def user_logout(request):
 @permission_classes([AllowAny])
 def verify_otp(request):
     return serializer_handle_customize_response(VerifyOtpSerializer, request)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def reset_password_otp(request):
+    return serializer_handle_customize_response(ResetPasswordSendOtpSerializer, request)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def verify_reset_password(request):
+    return serializer_handle_customize_response(
+        VerifyOtpAndChangePasswordSerializer, request
+    )
