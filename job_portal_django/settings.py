@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "accounts",
     "user_profiles",
     "storages",
+    "jobs",
 ]
 
 MIDDLEWARE = [
