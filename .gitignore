@@ -37,9 +37,9 @@ Desktop.ini
 *.cover
 *.py,cover
 
-# Migrations
-# */migrations/*
-# !*/migrations/__init__.py
+Migrations
+*/migrations/*
+!*/migrations/__init__.py
 
 # Pytest
 .cache/
