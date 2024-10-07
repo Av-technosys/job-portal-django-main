@@ -6,7 +6,7 @@ from .models import *
 class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         student = StudentProfile(**validated_data)
@@ -17,7 +17,7 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 class AcademicQualificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = AcademicQualification
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         academic_qualification = AcademicQualification(**validated_data)
@@ -28,7 +28,7 @@ class AcademicQualificationSerializer(serializers.ModelSerializer):
 class WorkExperienceSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkExperience
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         work_experience = WorkExperience(**validated_data)
@@ -39,7 +39,7 @@ class WorkExperienceSerializer(serializers.ModelSerializer):
 class SkillSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = SkillSet
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         skill_set = SkillSet(**validated_data)
@@ -50,7 +50,7 @@ class SkillSetSerializer(serializers.ModelSerializer):
 class CertificationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certifications
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         certification = Certifications(**validated_data)
@@ -61,7 +61,7 @@ class CertificationsSerializer(serializers.ModelSerializer):
 class ProjectsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projects
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         project = Projects(**validated_data)
@@ -72,7 +72,7 @@ class ProjectsSerializer(serializers.ModelSerializer):
 class SocialUrlsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SocialUrls
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         social_url = SocialUrls(**validated_data)
@@ -83,38 +83,42 @@ class SocialUrlsSerializer(serializers.ModelSerializer):
 class CompanyProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyProfile
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         company_profile = CompanyProfile(**validated_data)
         company_profile.save()
         return company_profile
-    
+
+
 class JobDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobDetails
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         job_details = JobDetails(**validated_data)
         job_details.save()
         return job_details
 
+
 class CompanyIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyId
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         company_id = CompanyId(**validated_data)
         company_id.save()
         return company_id
+
+
 class UploadedFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UploadedFile
-        fields = '__all__'
-        read_only_fields = ['user'] 
-def create(self, validated_data):
+        fields = "__all__"
+
+    def create(self, validated_data):
         uploaded_file = UploadedFile(**validated_data)
         uploaded_file.save()
         return uploaded_file

@@ -136,19 +136,17 @@ def upload_handler(model, serializer_class, request):
         return Response(serializer.data)
     elif request.method == "POST":
         data = request.data.copy()
-        user = request.user 
-        if user.is_anonymous:
-            return Response({"error": ERROR_USER_NOT_FOUND}, status=status.HTTP_401_UNAUTHORIZED)
-        data['user'] = user.id 
+        # To Be Enhanced
+        data["user"] = request.user.id
         serializer = serializer_class(data=data)
-        
         if serializer.is_valid():
-            serializer.save(user=user)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 def file_rename(instance, filename):
-    ext = filename.split('.')[-1]
-    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+    ext = filename.split(".")[-1]
+    timestamp = timezone.now().timestamp()
     new_filename = f"{timestamp}.{ext}"
-    return os.path.join(f'documents/{instance.file_type}/', new_filename)
+    return os.path.join(f"documents/{instance.file_type}/", new_filename)

@@ -18,14 +18,14 @@ SEARCH_STATUS_CHOICES = [
 ]
 
 JOB_TYPE_CHOICES = [
-    (0, 'Internship'),
-    (1, 'Part Time'),   
-    (2, 'Full Time'),    
+    (0, "Internship"),
+    (1, "Part Time"),
+    (2, "Full Time"),
 ]
 
 DOCUMENT_TYPES = [
-        ('resume', 'Resume'),
-        ('cover_letter', 'Cover Letter'),
-        ('profile_image', 'Profile Image'),
-        ('typescript', 'Typescript'),
-    ]
+    ("resume", "Resume"),
+    ("cover_letter", "Cover Letter"),
+    ("profile_image", "Profile Image"),
+    ("typescript", "Typescript"),
+]

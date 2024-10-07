@@ -130,6 +130,7 @@ class SocialUrls(models.Model):
     def __str__(self):
         return f"{self.link} - {self.link_title}"
 
+
 class CompanyProfile(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(
@@ -148,14 +149,15 @@ class CompanyProfile(models.Model):
     country = models.CharField(max_length=100)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
-    
-class JobDetails (models.Model):
+
+
+class JobDetails(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
-    industry = models.CharField(max_length=200) 
+    industry = models.CharField(max_length=200)
     location = models.CharField(max_length=200)
     job_type = models.PositiveSmallIntegerField(choices=JOB_TYPE_CHOICES)
     company_size = models.PositiveSmallIntegerField()
@@ -163,7 +165,8 @@ class JobDetails (models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
-class CompanyId (models.Model):
+
+class CompanyId(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -173,7 +176,8 @@ class CompanyId (models.Model):
     firm_id = models.PositiveSmallIntegerField()
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
-    
+
+
 class UploadedFile(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
@@ -186,4 +190,4 @@ class UploadedFile(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.file_type} for user {self.user.username}'
+        return f"{self.file_type} for user {self.user.username}"

@@ -14,7 +14,6 @@ from pathlib import Path
 from constants.env_data import *
 
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -55,7 +54,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "accounts",
     "user_profiles",
-    "storages"
+    "storages",
 ]
 
 MIDDLEWARE = [
@@ -170,8 +169,6 @@ DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL
 AUDITLOG_INCLUDE_ALL_MODELS = True
 
 
-
-
 AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
 
 STORAGES = {
@@ -185,7 +182,7 @@ STORAGES = {
             "file_overwrite": AWS_S3_FILE_OVERWRITE,
             "default_acl": AWS_DEFAULT_ACL,
             "object_parameters": {
-                "CacheControl": "max-age=86400", 
+                "CacheControl": "max-age=86400",
             },
         },
     },
@@ -202,6 +199,5 @@ STORAGES = {
     },
 }
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
