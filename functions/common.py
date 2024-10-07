@@ -2,6 +2,8 @@ from rest_framework.request import Request
 import random
 from rest_framework import status
 from rest_framework.exceptions import APIException
+from django.utils import timezone
+import os
 
 
 def generate_otp():
@@ -125,3 +127,26 @@ def delete_handle(model, request):
             {"message": REMOVE_SUCCESS}, status_code=status.HTTP_204_NO_CONTENT
         )
     return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
+
+
+def upload_handler(model, serializer_class, request):
+    if request.method == "GET":
+        documents = model.objects.all()
+        serializer = serializer_class(documents, many=True)
+        return Response(serializer.data)
+    elif request.method == "POST":
+        data = request.data.copy()
+        # To Be Enhanced
+        data["user"] = request.user.id
+        serializer = serializer_class(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def file_rename(instance, filename):
+    ext = filename.split(".")[-1]
+    timestamp = timezone.now().timestamp()
+    new_filename = f"{timestamp}.{ext}"
+    return os.path.join(f"documents/{instance.file_type}/", new_filename)
