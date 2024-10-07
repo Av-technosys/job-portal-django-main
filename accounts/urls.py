@@ -6,6 +6,7 @@ from .views import (
     verify_otp,
     reset_password_otp,
     verify_reset_password,
+    account_details,
 )
 
 urlpatterns = [
@@ -23,4 +24,5 @@ urlpatterns = [
         verify_reset_password,
         name="verify_otp_password_reset",
     ),
+    path("details/", account_details, name="account_details"),
 ]

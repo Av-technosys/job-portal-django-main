@@ -101,6 +101,12 @@ def update_handle(model_class, serializer_class, request):
     )
 
 
+def get_customize_handler(model, serializer_class, pk):
+    instances = model.objects.filter(**pk)
+    serializer = serializer_class(instances, many=True)
+    return ResponseHandler.success(serializer.data[0], status_code=status.HTTP_200_OK)
+
+
 def get_handle_profile(model, serializer_class, request):
     try:
         instance = model.objects.get(id=request.id)

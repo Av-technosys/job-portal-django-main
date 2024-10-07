@@ -1,6 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from accounts.models import User
 from .serializers import (
     UserSerializer,
     LoginSerializer,
@@ -15,6 +16,7 @@ from functions.common import (
     serializer_handle,
     serializer_handle_customize_response,
     serializer_handle_customize_response_only_validate,
+    get_customize_handler,
 )
 
 
@@ -61,3 +63,9 @@ def verify_reset_password(request):
     return serializer_handle_customize_response(
         VerifyOtpAndChangePasswordSerializer, request
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def account_details(request):
+    return get_customize_handler(User, UserSerializer, {"email": request.user})
