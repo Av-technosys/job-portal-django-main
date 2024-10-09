@@ -85,7 +85,8 @@ def serializer_handle_customize_response(Serializers, request):
 
 def update_handle(model_class, serializer_class, request):
     try:
-        instance = model_class.objects.get(id=request.id)
+        id = request.data.get("id") 
+        instance = model_class.objects.get(id, user=request.user)
     except model_class.DoesNotExist:
         return ResponseHandler.error(
             f"{model_class.__name__} {ERROR_NOT_FOUND}",
@@ -103,7 +104,7 @@ def update_handle(model_class, serializer_class, request):
 
 def get_handle_profile(model, serializer_class, request):
     try:
-        instance = model.objects.get(id=request.id)
+        instance = model.objects.get(id=request.user)
         serializer = serializer_class(instance)
         return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
     except model.DoesNotExist:
@@ -113,7 +114,7 @@ def get_handle_profile(model, serializer_class, request):
 
 
 def get_handle(model, serializer_class, request):
-    instances = model.objects.filter(id=request.id)
+    instances = model.objects.filter(user=request.user)
     serializer = serializer_class(instances, many=True)
     return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
 
@@ -131,18 +132,41 @@ def delete_handle(model, request):
 
 def upload_handler(model, serializer_class, request):
     if request.method == "GET":
-        documents = model.objects.all()
-        serializer = serializer_class(documents, many=True)
-        return Response(serializer.data)
+            return get_handle(model, serializer_class, request)
+
     elif request.method == "POST":
-        data = request.data.copy()
-        # To Be Enhanced
-        data["user"] = request.user.id
+        data = request.data.copy()       
+        data["user"] = request.user
+        
         serializer = serializer_class(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == "PATCH":
+        try:
+            document_id = request.data.get("id") 
+            document = model.objects.get(id=document_id, user=request.user) 
+        except model.DoesNotExist:
+            return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
+
+        if 'file' in request.FILES:
+            old_file = document.file
+            new_file = request.FILES['file']  
+
+            if old_file:
+                old_file.delete(save=False)  
+            document.file = new_file
+        data = request.data.copy()
+        data["user"] = request.user
+
+        serializer = serializer_class(document, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save() 
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 def file_rename(instance, filename):
