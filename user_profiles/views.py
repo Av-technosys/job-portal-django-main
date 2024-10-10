@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from functions.common import *
 from .serializers import *
-from handlers.user_profiles import *
+from handlers.common import *
 from rest_framework.permissions import IsAuthenticated
 
 
