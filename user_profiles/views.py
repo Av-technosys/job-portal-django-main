@@ -73,7 +73,7 @@ def company_id(request):
     return request_handler(CompanyId, CompanyIdSerializer, request)
 
 
-@api_view(["GET", "POST", "PATCH"])
+@api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def file_upload(request):
     return upload_handler(UploadedFile, UploadedFileSerializer, request)

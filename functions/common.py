@@ -121,7 +121,7 @@ def get_handle(model, serializer_class, request):
 
 def delete_handle(model, request):
     instance_id = request.data.get("id")
-    instances = model.objects.filter(id=instance_id)
+    instances = model.objects.filter(id=instance_id, user=request.user)
     if instances.exists():
         instances.delete()
         return ResponseHandler.success(
@@ -143,7 +143,6 @@ def upload_handler(model, serializer_class, request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     elif request.method == "PATCH":
         try:
             document_id = request.data.get("id") 
@@ -166,6 +165,17 @@ def upload_handler(model, serializer_class, request):
             serializer.save() 
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == "DELETE":
+        instance_id = request.data.get("id")
+        instance = model.objects.get(id=instance_id, user=request.user)
+
+    if instance.file:
+        instance.file.delete(save=False) 
+        instance.delete()
+        return ResponseHandler.success(
+           message=REMOVE_SUCCESS, status_code=status.HTTP_204_NO_CONTENT
+        )
+    return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
 
 
 
