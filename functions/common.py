@@ -85,8 +85,9 @@ def serializer_handle_customize_response(Serializers, request):
 
 def update_handle(model_class, serializer_class, request):
     try:
-        id = request.data.get("id") 
-        instance = model_class.objects.get(id, user=request.user)
+        id = request.data.get("id")
+        request.user = 26
+        instance = model_class.objects.get(id=id, user=request.user)
     except model_class.DoesNotExist:
         return ResponseHandler.error(
             f"{model_class.__name__} {ERROR_NOT_FOUND}",
@@ -138,12 +139,12 @@ def delete_handle(model, request):
 
 def upload_handler(model, serializer_class, request):
     if request.method == "GET":
-            return get_handle(model, serializer_class, request)
+        return get_handle(model, serializer_class, request)
 
     elif request.method == "POST":
-        data = request.data.copy()       
+        data = request.data.copy()
         data["user"] = request.user
-        
+
         serializer = serializer_class(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -151,24 +152,26 @@ def upload_handler(model, serializer_class, request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "PATCH":
         try:
-            document_id = request.data.get("id") 
-            document = model.objects.get(id=document_id, user=request.user) 
+            document_id = request.data.get("id")
+            document = model.objects.get(id=document_id, user=request.user)
         except model.DoesNotExist:
-            return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
+            return ResponseHandler.error(
+                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+            )
 
-        if 'file' in request.FILES:
+        if "file" in request.FILES:
             old_file = document.file
-            new_file = request.FILES['file']  
+            new_file = request.FILES["file"]
 
             if old_file:
-                old_file.delete(save=False)  
+                old_file.delete(save=False)
             document.file = new_file
         data = request.data.copy()
         data["user"] = request.user
 
         serializer = serializer_class(document, data=data, partial=True)
         if serializer.is_valid():
-            serializer.save() 
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "DELETE":
@@ -176,13 +179,12 @@ def upload_handler(model, serializer_class, request):
         instance = model.objects.get(id=instance_id, user=request.user)
 
     if instance.file:
-        instance.file.delete(save=False) 
+        instance.file.delete(save=False)
         instance.delete()
         return ResponseHandler.success(
-           message=REMOVE_SUCCESS, status_code=status.HTTP_204_NO_CONTENT
+            message=REMOVE_SUCCESS, status_code=status.HTTP_204_NO_CONTENT
         )
     return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
-
 
 
 def file_rename(instance, filename):

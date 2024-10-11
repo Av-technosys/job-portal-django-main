@@ -1,20 +1,24 @@
 from rest_framework import serializers
 from .models import Jobs
+from constants.jobs import *
+
 
 # Section 1 Serializer
 class Section1Serializer(serializers.ModelSerializer):
     class Meta:
         model = Jobs
-        fields = ['designation', 'department', 'location', 'job_type', 'status']
+        fields = SECTION_1_META_FIELD
+
 
 # Section 2 Serializer
 class Section2Serializer(serializers.ModelSerializer):
     class Meta:
         model = Jobs
-        fields = ['job_description', 'contact_name', 'phone_number', 'email', 'skills_required']
+        fields = SECTION_2_META_FIELD
+
 
 # Section 3 Serializer
 class Section3Serializer(serializers.ModelSerializer):
     class Meta:
         model = Jobs
-        fields = ['job_overview', 'qualifications_and_skills', 'roles_and_responsibilities']
+        fields = SECTION_3_META_FIELD
