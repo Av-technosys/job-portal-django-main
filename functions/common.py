@@ -17,7 +17,10 @@ from rest_framework import status
 
 
 def get_flattened_error_message(message):
-    return next(iter(message.values()))[0]
+    if isinstance(message, list):
+        return next(iter(message.values()))[0]
+    else:
+        return message
 
 
 class ResponseHandler:
@@ -26,7 +29,7 @@ class ResponseHandler:
     def success(data=None, status_code=200):
         response_data = {
             "success": True,
-            "data": data,
+            "data": remove_unwanted_id_from_response(data),
         }
         return Response(response_data, status=status_code)
 
@@ -47,16 +50,30 @@ def get_login_request_payload(request: Request, key: str, default=None):
     return request.data.get(key, default)
 
 
+def remove_unwanted_id_from_response(data):
+    if isinstance(data, object):
+        # Removes user as a foreign key from the response
+        data.pop("user", "")
+    return data
+
+
 def serializer_handle(Serializers, request):
-    serializer = Serializers(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return ResponseHandler.success(
-            serializer.data, status_code=status.HTTP_201_CREATED
+    try:
+        if request.user.id:
+            request.data["user"] = request.user.id
+        serializer = Serializers(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return ResponseHandler.success(
+                serializer.data, status_code=status.HTTP_201_CREATED
+            )
+        return ResponseHandler.error(
+            serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
         )
-    return ResponseHandler.error(
-        serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
-    )
+    except Exception:
+        return ResponseHandler.error(
+            RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
+        )
 
 
 def serializer_handle_customize_response_only_validate(Serializers, request):
@@ -85,8 +102,8 @@ def serializer_handle_customize_response(Serializers, request):
 
 def update_handle(model_class, serializer_class, request):
     try:
-        id = request.data.get("id") 
-        instance = model_class.objects.get(id, user=request.user)
+        id = request.data.get("id")
+        instance = model_class.objects.get(id = id, user=request.user)
     except model_class.DoesNotExist:
         return ResponseHandler.error(
             f"{model_class.__name__} {ERROR_NOT_FOUND}",
@@ -110,7 +127,7 @@ def get_customize_handler(model, serializer_class, pk):
 
 def get_handle_profile(model, serializer_class, request):
     try:
-        instance = model.objects.get(id=request.user)
+        instance = model.objects.get(user=request.user.id)
         serializer = serializer_class(instance)
         return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
     except model.DoesNotExist:
@@ -138,12 +155,12 @@ def delete_handle(model, request):
 
 def upload_handler(model, serializer_class, request):
     if request.method == "GET":
-            return get_handle(model, serializer_class, request)
+        return get_handle(model, serializer_class, request)
 
     elif request.method == "POST":
-        data = request.data.copy()       
+        data = request.data.copy()
         data["user"] = request.user
-        
+
         serializer = serializer_class(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -151,24 +168,26 @@ def upload_handler(model, serializer_class, request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "PATCH":
         try:
-            document_id = request.data.get("id") 
-            document = model.objects.get(id=document_id, user=request.user) 
+            document_id = request.data.get("id")
+            document = model.objects.get(id=document_id, user=request.user)
         except model.DoesNotExist:
-            return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
+            return ResponseHandler.error(
+                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+            )
 
-        if 'file' in request.FILES:
+        if "file" in request.FILES:
             old_file = document.file
-            new_file = request.FILES['file']  
+            new_file = request.FILES["file"]
 
             if old_file:
-                old_file.delete(save=False)  
+                old_file.delete(save=False)
             document.file = new_file
         data = request.data.copy()
         data["user"] = request.user
 
         serializer = serializer_class(document, data=data, partial=True)
         if serializer.is_valid():
-            serializer.save() 
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "DELETE":
@@ -176,13 +195,12 @@ def upload_handler(model, serializer_class, request):
         instance = model.objects.get(id=instance_id, user=request.user)
 
     if instance.file:
-        instance.file.delete(save=False) 
+        instance.file.delete(save=False)
         instance.delete()
         return ResponseHandler.success(
-           message=REMOVE_SUCCESS, status_code=status.HTTP_204_NO_CONTENT
+            message=REMOVE_SUCCESS, status_code=status.HTTP_204_NO_CONTENT
         )
     return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
-
 
 
 def file_rename(instance, filename):
