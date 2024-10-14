@@ -51,7 +51,11 @@ def get_login_request_payload(request: Request, key: str, default=None):
 
 
 def remove_unwanted_id_from_response(data):
-    if isinstance(data, object):
+    if isinstance(data, list) and len(data) > 0:
+        for d in data:
+            if isinstance(d, object):
+                d.pop("user", "")
+    elif isinstance(data, object):
         # Removes user as a foreign key from the response
         data.pop("user", "")
     return data
