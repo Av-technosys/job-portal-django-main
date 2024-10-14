@@ -29,7 +29,7 @@ class ResponseHandler:
     def success(data=None, status_code=200):
         response_data = {
             "success": True,
-            "data": data,
+            "data": remove_unwanted_id_from_response(data),
         }
         return Response(response_data, status=status_code)
 
@@ -50,16 +50,30 @@ def get_login_request_payload(request: Request, key: str, default=None):
     return request.data.get(key, default)
 
 
+def remove_unwanted_id_from_response(data):
+    if isinstance(data, object):
+        # Removes user as a foreign key from the response
+        data.pop("user", "")
+    return data
+
+
 def serializer_handle(Serializers, request):
-    serializer = Serializers(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return ResponseHandler.success(
-            serializer.data, status_code=status.HTTP_201_CREATED
+    try:
+        if request.user.id:
+            request.data["user"] = request.user.id
+        serializer = Serializers(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return ResponseHandler.success(
+                serializer.data, status_code=status.HTTP_201_CREATED
+            )
+        return ResponseHandler.error(
+            serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
         )
-    return ResponseHandler.error(
-        serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
-    )
+    except Exception:
+        return ResponseHandler.error(
+            RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
+        )
 
 
 def serializer_handle_customize_response_only_validate(Serializers, request):
@@ -89,7 +103,7 @@ def serializer_handle_customize_response(Serializers, request):
 def update_handle(model_class, serializer_class, request):
     try:
         id = request.data.get("id")
-        instance = model_class.objects.get(id=id, user=request.user)
+        instance = model_class.objects.get(id, user=request.user)
     except model_class.DoesNotExist:
         return ResponseHandler.error(
             f"{model_class.__name__} {ERROR_NOT_FOUND}",
@@ -115,7 +129,7 @@ def get_customize_handler(model, serializer_class, pk):
 
 def get_handle_profile(model, serializer_class, request):
     try:
-        instance = model.objects.get(id=request.user)
+        instance = model.objects.get(user=request.user.id)
         serializer = serializer_class(instance)
         return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
     except model.DoesNotExist:
