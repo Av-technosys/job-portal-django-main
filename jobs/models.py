@@ -30,6 +30,8 @@ class JobContactInfo(models.Model):
     name = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15)
     email = models.EmailField()
+    job_description = models.TextField()
+    skills_required = models.TextField()
 
     def __str__(self):
         return f"Contact for {self.job}: {self.name}"
@@ -44,8 +46,7 @@ class JobDescription(models.Model):
     job = models.ForeignKey(
         JobInfo, on_delete=models.CASCADE, related_name="description"
     )
-    job_description = models.TextField()
-    skills_required = models.TextField()
+
     job_overview = models.TextField()
     qualifications_and_skills = models.TextField()
     roles_and_responsibilities = models.TextField()
