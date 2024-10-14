@@ -88,7 +88,6 @@ def serializer_handle_customize_response(Serializers, request):
 
 def update_handle(model_class, serializer_class, request):
     try:
-        print(request.data)  # Debugging to check payload
         id = request.data.get("id")
         instance = model_class.objects.get(id=id, user=request.user)
     except model_class.DoesNotExist:
