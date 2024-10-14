@@ -1,11 +1,15 @@
 from django.urls import path
-from .views import section1_api_view, section2_api_view, section3_api_view
+from .views import (
+    job_info_api_view,
+    job_description_api_view,
+    job_contact_info_api_view,
+)
 
 urlpatterns = [
     # Section 1
-    path("section1/", section1_api_view, name="section1_post"),
+    path("job_info/", job_info_api_view, name="job_inf0_post"),
     # Section 2
-    path("section2/", section2_api_view, name="section2_post"),
+    path("job_contact_info/", job_contact_info_api_view, name="job_contact_post"),
     # Section 3
-    path("section3/", section3_api_view, name="section3_post"),
+    path("job_description/", job_description_api_view, name="job_description_post"),
 ]

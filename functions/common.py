@@ -17,7 +17,10 @@ from rest_framework import status
 
 
 def get_flattened_error_message(message):
-    return next(iter(message.values()))[0]
+    if isinstance(message, list):
+        return next(iter(message.values()))[0]
+    else:
+        return message
 
 
 class ResponseHandler:
@@ -85,6 +88,7 @@ def serializer_handle_customize_response(Serializers, request):
 
 def update_handle(model_class, serializer_class, request):
     try:
+        print(request.data)  # Debugging to check payload
         id = request.data.get("id")
         instance = model_class.objects.get(id=id, user=request.user)
     except model_class.DoesNotExist:
@@ -97,6 +101,8 @@ def update_handle(model_class, serializer_class, request):
     if serializer.is_valid():
         serializer.save()
         return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+
+    print(serializer.errors)  # Debugging to check errors from serializer
     return ResponseHandler.error(
         serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
     )
