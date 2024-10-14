@@ -103,7 +103,7 @@ def serializer_handle_customize_response(Serializers, request):
 def update_handle(model_class, serializer_class, request):
     try:
         id = request.data.get("id")
-        instance = model_class.objects.get(id, user=request.user)
+        instance = model_class.objects.get(id=id, user=request.user)
     except model_class.DoesNotExist:
         return ResponseHandler.error(
             f"{model_class.__name__} {ERROR_NOT_FOUND}",
