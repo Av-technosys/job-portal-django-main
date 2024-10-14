@@ -42,7 +42,7 @@ class AcademicQualification(models.Model):
     institution_name = models.CharField(max_length=200)
     specialization = models.CharField(max_length=100)
     start_date = models.DateField()
-    end_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
