@@ -114,8 +114,6 @@ def update_handle(model_class, serializer_class, request):
     if serializer.is_valid():
         serializer.save()
         return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
-
-    print(serializer.errors)  # Debugging to check errors from serializer
     return ResponseHandler.error(
         serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
     )
