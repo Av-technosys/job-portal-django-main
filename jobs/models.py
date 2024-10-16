@@ -24,7 +24,7 @@ class JobContactInfo(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,  # Foreign key to the user table
     )
-    job = models.ForeignKey(
+    job = models.OneToOneField(
         JobInfo, on_delete=models.CASCADE, related_name="contact_info"
     )
     name = models.CharField(max_length=100)
@@ -43,13 +43,11 @@ class JobDescription(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,  # Foreign key to the user table
     )
-    job = models.ForeignKey(
-        JobInfo, on_delete=models.CASCADE, related_name="description"
+    job = models.OneToOneField(
+        JobInfo, on_delete=models.CASCADE, related_name="description"  
     )
 
     job_overview = models.TextField()
     qualifications_and_skills = models.TextField()
     roles_and_responsibilities = models.TextField()
 
-    def __str__(self):
-        return f"Description for {self.job}"
