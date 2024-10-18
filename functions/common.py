@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 from django.utils import timezone
 import os
+from handlers.common import post_filter_handler
+from django.db.models import Q  
 
 
 def generate_otp():
@@ -212,3 +214,59 @@ def file_rename(instance, filename):
     timestamp = timezone.now().timestamp()
     new_filename = f"{timestamp}.{ext}"
     return os.path.join(f"documents/{instance.file_type}/", new_filename)
+
+
+def filter_handler(model_class, serializer_class, request):
+    filters = post_filter_handler(request)
+
+    if not filters:
+        return ResponseHandler.error(
+            NO_FILTER_PROVIDED,
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        instances = model_class.objects.filter(**filters)
+
+        if not instances.exists():
+            return ResponseHandler.api_exception_error(
+                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = serializer_class(instances, many=True)
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+
+    except:
+        return ResponseHandler.error(
+            RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+
+
+def search_handler(model_class, serializer_class, request):
+    query = request.query_params.get('query', None)
+
+    if not query:
+        return ResponseHandler.error(NO_QUERY_PROVIDED, status_code=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        queryset = model_class.objects.filter(
+            Q(user__academicqualification__specialization__icontains=query) |  
+            Q(short_bio__icontains=query) |
+            Q(user__skillset__skill_name__icontains=query)
+        )
+        
+        if not queryset.exists():
+            return ResponseHandler.api_exception_error(
+                NO_QUERY_PROVIDED, 
+                status_code=status.HTTP_204_NO_CONTENT
+            )
+
+        serializer = serializer_class(queryset, many=True)
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+
+    except:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
