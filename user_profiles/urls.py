@@ -13,4 +13,6 @@ urlpatterns = [
     path("job_details/", job_details),
     path("company_id/", company_id),
     path("upload_document/", file_upload),
+    path("filter_data/", filter_data),
+    path("search_data/", search_data),
 ]

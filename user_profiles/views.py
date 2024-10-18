@@ -77,3 +77,13 @@ def company_id(request):
 @permission_classes([IsAuthenticated])
 def file_upload(request):
     return upload_handler(UploadedFile, UploadedFileSerializer, request)
+
+@api_view(["POST"])
+# @permission_classes([IsAuthenticated])
+def filter_data(request):
+    return filter_handler(StudentProfile, StudentProfileSerializer, request)
+
+@api_view(["GET"])
+# @permission_classes([IsAuthenticated])
+def search_data(request):
+    return search_handler(StudentProfile, StudentProfileSerializer, request)
