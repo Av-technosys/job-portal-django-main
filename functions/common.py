@@ -216,6 +216,16 @@ def file_rename(instance, filename):
     return os.path.join(f"documents/{instance.file_type}/", new_filename)
 
 
+
+def get_data_from_id_and_serialize(model, serializer_class, obj_id):
+    try:
+        obj = model.objects.get(id=obj_id)
+        serializer = serializer_class(obj)
+        return ResponseHandler.success(serializer.data)
+    except model.DoesNotExist:
+        return ResponseHandler.error(
+            {"error": f"{model.__name__} not found"}, status=status.HTTP_404_NOT_FOUND
+
 def filter_handler(model_class, serializer_class, request):
     filters = post_filter_handler(request)
 

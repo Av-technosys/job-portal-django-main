@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import JobInfo, JobContactInfo, JobDescription
+from constants.jobs import JOB_DETAILS_FIELDS
 
 
 # Serializer for JobDetails model (Section 1)
@@ -21,3 +22,12 @@ class JobDescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobDescription
         fields = "__all__"
+
+
+class CombinedJobDetailsSerializer(serializers.ModelSerializer):
+    contact_info = JobContactInfoSerializer(read_only=True)
+    description = JobDescriptionSerializer(read_only=True)
+
+    class Meta:
+        model = JobInfo
+        fields = JOB_DETAILS_FIELDS
