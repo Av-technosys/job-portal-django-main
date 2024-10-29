@@ -5,7 +5,7 @@ from rest_framework.exceptions import APIException
 from django.utils import timezone
 import os
 from handlers.common import post_filter_handler
-from django.db.models import Q  
+from django.db.models import Q
 
 
 def generate_otp():
@@ -216,7 +216,6 @@ def file_rename(instance, filename):
     return os.path.join(f"documents/{instance.file_type}/", new_filename)
 
 
-
 def get_data_from_id_and_serialize(model, serializer_class, obj_id):
     try:
         obj = model.objects.get(id=obj_id)
@@ -225,14 +224,15 @@ def get_data_from_id_and_serialize(model, serializer_class, obj_id):
     except model.DoesNotExist:
         return ResponseHandler.error(
             {"error": f"{model.__name__} not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
 
 def filter_handler(model_class, serializer_class, request):
     filters = post_filter_handler(request)
 
     if not filters:
         return ResponseHandler.error(
-            NO_FILTER_PROVIDED,
-            status_code=status.HTTP_400_BAD_REQUEST
+            NO_FILTER_PROVIDED, status_code=status.HTTP_400_BAD_REQUEST
         )
 
     try:
@@ -252,24 +252,24 @@ def filter_handler(model_class, serializer_class, request):
         )
 
 
-
 def search_handler(model_class, serializer_class, request):
-    query = request.query_params.get('query', None)
+    query = request.query_params.get("query", None)
 
     if not query:
-        return ResponseHandler.error(NO_QUERY_PROVIDED, status_code=status.HTTP_400_BAD_REQUEST)
+        return ResponseHandler.error(
+            NO_QUERY_PROVIDED, status_code=status.HTTP_400_BAD_REQUEST
+        )
 
     try:
         queryset = model_class.objects.filter(
-            Q(user__academicqualification__specialization__icontains=query) |  
-            Q(short_bio__icontains=query) |
-            Q(user__skillset__skill_name__icontains=query)
+            Q(user__academicqualification__specialization__icontains=query)
+            | Q(short_bio__icontains=query)
+            | Q(user__skillset__skill_name__icontains=query)
         )
-        
+
         if not queryset.exists():
             return ResponseHandler.api_exception_error(
-                NO_QUERY_PROVIDED, 
-                status_code=status.HTTP_204_NO_CONTENT
+                NO_QUERY_PROVIDED, status_code=status.HTTP_204_NO_CONTENT
             )
 
         serializer = serializer_class(queryset, many=True)
@@ -277,6 +277,5 @@ def search_handler(model_class, serializer_class, request):
 
     except:
         return ResponseHandler.error(
-            RESPONSE_ERROR,
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

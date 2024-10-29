@@ -3,7 +3,7 @@ from .views import (
     job_info_api_view,
     job_description_api_view,
     job_contact_info_api_view,
-    get_job_details
+    get_job_details,
 )
 
 urlpatterns = [
@@ -13,6 +13,6 @@ urlpatterns = [
     path("job_contact_info/", job_contact_info_api_view, name="job_contact_post"),
     # Section 3
     path("job_description/", job_description_api_view, name="job_description_post"),
-    #Get all details by job id
-    path("job_details/",get_job_details,name="get_job_details")
+    # Get all details by job id
+    path("job_details/", get_job_details, name="get_job_details"),
 ]

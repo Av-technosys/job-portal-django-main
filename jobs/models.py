@@ -44,10 +44,9 @@ class JobDescription(models.Model):
         on_delete=models.CASCADE,  # Foreign key to the user table
     )
     job = models.OneToOneField(
-        JobInfo, on_delete=models.CASCADE, related_name="description"  
+        JobInfo, on_delete=models.CASCADE, related_name="description"
     )
 
     job_overview = models.TextField()
     qualifications_and_skills = models.TextField()
     roles_and_responsibilities = models.TextField()
-
