@@ -12,5 +12,7 @@ RESPONSE_ERROR = "something went wrong"
 METHOD_ERROR = "method not allowed"
 ERROR_OTP_EXPIRED = "OTP Expired"
 ERROR_NEW_PASSWORD_NOT_FOUND = "New Password not provided"
-NO_FILTER_PROVIDED = "No filters provided. Please provide at least one filter to perform the search."
+NO_FILTER_PROVIDED = (
+    "No filters provided. Please provide at least one filter to perform the search."
+)
 NO_QUERY_PROVIDED = "No search query provided."
