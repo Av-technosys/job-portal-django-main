@@ -15,7 +15,6 @@ def generate_otp():
 
 from constants.errors import *
 from rest_framework.response import Response
-from rest_framework import status
 
 
 def get_flattened_error_message(message):
@@ -53,7 +52,9 @@ def get_login_request_payload(request: Request, key: str, default=None):
 
 
 def remove_unwanted_id_from_response(data):
-    if isinstance(data, list) and len(data) > 0:
+    if isinstance(data, list) and len(data) == 0:
+        pass
+    elif isinstance(data, list) and len(data) > 0:
         for d in data:
             if isinstance(d, object):
                 d.pop("user", "")
@@ -164,10 +165,9 @@ def upload_handler(model, serializer_class, request):
         return get_handle(model, serializer_class, request)
 
     elif request.method == "POST":
-        data = request.data.copy()
-        data["user"] = request.user
-
-        serializer = serializer_class(data=data)
+        if request.user.id:
+            request.data["user"] = request.user.id
+        serializer = serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -188,10 +188,10 @@ def upload_handler(model, serializer_class, request):
             if old_file:
                 old_file.delete(save=False)
             document.file = new_file
-        data = request.data.copy()
-        data["user"] = request.user
+        if request.user.id:
+            request.data["user"] = request.user.id
 
-        serializer = serializer_class(document, data=data, partial=True)
+        serializer = serializer_class(document, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -199,14 +199,15 @@ def upload_handler(model, serializer_class, request):
     elif request.method == "DELETE":
         instance_id = request.data.get("id")
         instance = model.objects.get(id=instance_id, user=request.user)
-
-    if instance.file:
-        instance.file.delete(save=False)
-        instance.delete()
-        return ResponseHandler.success(
-            message=REMOVE_SUCCESS, status_code=status.HTTP_204_NO_CONTENT
+        if instance.file:
+            instance.file.delete(save=False)
+            instance.delete()
+            return ResponseHandler.success(
+                data={"message": REMOVE_SUCCESS}, status_code=status.HTTP_204_NO_CONTENT
+            )
+        return ResponseHandler.error(
+            ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
         )
-    return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
 
 
 def file_rename(instance, filename):
@@ -279,3 +280,19 @@ def search_handler(model_class, serializer_class, request):
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+def request_handler(model, serializer, request):
+    match request.method:
+        case "GET":
+            return get_handle(model, serializer, request)
+        case "POST":
+            return serializer_handle(serializer, request)
+        case "PATCH":
+            return update_handle(model, serializer, request)
+        case "DELETE":
+            return delete_handle(model, request)
+        case _:
+            return ResponseHandler.error(
+                METHOD_ERROR, status_code=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
