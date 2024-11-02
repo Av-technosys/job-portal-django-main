@@ -7,12 +7,12 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "job_portal_django/wsgi.py"
-    },
-    {
       "src": "/static/(.*)",
       "dest": "/staticfiles/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "job_portal_django/wsgi.py"
     }
   ]
 }
