@@ -3,6 +3,12 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from constants.user_profiles import *
 from functions.common import file_rename
+from storages.backends.s3boto3 import S3Boto3Storage
+
+
+class S3FileStorage(S3Boto3Storage):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class StudentProfile(models.Model):
@@ -185,7 +191,7 @@ class UploadedFile(models.Model):
         on_delete=models.CASCADE,
     )
     file_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
-    file = models.FileField(upload_to=file_rename)
+    file = models.FileField(upload_to=file_rename, storage=S3FileStorage())
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
