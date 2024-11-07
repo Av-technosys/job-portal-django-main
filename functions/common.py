@@ -4,8 +4,8 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 from django.utils import timezone
 import os
-from handlers.common import post_filter_handler
 from django.db.models import Q
+from django.core.paginator import Paginator
 
 
 def generate_otp():
@@ -144,9 +144,17 @@ def get_handle_profile(model, serializer_class, request):
 
 
 def get_handle(model, serializer_class, request):
+    request.user = 29
     instances = model.objects.filter(user=request.user)
-    serializer = serializer_class(instances, many=True)
-    return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+    page_obj, count, total_pages = paginator(instances, request)
+    serializer = serializer_class(page_obj, many=True)
+    response_data = {
+        "total_count": count,
+        "total_pages": total_pages,
+        "current_page": page_obj.number,
+        "data": serializer.data,
+    }
+    return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
 
 
 def delete_handle(model, request):
@@ -229,7 +237,23 @@ def get_data_from_id_and_serialize(model, serializer_class, obj_id):
 
 
 def filter_handler(model_class, serializer_class, request):
-    filters = post_filter_handler(request)
+    filters = {}
+    if request.data.get("education"):
+        filters["user__academicqualification__specialization__icontains"] = (
+            request.data.get("education")
+        )
+
+    if request.data.get("location"):
+        filters["city__icontains"] = request.data.get("location")
+
+    if request.data.get("experience"):
+        filters["experience__gte"] = request.data.get("experience")
+
+    if request.data.get("skills"):
+        filters["user__skillset__skill_name__icontains"] = request.data.get("skills")
+
+    if request.data.get("salary_expectations"):
+        filters["expecting_salary__lte"] = request.data.get("salary_expectations")
 
     if not filters:
         return ResponseHandler.error(
@@ -244,8 +268,15 @@ def filter_handler(model_class, serializer_class, request):
                 ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = serializer_class(instances, many=True)
-        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+        page_obj, count, total_pages = paginator(instances, request)
+        serializer = serializer_class(page_obj, many=True)
+        response_data = {
+        "total_count": count,
+        "total_pages": total_pages,
+        "current_page": page_obj.number,
+        "data": serializer.data,
+        }
+        return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
 
     except:
         return ResponseHandler.error(
@@ -273,8 +304,15 @@ def search_handler(model_class, serializer_class, request):
                 NO_QUERY_PROVIDED, status_code=status.HTTP_204_NO_CONTENT
             )
 
-        serializer = serializer_class(queryset, many=True)
-        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+        page_obj, count, total_pages = paginator(queryset, request)
+        serializer = serializer_class(page_obj, many=True)
+        response_data = {
+        "total_count": count,
+        "total_pages": total_pages,
+        "current_page": page_obj.number,
+        "data": serializer.data,
+        }
+        return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
 
     except:
         return ResponseHandler.error(
@@ -282,17 +320,9 @@ def search_handler(model_class, serializer_class, request):
         )
 
 
-def request_handler(model, serializer, request):
-    match request.method:
-        case "GET":
-            return get_handle(model, serializer, request)
-        case "POST":
-            return serializer_handle(serializer, request)
-        case "PATCH":
-            return update_handle(model, serializer, request)
-        case "DELETE":
-            return delete_handle(model, request)
-        case _:
-            return ResponseHandler.error(
-                METHOD_ERROR, status_code=status.HTTP_405_METHOD_NOT_ALLOWED
-            )
+def paginator(queryset, request):
+    page_size = int(request.GET.get("page_size", 10))
+    paginator = Paginator(queryset, page_size)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    return page_obj, paginator.count, paginator.num_pages
