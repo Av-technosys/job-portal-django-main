@@ -183,6 +183,39 @@ class ResetPasswordSendOtpSerializer(serializers.Serializer):
         return {"message": SUCCESS_SENDING_OTP}
 
 
+# resend otp
+
+
+class ResendOtpSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            user = User.objects.get(email=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"message": ERROR_USER_NOT_FOUND})
+        return value
+
+    def save(self):
+        email = self.validated_data["email"]
+        user = User.objects.get(email=email)
+
+        # Generate OTP and set OTP expiration time (10 minutes from now)
+        # phone_otp = generate_otp()
+        email_otp = generate_otp()
+        otp_expiration = timezone.now() + timedelta(minutes=10)
+
+        user.email_otp = email_otp
+        user.otp_expiration = otp_expiration
+        user.save()
+
+        # Send OTP via email or phone
+        send_email_otp(email, email_otp)
+        # send_phone_otp(user.phone_number, user.phone_otp)
+
+        return {"message": SUCCESS_SENDING_OTP}
+
+
 class VerifyOtpAndChangePasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
     email_otp = serializers.CharField(max_length=6)
