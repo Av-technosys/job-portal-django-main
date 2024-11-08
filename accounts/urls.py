@@ -21,9 +21,9 @@ urlpatterns = [
         name="send_otp_password_reset",
     ),
     path(
-        "resend_otp_password_reset/",
+        "resend_otp/",
         resend_otp,
-        name="resend_otp_password_reset",
+        name="resend_otp",
     ),
     path(
         "verify_otp_password_reset/",
