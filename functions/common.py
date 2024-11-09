@@ -235,39 +235,76 @@ def get_data_from_id_and_serialize(model, serializer_class, obj_id):
             {"error": f"{model.__name__} not found"}, status=status.HTTP_404_NOT_FOUND
         )
 
+def filters(request_data):
+    q_filters = Q()
+    filter_kwargs = {}
 
-def filter_handler(model_class, serializer_class, request):
-    filters = {}
-    if request.data.get("education"):
-        filters["user__academicqualification__specialization__icontains"] = (
-            request.data.get("education")
+    if filter_result := request_data.get("search"):
+        q_filters |= (
+            Q(user__academicqualification__specialization__icontains=filter_result) |
+            Q(short_bio__icontains=filter_result) |
+            Q(user__skillset__skill_name__icontains=filter_result)
         )
+    
+    # if education_terms := request_data.get("education", []):
+    #     if isinstance(education_terms, list):
+    #         filter_kwargs["user__academicqualification__specialization__in"] = education_terms
+    
+    # if location_terms := request_data.get("location", []):
+    #     if isinstance(location_terms, list):
+    #         filter_kwargs["city__in"] = location_terms
+    
+    # if experience := request_data.get("experience"):
+    #     if isinstance(experience, list):
+    #         filter_kwargs["experience__in"] = experience
+    
+    # if skill_terms := request_data.get("skills", []):
+    #     if isinstance(skill_terms, list):
+    #         filter_kwargs["user__skillset__skill_name__in"] = skill_terms
+    
+    # if salary_expectations := request_data.get("salary_expectations", []):
+    #     if isinstance(salary_expectations, list):
+    #         filter_kwargs["expecting_salary__in"] = salary_expectations
+    
+    filter_mappings = {
+        "education": "user__academicqualification__specialization__in",
+        "location": "city__in",
+        "experience": "experience__in",
+        "skills": "user__skillset__skill_name__in",
+        "salary_expectations": "expecting_salary__in"
+    }
+    
+    for key, filter_key in filter_mappings.items():
+        if terms := request_data.get(key):
+            if isinstance(terms, list):
+                filter_kwargs[filter_key] = terms
+    
+    return q_filters, filter_kwargs
 
-    if request.data.get("location"):
-        filters["city__icontains"] = request.data.get("location")
 
-    if request.data.get("experience"):
-        filters["experience__gte"] = request.data.get("experience")
-
-    if request.data.get("skills"):
-        filters["user__skillset__skill_name__icontains"] = request.data.get("skills")
-
-    if request.data.get("salary_expectations"):
-        filters["expecting_salary__lte"] = request.data.get("salary_expectations")
-
-    if not filters:
-        return ResponseHandler.error(
-            NO_FILTER_PROVIDED, status_code=status.HTTP_400_BAD_REQUEST
-        )
+def student_seeker_handler(model_class, serializer_class, request):
+    q_filters, filter_kwargs = filters(request.data)
+    
+    # if not q_filters and not filter_kwargs:
+    #     return ResponseHandler.error(
+    #         NO_FILTER_PROVIDED, 
+    #         status_code=status.HTTP_400_BAD_REQUEST
+    #     )
 
     try:
-        instances = model_class.objects.filter(**filters)
+        if not q_filters and not filter_kwargs:
+            instances = model_class.objects.all()
+            print("sfsdv",instances)
 
+        else:
+            instances = model_class.objects.filter(q_filters, **filter_kwargs)
+        
         if not instances.exists():
-            return ResponseHandler.api_exception_error(
-                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
-            )
-
+            raise ResponseHandler.api_exception_error()
+        
+        sort_fields = request.data.get("sort", ["created_date"])  
+        instances = instances.order_by(*sort_fields)
+        
         page_obj, count, total_pages = paginator(instances, request)
         serializer = serializer_class(page_obj, many=True)
         response_data = {
@@ -278,51 +315,24 @@ def filter_handler(model_class, serializer_class, request):
         }
         return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
 
-    except:
+    except Exception as e:
+        print(f"Error processing request: {e}") 
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
 
-
-def search_handler(model_class, serializer_class, request):
-    query = request.query_params.get("query", None)
-
-    if not query:
-        return ResponseHandler.error(
-            NO_QUERY_PROVIDED, status_code=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        queryset = model_class.objects.filter(
-            Q(user__academicqualification__specialization__icontains=query)
-            | Q(short_bio__icontains=query)
-            | Q(user__skillset__skill_name__icontains=query)
-        )
-
-        if not queryset.exists():
-            return ResponseHandler.api_exception_error(
-                NO_QUERY_PROVIDED, status_code=status.HTTP_204_NO_CONTENT
-            )
-
-        page_obj, count, total_pages = paginator(queryset, request)
-        serializer = serializer_class(page_obj, many=True)
-        response_data = {
-        "total_count": count,
-        "total_pages": total_pages,
-        "current_page": page_obj.number,
-        "data": serializer.data,
-        }
-        return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
-
-    except:
-        return ResponseHandler.error(
-            RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
 def paginator(queryset, request):
+    if not queryset.ordered:
+        queryset = queryset.order_by('id') 
     page_size = int(request.GET.get("page_size", 10))
     paginator = Paginator(queryset, page_size)
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
     return page_obj, paginator.count, paginator.num_pages
+
+
+# marge search and filter - done
+# sort = array of - done 
+# url filter_studentseekers - done 
+# if {} return all -
+
