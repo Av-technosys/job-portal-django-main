@@ -246,26 +246,6 @@ def filters(request_data):
             Q(user__skillset__skill_name__icontains=filter_result)
         )
     
-    # if education_terms := request_data.get("education", []):
-    #     if isinstance(education_terms, list):
-    #         filter_kwargs["user__academicqualification__specialization__in"] = education_terms
-    
-    # if location_terms := request_data.get("location", []):
-    #     if isinstance(location_terms, list):
-    #         filter_kwargs["city__in"] = location_terms
-    
-    # if experience := request_data.get("experience"):
-    #     if isinstance(experience, list):
-    #         filter_kwargs["experience__in"] = experience
-    
-    # if skill_terms := request_data.get("skills", []):
-    #     if isinstance(skill_terms, list):
-    #         filter_kwargs["user__skillset__skill_name__in"] = skill_terms
-    
-    # if salary_expectations := request_data.get("salary_expectations", []):
-    #     if isinstance(salary_expectations, list):
-    #         filter_kwargs["expecting_salary__in"] = salary_expectations
-    
     filter_mappings = {
         "education": "user__academicqualification__specialization__in",
         "location": "city__in",
@@ -284,17 +264,10 @@ def filters(request_data):
 
 def student_seeker_handler(model_class, serializer_class, request):
     q_filters, filter_kwargs = filters(request.data)
-    
-    # if not q_filters and not filter_kwargs:
-    #     return ResponseHandler.error(
-    #         NO_FILTER_PROVIDED, 
-    #         status_code=status.HTTP_400_BAD_REQUEST
-    #     )
 
     try:
         if not q_filters and not filter_kwargs:
             instances = model_class.objects.all()
-            print("sfsdv",instances)
 
         else:
             instances = model_class.objects.filter(q_filters, **filter_kwargs)
@@ -330,9 +303,4 @@ def paginator(queryset, request):
     page_obj = paginator.get_page(page_number)
     return page_obj, paginator.count, paginator.num_pages
 
-
-# marge search and filter - done
-# sort = array of - done 
-# url filter_studentseekers - done 
-# if {} return all -
 
