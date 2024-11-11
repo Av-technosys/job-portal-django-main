@@ -158,7 +158,7 @@ def handle_pagination_get(model, serializer_class, request):
         "current_page": page_obj.number,
         "data": serializer.data,
     }
-    return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK))
+    return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
 
 
 def delete_handle(model, request):
