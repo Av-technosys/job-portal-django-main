@@ -14,4 +14,5 @@ urlpatterns = [
     path("company_id/", company_id),
     path("upload_document/", file_upload),
     path("filter_studentseeker/", filter_data),
+    path("get_pagination/", get_pagination),
 ]

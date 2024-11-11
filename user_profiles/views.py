@@ -84,3 +84,7 @@ def file_upload(request):
 def filter_data(request):
     return job_seeker_handler(StudentProfile, StudentProfileSerializer, request)
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def get_pagination(request):
+    return handle_pagination_get(StudentProfile, StudentProfileSerializer, request)
