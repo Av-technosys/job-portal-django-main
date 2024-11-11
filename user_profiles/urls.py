@@ -13,6 +13,5 @@ urlpatterns = [
     path("job_details/", job_details),
     path("company_id/", company_id),
     path("upload_document/", file_upload),
-    path("filter_studentseeker/", filter_data),
-    path("get_pagination/", get_pagination),
+    path("filter_job_seeker/", job_seeker),
 ]

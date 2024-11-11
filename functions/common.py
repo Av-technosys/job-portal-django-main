@@ -146,19 +146,8 @@ def get_handle_profile(model, serializer_class, request):
 def get_handle(model, serializer_class, request):
     instances = model.objects.filter(user=request.user)
     serializer = serializer_class(instances, many=True)
-    return ResponseHandler.success(data= serializer.data, status_code=status.HTTP_200_OK)
+    return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
 
-def handle_pagination_get(model, serializer_class, request):
-    instances = model.objects.filter(user=request.user)
-    page_obj, count, total_pages = paginator(instances, request)
-    serializer = serializer_class(page_obj, many=True)
-    response_data = {
-        "total_count": count,
-        "total_pages": total_pages,
-        "current_page": page_obj.number,
-        "data": serializer.data,
-    }
-    return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
 
 
 def delete_handle(model, request):
@@ -300,7 +289,7 @@ def job_seeker_handler(model_class, serializer_class, request):
 
 def paginator(queryset, request):
     if not queryset.ordered:
-        queryset = queryset.order_by('id') 
+        queryset = queryset.order_by("created_date") 
     page_size = int(request.GET.get("page_size", 10))
     paginator = Paginator(queryset, page_size)
     page_number = request.GET.get("page", 1)
