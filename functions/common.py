@@ -4,8 +4,8 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 from django.utils import timezone
 import os
-from handlers.common import post_filter_handler
 from django.db.models import Q
+from django.core.paginator import Paginator
 
 
 def generate_otp():
@@ -149,6 +149,7 @@ def get_handle(model, serializer_class, request):
     return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
 
 
+
 def delete_handle(model, request):
     instance_id = request.data.get("id")
     instances = model.objects.filter(id=instance_id, user=request.user)
@@ -227,72 +228,72 @@ def get_data_from_id_and_serialize(model, serializer_class, obj_id):
             {"error": f"{model.__name__} not found"}, status=status.HTTP_404_NOT_FOUND
         )
 
+def filters(request_data):
+    q_filters = Q()
+    filter_kwargs = {}
 
-def filter_handler(model_class, serializer_class, request):
-    filters = post_filter_handler(request)
-
-    if not filters:
-        return ResponseHandler.error(
-            NO_FILTER_PROVIDED, status_code=status.HTTP_400_BAD_REQUEST
+    if filter_result := request_data.get("search"):
+        q_filters |= (
+            Q(user__academicqualification__specialization__icontains=filter_result) |
+            Q(short_bio__icontains=filter_result) |
+            Q(user__skillset__skill_name__icontains=filter_result)
         )
+    
+    filter_mappings = {
+        "education": "user__academicqualification__specialization__in",
+        "location": "city__in",
+        "experience": "experience__in",
+        "skills": "user__skillset__skill_name__in",
+        "salary_expectations": "expecting_salary__in"
+    }
+    
+    for key, filter_key in filter_mappings.items():
+        if terms := request_data.get(key):
+            if isinstance(terms, list):
+                filter_kwargs[filter_key] = terms
+    
+    return q_filters, filter_kwargs
+
+
+def job_seeker_handler(model_class, serializer_class, request):
+    q_filters, filter_kwargs = filters(request.data)
 
     try:
-        instances = model_class.objects.filter(**filters)
+        if not q_filters and not filter_kwargs:
+            instances = model_class.objects.all()
 
+        else:
+            instances = model_class.objects.filter(q_filters, **filter_kwargs)
+        
         if not instances.exists():
-            return ResponseHandler.api_exception_error(
-                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
-            )
+            raise ResponseHandler.api_exception_error()
+        
+        sort_fields = request.data.get("sort", ["created_date"])  
+        instances = instances.order_by(*sort_fields)
+        
+        page_obj, count, total_pages = paginator(instances, request)
+        serializer = serializer_class(page_obj, many=True)
+        response_data = {
+        "total_count": count,
+        "total_pages": total_pages,
+        "current_page": page_obj.number,
+        "data": serializer.data,
+        }
+        return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
 
-        serializer = serializer_class(instances, many=True)
-        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
-
-    except:
+    except Exception as e:
+        print(f"Error processing request: {e}") 
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
 
-
-def search_handler(model_class, serializer_class, request):
-    query = request.query_params.get("query", None)
-
-    if not query:
-        return ResponseHandler.error(
-            NO_QUERY_PROVIDED, status_code=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        queryset = model_class.objects.filter(
-            Q(user__academicqualification__specialization__icontains=query)
-            | Q(short_bio__icontains=query)
-            | Q(user__skillset__skill_name__icontains=query)
-        )
-
-        if not queryset.exists():
-            return ResponseHandler.api_exception_error(
-                NO_QUERY_PROVIDED, status_code=status.HTTP_204_NO_CONTENT
-            )
-
-        serializer = serializer_class(queryset, many=True)
-        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
-
-    except:
-        return ResponseHandler.error(
-            RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+def paginator(queryset, request):
+    if not queryset.ordered:
+        queryset = queryset.order_by("created_date") 
+    page_size = int(request.GET.get("page_size", 10))
+    paginator = Paginator(queryset, page_size)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+    return page_obj, paginator.count, paginator.num_pages
 
 
-def request_handler(model, serializer, request):
-    match request.method:
-        case "GET":
-            return get_handle(model, serializer, request)
-        case "POST":
-            return serializer_handle(serializer, request)
-        case "PATCH":
-            return update_handle(model, serializer, request)
-        case "DELETE":
-            return delete_handle(model, request)
-        case _:
-            return ResponseHandler.error(
-                METHOD_ERROR, status_code=status.HTTP_405_METHOD_NOT_ALLOWED
-            )

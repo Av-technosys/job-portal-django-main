@@ -8,7 +8,8 @@ from .serializers import (
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .models import JobInfo, JobContactInfo, JobDescription
-from functions.common import get_data_from_id_and_serialize, request_handler
+from functions.common import get_data_from_id_and_serialize
+from handlers.common import  request_handler
 
 
 # Section 1 (JobDetails)
