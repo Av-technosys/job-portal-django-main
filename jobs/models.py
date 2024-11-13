@@ -14,6 +14,8 @@ class JobInfo(models.Model):
     location = models.CharField(max_length=100)
     job_type = models.CharField(max_length=100)
     status = models.CharField(max_length=100)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.designation} at {self.department}"
@@ -33,6 +35,8 @@ class JobContactInfo(models.Model):
     email = models.EmailField()
     job_description = models.TextField()
     skills_required = models.TextField()
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Contact for {self.job}: {self.name}"
@@ -51,6 +55,8 @@ class JobDescription(models.Model):
     job_overview = models.TextField()
     qualifications_and_skills = models.TextField()
     roles_and_responsibilities = models.TextField()
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
     
 class JobApply(models.Model):
     user = models.ForeignKey(
