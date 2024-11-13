@@ -281,8 +281,7 @@ def job_seeker_handler(model_class, serializer_class, request):
         }
         return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
 
-    except Exception as e:
-        print(f"Error processing request: {e}") 
+    except:
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -296,4 +295,12 @@ def paginator(queryset, request):
     page_obj = paginator.get_page(page_number)
     return page_obj, paginator.count, paginator.num_pages
 
-
+def job_apply_handler(serializer_class, request):
+    try:
+        if request.user.user_type == 2:
+            return ResponseHandler.error(message=ERROR_INVALID_CREDENTIALS, status_code=status.HTTP_400_BAD_REQUEST)
+        return serializer_handle(serializer_class, request)
+    except:
+        return ResponseHandler.error(
+            RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
+        )

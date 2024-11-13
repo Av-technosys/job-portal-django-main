@@ -4,6 +4,7 @@ from .views import (
     job_description_api_view,
     job_contact_info_api_view,
     get_job_details,
+    apply_job
 )
 
 urlpatterns = [
@@ -15,4 +16,7 @@ urlpatterns = [
     path("job_description/", job_description_api_view, name="job_description_post"),
     # Get all details by job id
     path("job_details/", get_job_details, name="get_job_details"),
+    # Apply for job by student
+    path("apply_job/", apply_job, name="apply_job"),
+    
 ]

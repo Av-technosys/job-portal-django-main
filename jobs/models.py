@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from constants.jobs import JOB_STATUS_FIELDS
 
 
 # Model for basic job details (Section 1)
@@ -50,3 +51,18 @@ class JobDescription(models.Model):
     job_overview = models.TextField()
     qualifications_and_skills = models.TextField()
     roles_and_responsibilities = models.TextField()
+    
+class JobApply(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    job = models.ForeignKey(
+        JobInfo, on_delete=models.CASCADE, related_name="applications"
+    )
+    status = models.PositiveSmallIntegerField(choices=JOB_STATUS_FIELDS)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Application for {self.job.designation} by {self.user}"

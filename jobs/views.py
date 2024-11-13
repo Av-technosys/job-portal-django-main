@@ -4,12 +4,13 @@ from .serializers import (
     JobContactInfoSerializer,
     JobDescriptionSerializer,
     CombinedJobDetailsSerializer,
+    JobApplySerializer
 )
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from .models import JobInfo, JobContactInfo, JobDescription
+from .models import JobInfo, JobContactInfo, JobDescription, JobApply
 from functions.common import get_data_from_id_and_serialize
-from handlers.common import  request_handler
+from handlers.common import  request_handler, job_apply_handler
 
 
 # Section 1 (JobDetails)
@@ -38,3 +39,8 @@ def job_description_api_view(request):
 def get_job_details(request):
     job_id = request.data.get("job_id")
     return get_data_from_id_and_serialize(JobInfo, CombinedJobDetailsSerializer, job_id)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def apply_job(request):
+    return job_apply_handler(JobApplySerializer, request)
