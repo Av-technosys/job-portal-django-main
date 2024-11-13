@@ -8,9 +8,9 @@ from .serializers import (
 )
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from .models import JobInfo, JobContactInfo, JobDescription, JobApply
+from .models import JobInfo, JobContactInfo, JobDescription
 from functions.common import get_data_from_id_and_serialize
-from handlers.common import  request_handler, job_apply_handler
+from handlers.common import  request_handler, filter_search_handler
 
 
 # Section 1 (JobDetails)
@@ -43,4 +43,9 @@ def get_job_details(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def apply_job(request):
-    return job_apply_handler(JobApplySerializer, request)
+    return filter_search_handler(JobApplySerializer, request)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def list_jobs(request):
+    return filter_search_handler(JobInfo, JobInfoSerializer, request)

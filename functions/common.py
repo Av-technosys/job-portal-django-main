@@ -228,35 +228,48 @@ def get_data_from_id_and_serialize(model, serializer_class, obj_id):
             {"error": f"{model.__name__} not found"}, status=status.HTTP_404_NOT_FOUND
         )
 
-def filters(request_data):
+def filters(request):
     q_filters = Q()
     filter_kwargs = {}
-
-    if filter_result := request_data.get("search"):
-        q_filters |= (
+        
+    if filter_result := request.data.get("search"):
+        if "filter_job_seeker" in request.path:
+            q_filters = (
             Q(user__academicqualification__specialization__icontains=filter_result) |
             Q(short_bio__icontains=filter_result) |
-            Q(user__skillset__skill_name__icontains=filter_result)
+            Q(user__skillset__skill_name__icontains=filter_result) |
+            Q(designation__icontains=filter_result)
         )
-    
+        elif "list_jobs" in request.path:
+            q_filters = (
+            Q(designation__icontains=filter_result) |
+            Q(contact_info__skills_required__icontains=filter_result) |
+            Q(description__qualifications_and_skills__icontains=filter_result) 
+        )
+
+
     filter_mappings = {
         "education": "user__academicqualification__specialization__in",
         "location": "city__in",
         "experience": "experience__in",
         "skills": "user__skillset__skill_name__in",
-        "salary_expectations": "expecting_salary__in"
+        "salary_expectations": "expecting_salary__in",
+        "job_location" : "location__in",
+        "job_type" : "job_type__in",
+        "skills" : "contact_info__skills_required__in",
+          
     }
     
     for key, filter_key in filter_mappings.items():
-        if terms := request_data.get(key):
+        if terms := request.data.get(key):
             if isinstance(terms, list):
                 filter_kwargs[filter_key] = terms
     
     return q_filters, filter_kwargs
 
 
-def job_seeker_handler(model_class, serializer_class, request):
-    q_filters, filter_kwargs = filters(request.data)
+def filter_search_handler(model_class, serializer_class, request):
+    q_filters, filter_kwargs = filters(request)
 
     try:
         if not q_filters and not filter_kwargs:
@@ -279,7 +292,7 @@ def job_seeker_handler(model_class, serializer_class, request):
         "current_page": page_obj.number,
         "data": serializer.data,
         }
-        return ResponseHandler.success(data= response_data, status_code=status.HTTP_200_OK)
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
     except:
         return ResponseHandler.error(
