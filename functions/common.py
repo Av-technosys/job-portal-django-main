@@ -317,3 +317,27 @@ def job_apply_handler(serializer_class, request):
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
+        
+def job_application_handler(modal_class, serializer_class,StudentProfile, StudentProfileSerializer, request):
+    if request.user.user_type == 1:
+        return ResponseHandler.error(message=ERROR_INVALID_CREDENTIALS, status_code=status.HTTP_400_BAD_REQUEST)
+    job_id = request.data.get("job_id")
+    if not job_id:
+        return ResponseHandler.error(ERROR_JOB_ID_REQUIRED, status_code=status.HTTP_400_BAD_REQUEST)
+    try:
+        instances = modal_class.objects.filter(job_id=job_id)
+        if not instances.exists():
+            return ResponseHandler.error(ERROR_NO_APPLICATIONS_FOUND, status_code=status.HTTP_404_NOT_FOUND)
+        applications = serializer_class(instances, many=True)
+        student_profiles_data = []
+        for application in applications.data:
+            student_id = application.get("student")
+            student_profiles = StudentProfile.objects.filter(id=student_id)
+            profile_serializer = StudentProfileSerializer(student_profiles, many=True)
+            student_profiles_data.extend(profile_serializer.data)
+        
+        return ResponseHandler.success(student_profiles_data, status_code=status.HTTP_200_OK)
+        
+    except:
+        return ResponseHandler.error(RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST) 
+    

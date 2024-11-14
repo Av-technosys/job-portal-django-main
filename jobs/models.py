@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from constants.jobs import JOB_STATUS_FIELDS
+from user_profiles.models import StudentProfile
 
 
 # Model for basic job details (Section 1)
@@ -59,9 +60,8 @@ class JobDescription(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
     
 class JobApply(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+    student = models.ForeignKey(
+        StudentProfile, on_delete=models.CASCADE, related_name="students"
     )
     job = models.ForeignKey(
         JobInfo, on_delete=models.CASCADE, related_name="applications"
