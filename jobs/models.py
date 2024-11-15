@@ -58,7 +58,8 @@ class JobDescription(models.Model):
     roles_and_responsibilities = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
-    
+
+
 class JobApply(models.Model):
     student = models.ForeignKey(
         StudentProfile, on_delete=models.CASCADE, related_name="students"
@@ -69,6 +70,6 @@ class JobApply(models.Model):
     status = models.PositiveSmallIntegerField(choices=JOB_STATUS_FIELDS)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return f"Application for {self.job.designation} by {self.student.id}"

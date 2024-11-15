@@ -31,9 +31,11 @@ class CombinedJobDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobInfo
         fields = JOB_DETAILS_FIELDS
-        
+
+
 class JobApplySerializer(serializers.ModelSerializer):
-    user_id = serializers.PrimaryKeyRelatedField(source='user', read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(source="user", read_only=True)
+
     class Meta:
         model = JobApply
         fields = "__all__"
