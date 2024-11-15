@@ -7,7 +7,7 @@ from .views import (
     apply_job,
     list_jobs,
     submitted_jobs_application,
-    list_submetted_jobs,
+    list_submitted_jobs,
 )
 
 urlpatterns = [
@@ -29,5 +29,6 @@ urlpatterns = [
         submitted_jobs_application,
         name="submitted_jobs_application",
     ),
-    path("list_submetted_jobs/", list_submetted_jobs, name="list_submetted_jobs"),
+    # get all submitted jobs by student ----- pyload = { _id : }
+    path("list_submitted_jobs/", list_submitted_jobs, name="list_submitted_jobs"),
 ]

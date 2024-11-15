@@ -70,7 +70,7 @@ def submitted_jobs_application(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def list_submetted_jobs(request):
+def list_submitted_jobs(request):
     return application_handler(
         JobApply, JobApplySerializer, JobInfo, JobInfoSerializer, request
     )
