@@ -16,3 +16,5 @@ NO_FILTER_PROVIDED = (
     "No filters provided. Please provide at least one filter to perform the search."
 )
 NO_QUERY_PROVIDED = "No search query provided."
+ERROR_JOB_ID_REQUIRED = "Job ID is required"
+ERROR_NO_APPLICATIONS_FOUND = "No applications found for this job"
