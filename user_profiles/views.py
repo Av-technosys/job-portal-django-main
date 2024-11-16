@@ -1,8 +1,9 @@
 from rest_framework.decorators import api_view, permission_classes
 from functions.common import *
 from .serializers import *
-from handlers.common import *
+from handlers.common import request_handler
 from rest_framework.permissions import IsAuthenticated
+from handlers.permissions import IsRecruiter, IsJobSeeker
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
@@ -84,3 +85,9 @@ def file_upload(request):
 def job_seeker(request):
     return filter_search_handler(StudentProfile, StudentProfileSerializer, request)
 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def get_all_students_detail(request):
+    student_id = request.data.get("student_id")
+    return get_data_from_id_and_serialize(StudentProfile, CombinedUserProfileSerializer, student_id)
