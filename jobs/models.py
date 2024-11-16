@@ -67,7 +67,7 @@ class JobApply(models.Model):
     job = models.ForeignKey(
         JobInfo, on_delete=models.CASCADE, related_name="applications"
     )
-    status = models.PositiveSmallIntegerField(choices=JOB_STATUS_FIELDS)
+    status = models.PositiveSmallIntegerField(choices=JOB_STATUS_FIELDS, default=0)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 

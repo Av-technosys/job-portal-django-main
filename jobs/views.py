@@ -51,7 +51,7 @@ def get_job_details(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def apply_job(request):
-    return job_apply_handler(JobApplySerializer, request)
+    return job_apply_handler(JobApplySerializer, StudentProfile, request)
 
 
 @api_view(["POST"])
@@ -72,5 +72,5 @@ def submitted_jobs_application(request):
 @permission_classes([IsAuthenticated])
 def list_submitted_jobs(request):
     return application_handler(
-        JobApply, JobApplySerializer, JobInfo, JobInfoSerializer, request
+        JobApply, JobApplySerializer, JobInfo, JobInfoSerializer, StudentProfile, request
     )
