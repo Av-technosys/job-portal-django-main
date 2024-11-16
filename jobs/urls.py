@@ -26,7 +26,7 @@ urlpatterns = [
     ),
 
     # Combined View for JobDetails
-    path("job_details_combined/", getJobDetails, name="get_job_details"),
+    path("job_details_combined/", get_job_details, name="get_job_details"),
     # Apply for job by student
     path("apply_job/", apply_job, name="apply_job"),
     # API for job list

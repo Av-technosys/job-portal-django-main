@@ -53,7 +53,7 @@ def skills_certifications_responsibilities_api_view(request):
 # Combined View for JobDetails
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def getJobDetails(request):
+def get_job_details(request):
     job_id = request.data.get("job_id")
     return get_data_from_id_and_serialize(
         JobInfo, CombinedJobDetailsSerializer, job_id
