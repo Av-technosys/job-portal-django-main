@@ -5,29 +5,58 @@ from constants.jobs import JOB_DETAILS_FIELDS
 
 
 # Serializer for JobDetails model (Section 1)
-class JobInfoSerializer(serializers.ModelSerializer):
+# Serializer for JobDetails model (Section 1)
+class JobDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobInfo
         fields = "__all__"
 
 
-# Serializer for JobContactInfo model (Section 2)
-class JobContactInfoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JobContactInfo
-        fields = "__all__"
-
-
-# Serializer for JobDescription model (Section 3)
+# Serializer for JobDescription model (Section 2)
 class JobDescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobDescription
         fields = "__all__"
 
 
+# Serializer for ContactAndSkills model (Section 2)
+class ContactAndSkillsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactAndSkills
+        fields = "__all__"
+
+
+# Serializer for JobOverviewAndQualifications model (Section 3)
+class JobOverviewAndQualificationsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobOverviewAndQualifications
+        fields = "__all__"
+
+
+# Serializer for SkillsCertificationsResponsibilities model (Section 3)
+class SkillsCertificationsResponsibilitiesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SkillsCertificationsResponsibilities
+        fields = "__all__"
+
+
+# Combined Serializer for JobDetails (Nested)
 class CombinedJobDetailsSerializer(serializers.ModelSerializer):
-    contact_info = JobContactInfoSerializer(read_only=True)
-    description = JobDescriptionSerializer(read_only=True)
+    # Nested serializers for related models
+    job_description = JobDescriptionSerializer(
+        many=True, read_only=True, source="job_description"
+    )
+    contact_and_skills = ContactAndSkillsSerializer(
+        many=True, read_only=True, source="contact_and_skills"
+    )
+    job_overview_and_qualifications = JobOverviewAndQualificationsSerializer(
+        many=True, read_only=True, source="job_overview_and_qualifications"
+    )
+    skills_certifications_responsibilities = (
+        SkillsCertificationsResponsibilitiesSerializer(
+            many=True, read_only=True, source="skills_certifications_responsibilities"
+        )
+    )
 
     class Meta:
         model = JobInfo
@@ -40,15 +69,13 @@ class JobApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = JobApply
         fields = "__all__"
-    
+
     def validate(self, data):
         # Check if a JobApply entry already exists for the given student and job
         student = data.get("student")
         job = data.get("job")
-        
+
         if JobApply.objects.filter(student=student, job=job).exists():
-            raise serializers.ValidationError(
-                {"message" : ALREADY_APPLIED}
-            )
-        
+            raise serializers.ValidationError({"message": ALREADY_APPLIED})
+
         return data

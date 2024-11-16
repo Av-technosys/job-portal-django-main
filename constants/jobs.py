@@ -1,14 +1,21 @@
 JOB_DETAILS_FIELDS = [
     "id",
-    "user",
     "designation",
     "department",
     "location",
     "job_type",
-    "status",
-    "contact_info",
-    "description",
+    "job_description",
+    "contact_and_skills",
+    "job_overview_and_qualifications",
+    "skills_certifications_responsibilities",
 ]
+
+JOB_TYPE_CHOICES = [
+    ("Full Time", "Full Time"),
+    ("Part Time", "Part Time"),
+    ("Contract", "Contract"),
+]
+
 
 JOB_STATUS_FIELDS = [
     (0, "Received"),
@@ -19,5 +26,5 @@ JOB_STATUS_FIELDS = [
     (5, "Rejected"),
     (6, "Salary Negotiation"),
     (7, "Offered"),
-    (8, "Joined")
+    (8, "Joined"),
 ]
