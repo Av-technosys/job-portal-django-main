@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    JobDetails,
+    JobInfo,
     JobDescription,
     ContactAndSkills,
     JobOverviewAndQualifications,
@@ -8,7 +8,7 @@ from .models import (
 )
 
 # Registering models in the admin panel
-admin.site.register(JobDetails)
+admin.site.register(JobInfo)
 admin.site.register(JobDescription)
 admin.site.register(ContactAndSkills)
 admin.site.register(JobOverviewAndQualifications)

@@ -7,7 +7,7 @@ from constants.jobs import JOB_DETAILS_FIELDS
 # Serializer for JobDetails model (Section 1)
 class JobDetailsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = JobDetails
+        model = JobInfo
         fields = "__all__"
 
 
@@ -52,7 +52,7 @@ class CombinedJobDetailsSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = JobDetails
+        model = JobInfo
         fields = JOB_DETAILS_FIELDS
 
         

@@ -8,7 +8,7 @@ from django.db import models
 
 
 # Section 1: Job Details (Page 1)
-class JobDetails(models.Model):
+class JobInfo(models.Model):
     designation = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     location = models.CharField(max_length=100)
@@ -21,6 +21,10 @@ class JobDetails(models.Model):
         ],
     )
     description = models.TextField()
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
 
     def __str__(self):
         return f"{self.designation} - {self.department}"
@@ -29,12 +33,16 @@ class JobDetails(models.Model):
 # Section 2: Job Description (Page 2)
 class JobDescription(models.Model):
     job = models.ForeignKey(
-        JobDetails, on_delete=models.CASCADE, related_name="job_description"
+        JobInfo, on_delete=models.CASCADE, related_name="job_description"
     )
     job_title = models.CharField(max_length=100)
     company_name = models.CharField(max_length=100
                                     )
     location = models.CharField(max_length=100)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
 
     def __str__(self):
 
@@ -44,7 +52,7 @@ class JobDescription(models.Model):
 # Section 2: Contact and Skills (Page 2)
 class ContactAndSkills(models.Model):
     job = models.ForeignKey(
-        JobDetails, on_delete=models.CASCADE, related_name="contact_and_skills"
+        JobInfo, on_delete=models.CASCADE, related_name="contact_and_skills"
     )
 
     # Contact Information
@@ -59,6 +67,11 @@ class ContactAndSkills(models.Model):
     # Skills
     skills_required = models.TextField()
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
     def __str__(self):
         return self.full_name
 
@@ -66,7 +79,7 @@ class ContactAndSkills(models.Model):
 # Section 3: Job Overview, Academic Qualification, and Work Experience (Page 3)
 class JobOverviewAndQualifications(models.Model):
     job = models.ForeignKey(
-        JobDetails,
+        JobInfo,
         on_delete=models.CASCADE,
         related_name="job_overview_and_qualifications",
     )
@@ -96,6 +109,11 @@ class JobOverviewAndQualifications(models.Model):
     work_start_date = models.DateField()
     work_end_date = models.DateField()
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
     def __str__(self):
         return f"{self.job_title} - {self.company_name}"
 
@@ -103,7 +121,7 @@ class JobOverviewAndQualifications(models.Model):
 # Section 3: Skills, Certifications, and Roles & Responsibilities (Page 3)
 class SkillsCertificationsResponsibilities(models.Model):
     job = models.ForeignKey(
-        JobDetails,
+        JobInfo,
         on_delete=models.CASCADE,
         related_name="skills_certifications_responsibilities",
     )
@@ -130,6 +148,11 @@ class SkillsCertificationsResponsibilities(models.Model):
     job_role = models.CharField(max_length=100)
     responsibilities = models.TextField(max_length=500)
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
     def __str__(self):
         return f"{self.job_role} - {self.certificate_name if self.certificate_name else 'No Certificate'}"
 
@@ -139,7 +162,7 @@ class JobApply(models.Model):
         StudentProfile, on_delete=models.CASCADE, related_name="students"
     )
     job = models.ForeignKey(
-        JobDetails, on_delete=models.CASCADE, related_name="applications"
+        JobInfo, on_delete=models.CASCADE, related_name="applications"
     )
     status = models.PositiveSmallIntegerField(choices=JOB_STATUS_FIELDS)
     created_date = models.DateTimeField(auto_now_add=True)

@@ -18,7 +18,7 @@ from user_profiles.serializers import StudentProfileSerializer
 @api_view(["POST", "GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def job_details_api_view(request):
-    return request_handler(JobDetails, JobDetailsSerializer, request)
+    return request_handler(JobInfo, JobDetailsSerializer, request)
 
 
 # Section 2: JobDescription
@@ -74,7 +74,7 @@ def apply_job(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def list_jobs(request):
-    return filter_search_handler(JobDetails, JobDetailsSerializer, request)
+    return filter_search_handler(JobInfo, JobDetailsSerializer, request)
 
 
 @api_view(["GET"])
