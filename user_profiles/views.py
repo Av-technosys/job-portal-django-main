@@ -79,8 +79,8 @@ def file_upload(request):
     return upload_handler(UploadedFile, UploadedFileSerializer, request)
 
 
-@api_view(["POST"])
-# @permission_classes([IsAuthenticated])
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def job_seeker(request):
     return filter_search_handler(StudentProfile, StudentProfileSerializer, request)
 
