@@ -1,58 +1,85 @@
 from django.shortcuts import render
-from .serializers import (
-    JobInfoSerializer,
-    JobContactInfoSerializer,
-    JobDescriptionSerializer,
-    CombinedJobDetailsSerializer,
-    JobApplySerializer
-)
+from .serializers import *
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from .models import JobInfo, JobContactInfo, JobDescription, JobApply
+from .models import *
 from functions.common import get_data_from_id_and_serialize
-from handlers.common import  request_handler, filter_search_handler, job_apply_handler, job_application_handler
+from handlers.common import (
+    request_handler,
+    filter_search_handler,
+    job_apply_handler,
+    job_application_handler,
+)
 from user_profiles.models import StudentProfile
 from user_profiles.serializers import StudentProfileSerializer
 
 
-# Section 1 (JobDetails)
+# Section 1: JobDetails
 @api_view(["POST", "GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
-def job_info_api_view(request):
-    return request_handler(JobInfo, JobInfoSerializer, request)
+def job_details_api_view(request):
+    return request_handler(JobDetails, JobDetailsSerializer, request)
 
 
-# Section 2 (JobContactInfo)
-@api_view(["POST", "GET", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
-def job_contact_info_api_view(request):
-    return request_handler(JobContactInfo, JobContactInfoSerializer, request)
-
-
-# Section 3 (JobDescription)
+# Section 2: JobDescription
 @api_view(["POST", "GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def job_description_api_view(request):
     return request_handler(JobDescription, JobDescriptionSerializer, request)
 
 
+# Section 2: ContactAndSkills
+@api_view(["POST", "GET", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def contact_and_skills_api_view(request):
+    return request_handler(ContactAndSkills, ContactAndSkillsSerializer, request)
+
+
+# Section 3: JobOverviewAndQualifications
+@api_view(["POST", "GET", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def job_overview_and_qualifications_api_view(request):
+    return request_handler(
+        JobOverviewAndQualifications, JobOverviewAndQualificationsSerializer, request
+    )
+
+
+# Section 3: SkillsCertificationsResponsibilities
+@api_view(["POST", "GET", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def skills_certifications_responsibilities_api_view(request):
+    return request_handler(
+        SkillsCertificationsResponsibilities,
+        SkillsCertificationsResponsibilitiesSerializer,
+        request,
+    )
+
+
+# Combined View for JobDetails
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def get_job_details(request):
+def getJobDetails(request):
     job_id = request.data.get("job_id")
-    return get_data_from_id_and_serialize(JobInfo, CombinedJobDetailsSerializer, job_id)
+    return get_data_from_id_and_serialize(
+        JobDetails, CombinedJobDetailsSerializer, job_id
+    )
+
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def apply_job(request):
     return job_apply_handler(JobApplySerializer, request)
 
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def list_jobs(request):
-    return filter_search_handler(JobInfo, JobInfoSerializer, request)
+    return filter_search_handler(JobDetails, JobDetailsSerializer, request)
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def submitted_jobs_application(request):
-    return job_application_handler(JobApply, JobApplySerializer, StudentProfile, StudentProfileSerializer, request)
+    return job_application_handler(
+        JobApply, JobApplySerializer, StudentProfile, StudentProfileSerializer, request
+    )

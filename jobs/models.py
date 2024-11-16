@@ -4,71 +4,146 @@ from constants.jobs import JOB_STATUS_FIELDS
 from user_profiles.models import StudentProfile
 
 
-# Model for basic job details (Section 1)
-class JobInfo(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,  # When a user is deleted, all associated jobs will also be deleted
-    )
+from django.db import models
+
+
+# Section 1: Job Details (Page 1)
+class JobDetails(models.Model):
     designation = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     location = models.CharField(max_length=100)
-    job_type = models.CharField(max_length=100)
-    status = models.CharField(max_length=100)
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
+    job_type = models.CharField(
+        max_length=50,
+        choices=[
+            ("Full Time", "Full Time"),
+            ("Part Time", "Part Time"),
+            ("Contract", "Contract"),
+        ],
+    )
+    description = models.TextField()
 
     def __str__(self):
-        return f"{self.designation} at {self.department}"
+        return f"{self.designation} - {self.department}"
 
 
-# Model for job contact information (Section 2)
-class JobContactInfo(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,  # Foreign key to the user table
-    )
-    job = models.OneToOneField(
-        JobInfo, on_delete=models.CASCADE, related_name="contact_info"
-    )
-    name = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15)
-    email = models.EmailField()
-    job_description = models.TextField()
-    skills_required = models.TextField()
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"Contact for {self.job}: {self.name}"
-
-
-# Model for job description and requirements (Section 3)
+# Section 2: Job Description (Page 2)
 class JobDescription(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,  # Foreign key to the user table
+    job = models.ForeignKey(
+        JobDetails, on_delete=models.CASCADE, related_name="job_description"
     )
-    job = models.OneToOneField(
-        JobInfo, on_delete=models.CASCADE, related_name="description"
+    job_title = models.CharField(max_length=100)
+    company_name = models.CharField(max_length=100
+                                    )
+    location = models.CharField(max_length=100)
+
+    def __str__(self):
+
+        return f"{self.job_title} at {self.company_name}"
+
+
+# Section 2: Contact and Skills (Page 2)
+class ContactAndSkills(models.Model):
+    job = models.ForeignKey(
+        JobDetails, on_delete=models.CASCADE, related_name="contact_and_skills"
     )
 
-    job_overview = models.TextField()
-    qualifications_and_skills = models.TextField()
-    roles_and_responsibilities = models.TextField()
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
-    
+    # Contact Information
+    full_name = models.CharField(max_length=100)
+    email_address = models.EmailField()
+    phone_number = models.CharField(max_length=15)
+    address_line1 = models.CharField(max_length=200)
+    address_line2 = models.CharField(max_length=200, blank=True, null=True)
+    city = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+
+    # Skills
+    skills_required = models.TextField()
+
+    def __str__(self):
+        return self.full_name
+
+
+# Section 3: Job Overview, Academic Qualification, and Work Experience (Page 3)
+class JobOverviewAndQualifications(models.Model):
+    job = models.ForeignKey(
+        JobDetails,
+        on_delete=models.CASCADE,
+        related_name="job_overview_and_qualifications",
+    )
+
+    # Job Overview
+    job_title = models.CharField(max_length=100)
+    company_name = models.CharField(max_length=100)
+    location = models.CharField(max_length=100)
+    salary_range = models.CharField(max_length=100, blank=True, null=True)
+
+    # Academic Qualification
+    institution_name = models.CharField(max_length=200)
+    status = models.CharField(
+        max_length=50,
+        choices=[
+            ("Pursuing", "Pursuing"),
+            ("Completed", "Completed"),
+        ],
+    )
+    start_year = models.DateField()
+    end_year = models.DateField()
+    specialization = models.CharField(max_length=200)
+
+    # Work Experience
+    organization_name = models.CharField(max_length=200)
+    designation_name = models.CharField(max_length=100)
+    work_start_date = models.DateField()
+    work_end_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.job_title} - {self.company_name}"
+
+
+# Section 3: Skills, Certifications, and Roles & Responsibilities (Page 3)
+class SkillsCertificationsResponsibilities(models.Model):
+    job = models.ForeignKey(
+        JobDetails,
+        on_delete=models.CASCADE,
+        related_name="skills_certifications_responsibilities",
+    )
+
+    # Skills
+    skill_name = models.CharField(max_length=100)
+    skill_level = models.CharField(
+        max_length=50,
+        choices=[
+            ("Beginner", "Beginner"),
+            ("Intermediate", "Intermediate"),
+            ("Expert", "Expert"),
+        ],
+        blank=True,
+        null=True,
+    )
+    years_of_experience = models.PositiveIntegerField(blank=True, null=True)
+
+    # Certifications
+    certificate_name = models.CharField(max_length=200, blank=True, null=True)
+    certificate_link = models.URLField(blank=True, null=True)
+
+    # Roles and Responsibilities
+    job_role = models.CharField(max_length=100)
+    responsibilities = models.TextField(max_length=500)
+
+    def __str__(self):
+        return f"{self.job_role} - {self.certificate_name if self.certificate_name else 'No Certificate'}"
+
+
 class JobApply(models.Model):
     student = models.ForeignKey(
         StudentProfile, on_delete=models.CASCADE, related_name="students"
     )
     job = models.ForeignKey(
-        JobInfo, on_delete=models.CASCADE, related_name="applications"
+        JobDetails, on_delete=models.CASCADE, related_name="applications"
     )
     status = models.PositiveSmallIntegerField(choices=JOB_STATUS_FIELDS)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return f"Application for {self.job.designation} by {self.user}"
