@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from constants.errors import ALREADY_APPLIED
 from constants.jobs import JOB_DETAILS_FIELDS
 
 
@@ -39,3 +40,15 @@ class JobApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = JobApply
         fields = "__all__"
+    
+    def validate(self, data):
+        # Check if a JobApply entry already exists for the given student and job
+        student = data.get("student")
+        job = data.get("job")
+        
+        if JobApply.objects.filter(student=student, job=job).exists():
+            raise serializers.ValidationError(
+                {"message" : ALREADY_APPLIED}
+            )
+        
+        return data

@@ -6,6 +6,7 @@ from django.utils import timezone
 import os
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404
 
 
 def generate_otp():
@@ -308,13 +309,15 @@ def paginator(queryset, request):
     return page_obj, paginator.count, paginator.num_pages
 
 
-def job_apply_handler(serializer_class, request):
+def job_apply_handler(serializer_class, StudentProfile, request):
     try:
         if request.user.user_type == 2:
             return ResponseHandler.error(
                 message=ERROR_INVALID_CREDENTIALS,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
+        student_id = get_object_or_404(StudentProfile, user=request.user).id
+        request.data["student"] = student_id
         return serializer_handle(serializer_class, request)
     except:
         return ResponseHandler.error(
@@ -323,10 +326,10 @@ def job_apply_handler(serializer_class, request):
 
 
 def application_handler(
-    modal_class, serializer_class, profile, profile_serializer, request
+    modal_class, serializer_class, profile, profile_serializer,student_profile, request
 ):
     user_type = request.user.user_type
-    _id = request.data.get("_id")
+    _id = get_object_or_404(student_profile, user=request.user).id
     if not _id:
         return ResponseHandler.error(
             message=ERROR_JOB_ID_REQUIRED, status_code=status.HTTP_400_BAD_REQUEST
