@@ -67,8 +67,7 @@ def apply_job(request):
     return job_apply_handler(JobApplySerializer, StudentProfile, request)
 
 
-
-@api_view(["POST"])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_jobs(request):
     return filter_search_handler(JobInfo, JobDetailsSerializer, request)
