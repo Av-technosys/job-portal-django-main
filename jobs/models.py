@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from constants.jobs import JOB_STATUS_FIELDS, JOB_TYPE_CHOICES
+from constants.jobs import JOB_STATUS_FIELDS, JOB_TYPE_CHOICES,SKILL_LEVEL_CHOICES
 from user_profiles.models import StudentProfile
 
 
@@ -74,7 +74,7 @@ class ContactAndSkills(models.Model):
         return self.full_name
 
 
-# Section 3: Job Overview, Academic Qualification, and Work Experience (Page 3)
+# Section 3: Job Overview (Page 3)
 class JobOverviewAndQualifications(models.Model):
     job = models.ForeignKey(
         JobInfo,
@@ -88,37 +88,15 @@ class JobOverviewAndQualifications(models.Model):
     location = models.CharField(max_length=100)
     salary_range = models.CharField(max_length=100, blank=True, null=True)
 
-    # Academic Qualification
-    institution_name = models.CharField(max_length=200)
-    status = models.CharField(
-        max_length=50,
-        choices=[
-            ("Pursuing", "Pursuing"),
-            ("Completed", "Completed"),
-        ],
-    )
-    start_year = models.DateField()
-    end_year = models.DateField()
-    specialization = models.CharField(max_length=200)
-
-    # Work Experience
-    organization_name = models.CharField(max_length=200)
-    designation_name = models.CharField(max_length=100)
-    work_start_date = models.DateField()
-    work_end_date = models.DateField()
-
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,  # Foreign key to the user table
     )
-    job_overview = models.TextField()
-    qualifications_and_skills = models.TextField()
-    roles_and_responsibilities = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
 
-# Section 3: Skills, Certifications, and Roles & Responsibilities (Page 3)
+# Section 3: Skills, Roles & Responsibilities (Page 3)
 class SkillsCertificationsResponsibilities(models.Model):
     job = models.ForeignKey(
         JobInfo,
@@ -130,19 +108,11 @@ class SkillsCertificationsResponsibilities(models.Model):
     skill_name = models.CharField(max_length=100)
     skill_level = models.CharField(
         max_length=50,
-        choices=[
-            ("Beginner", "Beginner"),
-            ("Intermediate", "Intermediate"),
-            ("Expert", "Expert"),
-        ],
+        choices=SKILL_LEVEL_CHOICES,
         blank=True,
         null=True,
     )
     years_of_experience = models.PositiveIntegerField(blank=True, null=True)
-
-    # Certifications
-    certificate_name = models.CharField(max_length=200, blank=True, null=True)
-    certificate_link = models.URLField(blank=True, null=True)
 
     # Roles and Responsibilities
     job_role = models.CharField(max_length=100)

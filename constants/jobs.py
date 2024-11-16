@@ -11,9 +11,16 @@ JOB_DETAILS_FIELDS = [
 ]
 
 JOB_TYPE_CHOICES = [
-    ("Full Time", "Full Time"),
-    ("Part Time", "Part Time"),
-    ("Contract", "Contract"),
+    (0, "Full Time"),
+    (1, "Part Time"),
+    (2, "Contract"),
+]
+
+
+SKILL_LEVEL_CHOICES = [
+    (0, "Beginner"),
+    (1, "Intermediate"),
+    (2, "Expert"),
 ]
 
 
