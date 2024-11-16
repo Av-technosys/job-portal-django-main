@@ -32,6 +32,11 @@ urlpatterns = [
     # API for job list
     path("list_jobs/", list_jobs, name="list_jobs"),
     # get all the submitted application by the student to recruiter
-    path("submitted_jobs_application/", submitted_jobs_application, name="submitted_jobs_application"),
-    
+    path(
+        "submitted_jobs_application/",
+        submitted_jobs_application,
+        name="submitted_jobs_application",
+    ),
+    # get all submitted jobs by student ----- pyload = { _id : }
+    path("list_submitted_jobs/", list_submitted_jobs, name="list_submitted_jobs"),
 ]

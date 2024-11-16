@@ -4,12 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .models import *
 from functions.common import get_data_from_id_and_serialize
-from handlers.common import (
-    request_handler,
-    filter_search_handler,
-    job_apply_handler,
-    job_application_handler,
-)
+from handlers.common import *
 from user_profiles.models import StudentProfile
 from user_profiles.serializers import StudentProfileSerializer
 
@@ -61,14 +56,16 @@ def skills_certifications_responsibilities_api_view(request):
 def getJobDetails(request):
     job_id = request.data.get("job_id")
     return get_data_from_id_and_serialize(
-        JobDetails, CombinedJobDetailsSerializer, job_id
+        JobInfo, CombinedJobDetailsSerializer, job_id
     )
+
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def apply_job(request):
-    return job_apply_handler(JobApplySerializer, request)
+    return job_apply_handler(JobApplySerializer, StudentProfile, request)
+
 
 
 @api_view(["POST"])
@@ -77,9 +74,18 @@ def list_jobs(request):
     return filter_search_handler(JobInfo, JobDetailsSerializer, request)
 
 
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def submitted_jobs_application(request):
-    return job_application_handler(
+    return application_handler(
         JobApply, JobApplySerializer, StudentProfile, StudentProfileSerializer, request
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_submitted_jobs(request):
+    return application_handler(
+        JobApply, JobApplySerializer, JobInfo, JobDetailsSerializer, StudentProfile, request
     )

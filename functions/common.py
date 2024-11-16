@@ -6,6 +6,7 @@ from django.utils import timezone
 import os
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404
 
 
 def generate_otp():
@@ -149,7 +150,6 @@ def get_handle(model, serializer_class, request):
     return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
 
 
-
 def delete_handle(model, request):
     instance_id = request.data.get("id")
     instances = model.objects.filter(id=instance_id, user=request.user)
@@ -228,25 +228,25 @@ def get_data_from_id_and_serialize(model, serializer_class, obj_id):
             {"error": f"{model.__name__} not found"}, status=status.HTTP_404_NOT_FOUND
         )
 
+
 def filters(request):
     q_filters = Q()
     filter_kwargs = {}
-        
+
     if filter_result := request.data.get("search"):
         if "filter_job_seeker" in request.path:
             q_filters = (
-            Q(user__academicqualification__specialization__icontains=filter_result) |
-            Q(short_bio__icontains=filter_result) |
-            Q(user__skillset__skill_name__icontains=filter_result) |
-            Q(designation__icontains=filter_result)
-        )
+                Q(user__academicqualification__specialization__icontains=filter_result)
+                | Q(short_bio__icontains=filter_result)
+                | Q(user__skillset__skill_name__icontains=filter_result)
+                | Q(designation__icontains=filter_result)
+            )
         elif "list_jobs" in request.path:
             q_filters = (
-            Q(designation__icontains=filter_result) |
-            Q(contact_info__skills_required__icontains=filter_result) |
-            Q(description__qualifications_and_skills__icontains=filter_result) 
-        )
-
+                Q(designation__icontains=filter_result)
+                | Q(contact_info__skills_required__icontains=filter_result)
+                | Q(description__qualifications_and_skills__icontains=filter_result)
+            )
 
     filter_mappings = {
         "education": "user__academicqualification__specialization__in",
@@ -254,17 +254,16 @@ def filters(request):
         "experience": "experience__in",
         "skills": "user__skillset__skill_name__in",
         "salary_expectations": "expecting_salary__in",
-        "job_location" : "location__in",
-        "job_type" : "job_type__in",
-        "skills" : "contact_info__skills_required__in",
-          
+        "job_location": "location__in",
+        "job_type": "job_type__in",
+        "skills": "contact_info__skills_required__in",
     }
-    
+
     for key, filter_key in filter_mappings.items():
         if terms := request.data.get(key):
             if isinstance(terms, list):
                 filter_kwargs[filter_key] = terms
-    
+
     return q_filters, filter_kwargs
 
 
@@ -277,20 +276,20 @@ def filter_search_handler(model_class, serializer_class, request):
 
         else:
             instances = model_class.objects.filter(q_filters, **filter_kwargs)
-        
+
         if not instances.exists():
             raise ResponseHandler.api_exception_error()
-        
-        sort_fields = request.data.get("sort", ["created_date"])  
+
+        sort_fields = request.data.get("sort", ["created_date"])
         instances = instances.order_by(*sort_fields)
-        
+
         page_obj, count, total_pages = paginator(instances, request)
         serializer = serializer_class(page_obj, many=True)
         response_data = {
-        "total_count": count,
-        "total_pages": total_pages,
-        "current_page": page_obj.number,
-        "data": serializer.data,
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
         }
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
@@ -299,48 +298,103 @@ def filter_search_handler(model_class, serializer_class, request):
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
 
+
 def paginator(queryset, request):
     if not queryset.ordered:
-        queryset = queryset.order_by("created_date") 
+        queryset = queryset.order_by("created_date")
     page_size = int(request.GET.get("page_size", 10))
     paginator = Paginator(queryset, page_size)
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
     return page_obj, paginator.count, paginator.num_pages
 
-def job_apply_handler(serializer_class, request):
+
+def job_apply_handler(serializer_class, StudentProfile, request):
     try:
         if request.user.user_type == 2:
-            return ResponseHandler.error(message=ERROR_INVALID_CREDENTIALS, status_code=status.HTTP_400_BAD_REQUEST)
+            return ResponseHandler.error(
+                message=ERROR_INVALID_CREDENTIALS,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        student_id = get_object_or_404(StudentProfile, user=request.user).id
+        request.data["student"] = student_id
         return serializer_handle(serializer_class, request)
     except:
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
-        
-def job_application_handler(modal_class, serializer_class, StudentProfile, StudentProfileSerializer, request):
-    if request.user.user_type == 1:
-        return ResponseHandler.error(message=ERROR_INVALID_CREDENTIALS, status_code=status.HTTP_400_BAD_REQUEST)
-    
-    job_id = request.data.get("job_id")
-    if not job_id:
-        return ResponseHandler.error(ERROR_JOB_ID_REQUIRED, status_code=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-        instances = modal_class.objects.filter(job_id=job_id).select_related('student') 
-        if not instances.exists():
-            return ResponseHandler.error(ERROR_NO_APPLICATIONS_FOUND, status_code=status.HTTP_404_NOT_FOUND)
-        
-        applications = serializer_class(instances, many=True)
-        student_ids = [application.get("student") for application in applications.data]
-        
-        student_profiles = StudentProfile.objects.filter(id__in=student_ids)
-        profile_serializer = StudentProfileSerializer(student_profiles, many=True)
-        
-        return ResponseHandler.success(profile_serializer.data, status_code=status.HTTP_200_OK)
-    
-    except Exception as e:
-        print(f"Error occurred: {e}")
-        return ResponseHandler.error(RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST)
 
-    
+
+def application_handler(
+    modal_class, serializer_class, profile, profile_serializer,student_profile, request
+):
+    user_type = request.user.user_type
+    _id = get_object_or_404(student_profile, user=request.user).id
+    if not _id:
+        return ResponseHandler.error(
+            message=ERROR_JOB_ID_REQUIRED, status_code=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        if user_type == 1:
+            return get_application_data(
+                _id,
+                modal_class,
+                serializer_class,
+                profile,
+                profile_serializer,
+                request,
+                "job",
+            )
+
+        elif user_type == 2:
+            return get_application_data(
+                _id,
+                modal_class,
+                serializer_class,
+                profile,
+                profile_serializer,
+                request,
+                "student",
+            )
+
+    except:
+        return ResponseHandler.error(
+            message=RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+
+def get_application_data(
+    _id, modal_class, serializer_class, profile, profile_serializer, request, lookup
+):
+    try:
+        if lookup == "student":
+            instances = modal_class.objects.filter(job_id=_id).select_related(lookup)
+        elif lookup == "job":
+            instances = modal_class.objects.filter(student_id=_id).select_related(
+                lookup
+            )
+
+        if not instances.exists():
+            return ResponseHandler.error(
+                message=ERROR_NO_APPLICATIONS_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        applications = serializer_class(instances, many=True)
+        related_ids = [application.get(lookup) for application in applications.data]
+        related_profiles = profile.objects.filter(id__in=related_ids)
+
+        page_obj, count, total_pages = paginator(related_profiles, request)
+        serializer = profile_serializer(page_obj, many=True)
+        response_data = {
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
+        }
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+
+    except:
+        return ResponseHandler.error(
+            message=RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
+        )
