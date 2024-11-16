@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from constants.jobs import JOB_STATUS_FIELDS
+from constants.jobs import JOB_STATUS_FIELDS, JOB_TYPE_CHOICES
 from user_profiles.models import StudentProfile
 
 
@@ -14,14 +14,7 @@ class JobInfo(models.Model):
     location = models.CharField(max_length=100)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
-    job_type = models.CharField(
-        max_length=50,
-        choices=[
-            ("Full Time", "Full Time"),
-            ("Part Time", "Part Time"),
-            ("Contract", "Contract"),
-        ],
-    )
+    job_type = models.CharField(max_length=50, choices=JOB_TYPE_CHOICES)
     description = models.TextField()
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -38,8 +31,7 @@ class JobDescription(models.Model):
         JobInfo, on_delete=models.CASCADE, related_name="job_description"
     )
     job_title = models.CharField(max_length=100)
-    company_name = models.CharField(max_length=100
-                                    )
+    company_name = models.CharField(max_length=100)
     location = models.CharField(max_length=100)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
@@ -126,7 +118,6 @@ class JobOverviewAndQualifications(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
 
-
 # Section 3: Skills, Certifications, and Roles & Responsibilities (Page 3)
 class SkillsCertificationsResponsibilities(models.Model):
     job = models.ForeignKey(
@@ -167,7 +158,8 @@ class SkillsCertificationsResponsibilities(models.Model):
 
     def __str__(self):
         return f"{self.job_role} - {self.certificate_name if self.certificate_name else 'No Certificate'}"
-    
+
+
 class JobApply(models.Model):
     student = models.ForeignKey(
         StudentProfile, on_delete=models.CASCADE, related_name="students"

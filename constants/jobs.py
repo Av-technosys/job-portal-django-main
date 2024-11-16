@@ -10,6 +10,15 @@ JOB_DETAILS_FIELDS = [
     "skills_certifications_responsibilities",
 ]
 
+JOB_TYPE_CHOICES = (
+    [
+        ("Full Time", "Full Time"),
+        ("Part Time", "Part Time"),
+        ("Contract", "Contract"),
+    ],
+)
+
+
 JOB_STATUS_FIELDS = [
     (0, "Received"),
     (1, "In Review"),
