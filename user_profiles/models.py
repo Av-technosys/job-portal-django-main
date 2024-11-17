@@ -44,7 +44,7 @@ class AcademicQualification(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="academic_qualifications"
+        related_name="academic_qualifications",
     )
     institution_name = models.CharField(max_length=200)
     specialization = models.CharField(max_length=100)
@@ -62,7 +62,7 @@ class WorkExperience(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="work_experiences"
+        related_name="work_experiences",
     )
     organization_name = models.CharField(max_length=200)
     designation = models.CharField(max_length=100)
@@ -78,9 +78,7 @@ class WorkExperience(models.Model):
 class SkillSet(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="skill_sets"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="skill_sets"
     )
     skill_name = models.CharField(max_length=100)
     proficiency_level = models.CharField(max_length=50)
@@ -97,7 +95,7 @@ class Certifications(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="certifications"
+        related_name="certifications",
     )
     certification_name = models.CharField(max_length=200)
     start_date = models.DateField(null=True, blank=True)
@@ -113,9 +111,7 @@ class Certifications(models.Model):
 class Projects(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="projects"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="projects"
     )
     project_name = models.CharField(max_length=200)
     description = models.TextField(max_length=500, blank=True, null=True)
@@ -130,9 +126,7 @@ class Projects(models.Model):
 class SocialUrls(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="social_urls"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="social_urls"
     )
     link = models.URLField(blank=True)
     link_title = models.CharField(blank=True, null=True)
@@ -148,7 +142,7 @@ class CompanyProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="company_profile"
+        related_name="company_profile",
     )
     company_email = models.EmailField()
     company_name = models.CharField(max_length=200)
@@ -167,9 +161,7 @@ class CompanyProfile(models.Model):
 class JobDetails(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="job_details"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="job_details"
     )
     industry = models.CharField(max_length=200)
     location = models.CharField(max_length=200)
@@ -183,9 +175,7 @@ class JobDetails(models.Model):
 class CompanyId(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="company_id"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="company_id"
     )
     registeration_number = models.PositiveSmallIntegerField()
     firm_id = models.PositiveSmallIntegerField()
@@ -198,7 +188,7 @@ class UploadedFile(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="uploaded_files"
+        related_name="uploaded_files",
     )
     file_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
     file = models.FileField(upload_to=file_rename, storage=S3FileStorage())

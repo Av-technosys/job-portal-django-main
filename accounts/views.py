@@ -9,7 +9,6 @@ from .serializers import (
     ResetPasswordSendOtpSerializer,
     ResendOtpSerializer,
     VerifyOtpAndChangePasswordSerializer,
-    
 )
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
@@ -57,6 +56,7 @@ def verify_otp(request):
 @permission_classes([AllowAny])
 def reset_password_otp(request):
     return serializer_handle_customize_response(ResetPasswordSendOtpSerializer, request)
+
 
 # ResendOTP
 @api_view(["POST"])

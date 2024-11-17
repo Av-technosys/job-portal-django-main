@@ -43,19 +43,13 @@ class SkillsCertificationsResponsibilitiesSerializer(serializers.ModelSerializer
 # Combined Serializer for JobDetails (Nested)
 class CombinedJobDetailsSerializer(serializers.ModelSerializer):
     # Nested serializers for related models
-    job_description = JobDescriptionSerializer(
-        many=True, read_only=True
-    )
-    contact_and_skills = ContactAndSkillsSerializer(
-        many=True, read_only=True
-    )
+    job_description = JobDescriptionSerializer(many=True, read_only=True)
+    contact_and_skills = ContactAndSkillsSerializer(many=True, read_only=True)
     job_overview_and_qualifications = JobOverviewAndQualificationsSerializer(
         many=True, read_only=True
     )
     skills_certifications_responsibilities = (
-        SkillsCertificationsResponsibilitiesSerializer(
-            many=True, read_only=True
-        )
+        SkillsCertificationsResponsibilitiesSerializer(many=True, read_only=True)
     )
 
     class Meta:
