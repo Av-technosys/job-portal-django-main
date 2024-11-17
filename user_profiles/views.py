@@ -4,6 +4,8 @@ from .serializers import *
 from handlers.common import request_handler
 from rest_framework.permissions import IsAuthenticated
 from handlers.permissions import IsRecruiter, IsJobSeeker
+from jobs.models import JobApply
+from jobs.serializers import JobApplySerializer
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
@@ -91,3 +93,9 @@ def job_seeker(request):
 def students_all_details(request):
     student_id = request.data.get("student_id")
     return get_data_from_id_and_serialize(StudentProfile, CombineStudentProfileSerializer, student_id)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def application_status(request):
+        return handle_application_status(JobApply,JobApplySerializer, request)

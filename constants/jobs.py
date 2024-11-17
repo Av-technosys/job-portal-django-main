@@ -35,3 +35,15 @@ JOB_STATUS_FIELDS = [
     (7, "Offered"),
     (8, "Joined"),
 ]
+
+VALID_STATUS_TRANSITIONS = {
+    0: [1, 2],  # Received → In Review, On Hold
+    1: [3, 5],  # In Review → Shortlisted, Rejected
+    2: [3, 4, 5],  # On Hold → Shortlisted, Interviewing, Rejected
+    3: [4, 5],  # Shortlisted → Interviewing, Rejected
+    4: [5, 6],  # Interviewing → Rejected, Salary Negotiation
+    5: [],  # Rejected → No further transitions
+    6: [7],  # Salary Negotiation → Offered
+    7: [8],  # Offered → Joined
+    8: [],  # Joined → No further transitions
+}
