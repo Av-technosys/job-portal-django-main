@@ -55,8 +55,5 @@ JOB_DETAILS_FIELDS = [
     "certifications",
     "projects",
     "social_urls",
-    "company_profile",
-    "job_details",
-    "company_id",
     "uploaded_files",
 ]
