@@ -1,6 +1,7 @@
 from functions.common import *
 from constants.errors import *
 
+
 def request_handler(model, serializer, request):
     match request.method:
         case "GET":

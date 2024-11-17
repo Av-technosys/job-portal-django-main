@@ -56,10 +56,7 @@ def skills_certifications_responsibilities_api_view(request):
 @permission_classes([IsAuthenticated])
 def get_job_details(request):
     job_id = request.data.get("job_id")
-    return get_data_from_id_and_serialize(
-        JobInfo, CombinedJobDetailsSerializer, job_id
-    )
-
+    return get_data_from_id_and_serialize(JobInfo, CombinedJobDetailsSerializer, job_id)
 
 
 @api_view(["POST"])
@@ -74,7 +71,6 @@ def list_jobs(request):
     return filter_search_handler(JobInfo, JobDetailsSerializer, request)
 
 
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def submitted_jobs_application(request):
@@ -87,7 +83,12 @@ def submitted_jobs_application(request):
 @permission_classes([IsAuthenticated])
 def list_submitted_jobs(request):
     return application_handler(
-        JobApply, JobApplySerializer, JobInfo, JobDetailsSerializer, StudentProfile, request
+        JobApply,
+        JobApplySerializer,
+        JobInfo,
+        JobDetailsSerializer,
+        StudentProfile,
+        request,
     )
     
 @api_view(["GET", "PATCH"])

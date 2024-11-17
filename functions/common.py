@@ -326,7 +326,7 @@ def job_apply_handler(serializer_class, StudentProfile, request):
 
 
 def application_handler(
-    modal_class, serializer_class, profile, profile_serializer,student_profile, request
+    modal_class, serializer_class, profile, profile_serializer, student_profile, request
 ):
     user_type = request.user.user_type
     _id = get_object_or_404(student_profile, user=request.user).id
