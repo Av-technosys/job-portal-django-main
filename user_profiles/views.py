@@ -90,4 +90,6 @@ def job_seeker(request):
 @permission_classes([IsAuthenticated, IsRecruiter])
 def students_all_details(request):
     student_id = request.data.get("student_id")
-    return get_data_from_id_and_serialize(StudentProfile, CombineStudentProfileSerializer, student_id)
+    return get_data_from_id_and_serialize(
+        StudentProfile, CombineStudentProfileSerializer, student_id
+    )

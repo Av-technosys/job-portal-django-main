@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from constants.jobs import JOB_STATUS_FIELDS, JOB_TYPE_CHOICES,SKILL_LEVEL_CHOICES
+from constants.jobs import JOB_STATUS_FIELDS, JOB_TYPE_CHOICES, SKILL_LEVEL_CHOICES
 from user_profiles.models import StudentProfile
 
 
@@ -142,4 +142,4 @@ class JobApply(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Application for {self.job.designation} by {self.user}"
+        return f"Application for {self.job.designation} by {self.student}"

@@ -123,6 +123,7 @@ class UploadedFileSerializer(serializers.ModelSerializer):
         uploaded_file.save()
         return uploaded_file
 
+
 class CombineStudentProfileSerializer(serializers.ModelSerializer):
     academic_qualifications = AcademicQualificationSerializer(many=True, read_only=True)
     work_experiences = WorkExperienceSerializer(many=True, read_only=True)
@@ -131,9 +132,7 @@ class CombineStudentProfileSerializer(serializers.ModelSerializer):
     projects = ProjectsSerializer(many=True, read_only=True)
     social_urls = SocialUrlsSerializer(many=True, read_only=True)
     uploaded_files = UploadedFileSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = StudentProfile
         fields = JOB_DETAILS_FIELDS
-        
-        
