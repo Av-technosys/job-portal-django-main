@@ -398,3 +398,60 @@ def get_application_data(
         return ResponseHandler.error(
             message=RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
+
+
+def handle_application_status(model, serializer_class, request):
+    if request.method == 'GET':
+        _id = request.data.get("id") 
+        
+        if not _id:
+            return ResponseHandler.error(
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            instance = model.objects.filter(job_id=_id)
+            if not instance.exists():
+                return ResponseHandler.error(
+                    ERROR_NOT_FOUND,
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = serializer_class(instance, many=True)
+            return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+
+        except:
+            return ResponseHandler.error(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    elif request.method in ['PATCH']:
+        try:
+            job_id = request.data.get("job_id")
+            student_id = request.data.get("student_id")
+
+            if not job_id or not student_id:
+                return ResponseHandler.error(
+                    RESPONSE_ERROR,
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+            instance = model.objects.filter(student_id=student_id, job_id=job_id).first()
+            if not instance:
+                return ResponseHandler.error(
+                    ERROR_NOT_FOUND,
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
+            serializer = serializer_class(instance, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return ResponseHandler.success([], status_code=status.HTTP_200_OK)
+            
+            return ResponseHandler.error(
+                serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        except:
+            return ResponseHandler.error(
+                RESPONSE_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

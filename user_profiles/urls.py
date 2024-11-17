@@ -15,4 +15,5 @@ urlpatterns = [
     path("upload_document/", file_upload),
     path("filter_job_seeker/", job_seeker),
     path("students_all_details/", students_all_details),
+    path("application_status/", application_status),
 ]

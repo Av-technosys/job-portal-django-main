@@ -7,6 +7,7 @@ from functions.common import get_data_from_id_and_serialize
 from handlers.common import *
 from user_profiles.models import StudentProfile
 from user_profiles.serializers import StudentProfileSerializer
+from handlers.permissions import IsRecruiter, IsJobSeeker
 
 
 # Section 1: JobDetails
@@ -89,3 +90,8 @@ def list_submitted_jobs(request):
         StudentProfile,
         request,
     )
+    
+@api_view(["GET", "PATCH"])
+@permission_classes([IsAuthenticated, IsRecruiter])
+def application_status(request):
+        return handle_application_status(JobApply,JobApplySerializer, request)

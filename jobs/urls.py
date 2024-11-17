@@ -36,4 +36,6 @@ urlpatterns = [
     ),
     # get all submitted jobs by student ----- pyload = { _id : }
     path("list_submitted_jobs/", list_submitted_jobs, name="list_submitted_jobs"),
+    # get application status 
+    path("application_status/", application_status, name="application_status"),
 ]

@@ -142,4 +142,5 @@ class JobApply(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Application for {self.job.designation} by {self.student}"
+        return f"Application for {self.job.designation} by {self.student.user.username}"
+
