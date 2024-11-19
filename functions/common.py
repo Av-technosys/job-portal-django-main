@@ -293,8 +293,7 @@ def filter_search_handler(model_class, serializer_class, request):
         }
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
-    except Exception as e:
-        print("ERR", e)
+    except:
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -398,6 +397,7 @@ def get_application_data(
         return ResponseHandler.error(
             message=RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
+
 
 def handle_application_status(model, serializer_class, request):
     if request.method == 'GET':
