@@ -244,8 +244,8 @@ def filters(request):
         elif "list_jobs" in request.path:
             q_filters = (
                 Q(designation__icontains=filter_result)
-                | Q(contact_info__skills_required__icontains=filter_result)
-                | Q(description__qualifications_and_skills__icontains=filter_result)
+                | Q(contact_and_skills__skills_required__icontains=filter_result)
+                | Q(job_description__job_title__icontains=filter_result)
             )
 
     filter_mappings = {
@@ -278,7 +278,7 @@ def filter_search_handler(model_class, serializer_class, request):
             instances = model_class.objects.filter(q_filters, **filter_kwargs)
 
         if not instances.exists():
-            raise ResponseHandler.api_exception_error()
+            ResponseHandler.error(message= ERROR_NOT_FOUND, status_code= status.HTTP_404_NOT_FOUND)
 
         sort_fields = request.data.get("sort", ["created_date"])
         instances = instances.order_by(*sort_fields)
@@ -293,7 +293,8 @@ def filter_search_handler(model_class, serializer_class, request):
         }
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
-    except:
+    except Exception as e:
+        print("ERR", e)
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -325,17 +326,12 @@ def job_apply_handler(serializer_class, StudentProfile, request):
         )
 
 
-def application_handler(
-    modal_class, serializer_class, profile, profile_serializer, student_profile, request
-):
+def application_handler( modal_class, serializer_class, profile, profile_serializer,student_profile, request):
     user_type = request.user.user_type
-    _id = get_object_or_404(student_profile, user=request.user).id
-    if not _id:
-        return ResponseHandler.error(
-            message=ERROR_JOB_ID_REQUIRED, status_code=status.HTTP_400_BAD_REQUEST
-        )
     try:
         if user_type == 1:
+            student_id = get_object_or_404(student_profile, user=request.user).id
+            _id = list(modal_class.objects.filter(student_id=student_id).values_list('job_id', flat=True))
             return get_application_data(
                 _id,
                 modal_class,
@@ -347,6 +343,12 @@ def application_handler(
             )
 
         elif user_type == 2:
+            id = request.data.get("id")
+            if not id:
+                return ResponseHandler.error(
+                    message=ERROR_JOB_ID_REQUIRED, status_code=status.HTTP_400_BAD_REQUEST
+                    )
+            _id = list(modal_class.objects.filter(job_id=id).values_list('student_id', flat=True))
             return get_application_data(
                 _id,
                 modal_class,
@@ -368,11 +370,9 @@ def get_application_data(
 ):
     try:
         if lookup == "student":
-            instances = modal_class.objects.filter(job_id=_id).select_related(lookup)
+            instances = modal_class.objects.filter(student_id__in=_id).select_related(lookup)
         elif lookup == "job":
-            instances = modal_class.objects.filter(student_id=_id).select_related(
-                lookup
-            )
+            instances = modal_class.objects.filter(job_id__in=_id).select_related(lookup)
 
         if not instances.exists():
             return ResponseHandler.error(
@@ -398,7 +398,6 @@ def get_application_data(
         return ResponseHandler.error(
             message=RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
-
 
 def handle_application_status(model, serializer_class, request):
     if request.method == 'GET':
