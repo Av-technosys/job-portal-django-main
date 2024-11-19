@@ -89,7 +89,7 @@ def job_seeker(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsRecruiter])
+@permission_classes([IsAuthenticated])
 def students_all_details(request):
     student_id = request.data.get("student_id")
     return get_data_from_id_and_serialize(StudentProfile, CombineStudentProfileSerializer, student_id)

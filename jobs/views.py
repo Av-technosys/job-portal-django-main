@@ -75,7 +75,7 @@ def list_jobs(request):
 @permission_classes([IsAuthenticated])
 def submitted_jobs_application(request):
     return application_handler(
-        JobApply, JobApplySerializer, StudentProfile, StudentProfileSerializer, request
+        JobApply, JobApplySerializer, StudentProfile, StudentProfileSerializer,StudentProfile, request
     )
 
 
