@@ -7,6 +7,7 @@ from constants.errors import (
     ERROR_USER_EXIST,
     ERROR_OTP_EXPIRED,
     ERROR_NEW_PASSWORD_NOT_FOUND,
+    LIMIT_REACHED,
 )
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
@@ -182,10 +183,7 @@ class ResetPasswordSendOtpSerializer(serializers.Serializer):
 
         return {"message": SUCCESS_SENDING_OTP}
 
-
 # resend otp
-
-
 class ResendOtpSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -193,26 +191,37 @@ class ResendOtpSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=value)
         except User.DoesNotExist:
-            raise serializers.ValidationError({"message": ERROR_USER_NOT_FOUND})
+            raise serializers.ValidationError({"message": ERROR_USER_NOT_FOUND})    
+            
+
+        if user.last_otp_request and timezone.now() < user.last_otp_request + timedelta(minutes=10):
+            # If within an hour, check the retries_otp count
+            if user.retries_otp >= 3:
+                 raise ResponseHandler.api_exception_error(message=LIMIT_REACHED)
+        else:
+            # Reset retries_otp if one hour has passed
+            user.retries_otp = 0
+            user.save()
         return value
 
     def save(self):
         email = self.validated_data["email"]
         user = User.objects.get(email=email)
-
         # Generate OTP and set OTP expiration time (10 minutes from now)
         # phone_otp = generate_otp()
+        # Increment retries_otp and update last_otp_request
+        user.retries_otp += 1
+        user.last_otp_request = timezone.now()
+        # Generate OTP and set expiration time (10 minutes from now)
         email_otp = generate_otp()
         otp_expiration = timezone.now() + timedelta(minutes=10)
 
         user.email_otp = email_otp
         user.otp_expiration = otp_expiration
         user.save()
-
         # Send OTP via email or phone
         send_email_otp(email, email_otp)
         # send_phone_otp(user.phone_number, user.phone_otp)
-
         return {"message": SUCCESS_SENDING_OTP}
 
 

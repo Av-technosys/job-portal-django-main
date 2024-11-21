@@ -12,5 +12,7 @@ class User(AbstractUser):
     phone_otp = models.CharField(max_length=6, null=True, blank=True)
     email_otp = models.CharField(max_length=6, null=True, blank=True)
     otp_expiration = models.DateTimeField(blank=True, null=True)
+    retries_otp = models.PositiveIntegerField(default=0)
+    last_otp_request = models.DateTimeField(blank=True, null=True) 
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
