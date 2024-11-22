@@ -7,7 +7,7 @@ from constants.errors import (
     ERROR_USER_EXIST,
     ERROR_OTP_EXPIRED,
     ERROR_NEW_PASSWORD_NOT_FOUND,
-    LIMIT_REACHED,
+    OTP_LIMIT_REACHED_ERROR,
 )
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
@@ -197,7 +197,7 @@ class ResendOtpSerializer(serializers.Serializer):
         if user.last_otp_request and timezone.now() < user.last_otp_request + timedelta(minutes=10):
             # If within an hour, check the retries_otp count
             if user.retries_otp >= 3:
-                 raise ResponseHandler.api_exception_error(message=LIMIT_REACHED)
+                 raise ResponseHandler.api_exception_error(message=OTP_LIMIT_REACHED_ERROR)
         else:
             # Reset retries_otp if one hour has passed
             user.retries_otp = 0
