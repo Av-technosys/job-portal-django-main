@@ -46,7 +46,8 @@ class AcademicQualification(models.Model):
         on_delete=models.CASCADE,
     )
     student = models.ForeignKey(
-        StudentProfile, on_delete=models.CASCADE,
+        StudentProfile,
+        on_delete=models.CASCADE,
         related_name="academic_qualifications",
     )
     institution_name = models.CharField(max_length=200)
@@ -67,7 +68,8 @@ class WorkExperience(models.Model):
         on_delete=models.CASCADE,
     )
     student = models.ForeignKey(
-        StudentProfile, on_delete=models.CASCADE,
+        StudentProfile,
+        on_delete=models.CASCADE,
         related_name="work_experiences",
     )
     organization_name = models.CharField(max_length=200)
@@ -84,10 +86,12 @@ class WorkExperience(models.Model):
 class SkillSet(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
     )
     student = models.ForeignKey(
-        StudentProfile, on_delete=models.CASCADE,
+        StudentProfile,
+        on_delete=models.CASCADE,
         related_name="skill_sets",
     )
     skill_name = models.CharField(max_length=100)
@@ -107,7 +111,8 @@ class Certifications(models.Model):
         on_delete=models.CASCADE,
     )
     student = models.ForeignKey(
-        StudentProfile, on_delete=models.CASCADE,
+        StudentProfile,
+        on_delete=models.CASCADE,
         related_name="certifications",
     )
     certification_name = models.CharField(max_length=200)
@@ -123,11 +128,10 @@ class Certifications(models.Model):
 
 class Projects(models.Model):
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     student = models.ForeignKey(
-        StudentProfile, on_delete=models.CASCADE,
+        StudentProfile,
+        on_delete=models.CASCADE,
         related_name="projects",
     )
     project_name = models.CharField(max_length=200)
@@ -142,11 +146,10 @@ class Projects(models.Model):
 
 class SocialUrls(models.Model):
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     student = models.ForeignKey(
-        StudentProfile, on_delete=models.CASCADE,
+        StudentProfile,
+        on_delete=models.CASCADE,
         related_name="social_urls",
     )
     link = models.URLField(blank=True)
@@ -211,7 +214,8 @@ class UploadedFile(models.Model):
         on_delete=models.CASCADE,
     )
     student = models.ForeignKey(
-        StudentProfile, on_delete=models.CASCADE,
+        StudentProfile,
+        on_delete=models.CASCADE,
         related_name="uploaded_files",
     )
     file_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
@@ -221,3 +225,14 @@ class UploadedFile(models.Model):
 
     def __str__(self):
         return f"{self.file_type} for user {self.user.username}"
+
+
+class FCMToken(models.Model):
+    id = models.AutoField(primary_key=True)
+    fcm_token = models.CharField(max_length=255, unique=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"FCM token for {self.user.username}"

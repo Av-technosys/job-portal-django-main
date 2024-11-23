@@ -18,6 +18,6 @@ NO_FILTER_PROVIDED = (
 NO_QUERY_PROVIDED = "No search query provided."
 ERROR_JOB_ID_REQUIRED = "Job ID is required"
 ERROR_NO_APPLICATIONS_FOUND = "No applications found for this job"
-ALREADY_APPLIED =  "You have already applied for this job."
+ALREADY_APPLIED = "You have already applied for this job."
 INVALID_JOB_STATUS = "Invalid job status"
 OTP_LIMIT_REACHED_ERROR = "OTP resend limit reached. Try again after 1 hour."

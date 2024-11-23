@@ -1,7 +1,10 @@
 from rest_framework import serializers
+from user_profiles.models import FCMToken
+from functions.fcm import send_notification_to_topic, subscribe_to_topic
 from .models import *
 from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS
 from constants.jobs import JOB_DETAILS_FIELDS, VALID_STATUS_TRANSITIONS
+from rest_framework.authtoken.models import Token
 
 
 # Serializer for JobDetails model (Section 1)
@@ -69,14 +72,49 @@ class JobApplySerializer(serializers.ModelSerializer):
         new_status = data.get("status")
 
         if job_apply_instance and new_status is not None:
-            current_status = job_apply_instance.status 
+            current_status = job_apply_instance.status
             if new_status not in VALID_STATUS_TRANSITIONS.get(current_status, []):
-                raise serializers.ValidationError(
-                     {"message": INVALID_JOB_STATUS}
-                )
+                raise serializers.ValidationError({"message": INVALID_JOB_STATUS})
         student = data.get("student")
         job = data.get("job")
         if JobApply.objects.filter(student=student, job=job).exists():
             raise serializers.ValidationError({"message": ALREADY_APPLIED})
 
         return data
+
+    def save(self):
+        job = super().save()
+        self.send_notification()
+        return job
+
+    def send_notification(self):
+        try:
+            job_id = self.data.get("job")
+            applied_job_detail = JobInfo.objects.get(id=job_id)
+            recruiter_id = applied_job_detail.user_id
+
+            # TBD Email to the student about application submitted
+            recruiter_token_details = Token.objects.get(user=recruiter_id)
+
+            # Send Notification only if logged in
+            if recruiter_token_details:
+
+                # Send Firebase notification
+                recruiter_fcm_token = FCMToken.objects.get(user=recruiter_id).fcm_token
+                topic_name = f"bell_{recruiter_id}"
+                subscribe_to_topic(recruiter_fcm_token, topic_name)
+
+                # TBD - Move to constant
+                send_notification_to_topic(
+                    topic_name,
+                    "New Job Application Received",
+                    "A new submission is received from a student.",
+                )
+
+        except Token.DoesNotExist:
+            print(
+                "Recruiter doesn't have any active session Skipping Sending Notification"
+            )
+
+        except Exception as e:
+            print("Error while sending notification", e)

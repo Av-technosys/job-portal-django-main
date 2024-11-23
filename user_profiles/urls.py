@@ -16,4 +16,5 @@ urlpatterns = [
     path("filter_job_seeker/", job_seeker),
     path("students_all_details/", students_all_details),
     path("application_status/", application_status),
+    path("store_fcm_token/", store_fcm_token),
 ]

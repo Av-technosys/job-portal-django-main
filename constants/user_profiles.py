@@ -30,6 +30,10 @@ DOCUMENT_TYPES = [
     ("typescript", "Typescript"),
 ]
 
+NOTIFICATION_TYPE_CHOICES = [
+    (0, "New Job Application Received"),
+]
+
 JOB_DETAILS_FIELDS = [
     "id",
     "user",

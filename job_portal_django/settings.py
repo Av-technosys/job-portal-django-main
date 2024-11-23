@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from constants.env_data import *
-
+from firebase_admin import credentials, initialize_app
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +39,10 @@ CORS_ALLOWED_ORIGINS = [
     "https://job-portal-next-ten.vercel.app",
     "https://job-portal-django.vercel.app",
 ]
+
+cred = credentials.Certificate("./job_portal_django/account-key.json")
+
+initialize_app(cred)
 
 # Application definition
 

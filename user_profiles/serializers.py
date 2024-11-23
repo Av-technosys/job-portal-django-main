@@ -1,5 +1,9 @@
 # profiles/serializers.py
 from rest_framework import serializers
+from accounts.models import User
+from constants.errors import RESPONSE_ERROR
+from functions.common import ResponseHandler
+from constants.fcm import FCM_TOKEN_STORED
 from .models import *
 
 
@@ -136,3 +140,20 @@ class CombineStudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
         fields = JOB_DETAILS_FIELDS
+
+
+class StoreFCMTokenSerializer(serializers.Serializer):
+    fcm_token = serializers.CharField()
+
+    def return_response(self, validated_data):
+        user_id = self.initial_data.get("user")
+        if user_id:
+            user = User.objects.get(id=user_id)
+            fcm_token_instance = FCMToken.objects.update_or_create(
+                user=user, defaults={"fcm_token": validated_data["fcm_token"]}
+            )
+
+            if fcm_token_instance:
+                return {"message": FCM_TOKEN_STORED}
+
+        raise ResponseHandler.api_exception_error(RESPONSE_ERROR)
