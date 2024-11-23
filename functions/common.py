@@ -85,6 +85,8 @@ def serializer_handle(Serializers, request):
 
 
 def serializer_handle_customize_response_only_validate(Serializers, request):
+    if request.user.id:
+        request.data["user"] = request.user.id
     serializer = Serializers(data=request.data)
     if serializer.is_valid():
         responseData = serializer.return_response(serializer.data)
@@ -278,7 +280,9 @@ def filter_search_handler(model_class, serializer_class, request):
             instances = model_class.objects.filter(q_filters, **filter_kwargs)
 
         if not instances.exists():
-            ResponseHandler.error(message= ERROR_NOT_FOUND, status_code= status.HTTP_404_NOT_FOUND)
+            ResponseHandler.error(
+                message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+            )
 
         sort_fields = request.data.get("sort", ["created_date"])
         instances = instances.order_by(*sort_fields)
@@ -325,12 +329,18 @@ def job_apply_handler(serializer_class, StudentProfile, request):
         )
 
 
-def application_handler( modal_class, serializer_class, profile, profile_serializer,student_profile, request):
+def application_handler(
+    modal_class, serializer_class, profile, profile_serializer, student_profile, request
+):
     user_type = request.user.user_type
     try:
         if user_type == 1:
             student_id = get_object_or_404(student_profile, user=request.user).id
-            _id = list(modal_class.objects.filter(student_id=student_id).values_list('job_id', flat=True))
+            _id = list(
+                modal_class.objects.filter(student_id=student_id).values_list(
+                    "job_id", flat=True
+                )
+            )
             return get_application_data(
                 _id,
                 modal_class,
@@ -345,9 +355,14 @@ def application_handler( modal_class, serializer_class, profile, profile_seriali
             id = request.data.get("id")
             if not id:
                 return ResponseHandler.error(
-                    message=ERROR_JOB_ID_REQUIRED, status_code=status.HTTP_400_BAD_REQUEST
-                    )
-            _id = list(modal_class.objects.filter(job_id=id).values_list('student_id', flat=True))
+                    message=ERROR_JOB_ID_REQUIRED,
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+            _id = list(
+                modal_class.objects.filter(job_id=id).values_list(
+                    "student_id", flat=True
+                )
+            )
             return get_application_data(
                 _id,
                 modal_class,
@@ -369,9 +384,13 @@ def get_application_data(
 ):
     try:
         if lookup == "student":
-            instances = modal_class.objects.filter(student_id__in=_id).select_related(lookup)
+            instances = modal_class.objects.filter(student_id__in=_id).select_related(
+                lookup
+            )
         elif lookup == "job":
-            instances = modal_class.objects.filter(job_id__in=_id).select_related(lookup)
+            instances = modal_class.objects.filter(job_id__in=_id).select_related(
+                lookup
+            )
 
         if not instances.exists():
             return ResponseHandler.error(
@@ -400,57 +419,55 @@ def get_application_data(
 
 
 def handle_application_status(model, serializer_class, request):
-    if request.method == 'GET':
-        _id = request.data.get("id") 
-        
+    if request.method == "GET":
+        _id = request.data.get("id")
+
         if not _id:
-            return ResponseHandler.error(
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
+            return ResponseHandler.error(status_code=status.HTTP_400_BAD_REQUEST)
 
         try:
             instance = model.objects.filter(job_id=_id)
             if not instance.exists():
                 return ResponseHandler.error(
-                    ERROR_NOT_FOUND,
-                    status_code=status.HTTP_404_NOT_FOUND
+                    ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
                 )
 
             serializer = serializer_class(instance, many=True)
-            return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+            return ResponseHandler.success(
+                serializer.data, status_code=status.HTTP_200_OK
+            )
 
         except:
             return ResponseHandler.error(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-            
-    elif request.method in ['PATCH']:
+
+    elif request.method in ["PATCH"]:
         try:
             job_id = request.data.get("job_id")
             student_id = request.data.get("student_id")
 
             if not job_id or not student_id:
                 return ResponseHandler.error(
-                    RESPONSE_ERROR,
-                    status_code=status.HTTP_400_BAD_REQUEST
+                    RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
                 )
-            instance = model.objects.filter(student_id=student_id, job_id=job_id).first()
+            instance = model.objects.filter(
+                student_id=student_id, job_id=job_id
+            ).first()
             if not instance:
                 return ResponseHandler.error(
-                    ERROR_NOT_FOUND,
-                    status_code=status.HTTP_404_NOT_FOUND
+                    ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
                 )
             serializer = serializer_class(instance, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return ResponseHandler.success([], status_code=status.HTTP_200_OK)
-            
+
             return ResponseHandler.error(
                 serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
             )
 
         except:
             return ResponseHandler.error(
-                RESPONSE_ERROR,
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

@@ -75,7 +75,12 @@ def list_jobs(request):
 @permission_classes([IsAuthenticated])
 def submitted_jobs_application(request):
     return application_handler(
-        JobApply, JobApplySerializer, StudentProfile, StudentProfileSerializer,StudentProfile, request
+        JobApply,
+        JobApplySerializer,
+        StudentProfile,
+        StudentProfileSerializer,
+        StudentProfile,
+        request,
     )
 
 
@@ -90,8 +95,9 @@ def list_submitted_jobs(request):
         StudentProfile,
         request,
     )
-    
+
+
 @api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated, IsRecruiter])
 def application_status(request):
-        return handle_application_status(JobApply,JobApplySerializer, request)
+    return handle_application_status(JobApply, JobApplySerializer, request)

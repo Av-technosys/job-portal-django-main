@@ -92,10 +92,20 @@ def job_seeker(request):
 @permission_classes([IsAuthenticated])
 def students_all_details(request):
     student_id = request.data.get("student_id")
-    return get_data_from_id_and_serialize(StudentProfile, CombineStudentProfileSerializer, student_id)
+    return get_data_from_id_and_serialize(
+        StudentProfile, CombineStudentProfileSerializer, student_id
+    )
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def application_status(request):
-        return handle_application_status(JobApply,JobApplySerializer, request)
+    return handle_application_status(JobApply, JobApplySerializer, request)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def store_fcm_token(request):
+    return serializer_handle_customize_response_only_validate(
+        StoreFCMTokenSerializer, request
+    )

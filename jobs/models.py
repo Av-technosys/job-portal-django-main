@@ -143,4 +143,3 @@ class JobApply(models.Model):
 
     def __str__(self):
         return f"Application for {self.job.designation} by {self.student.user.username}"
-

@@ -183,6 +183,7 @@ class ResetPasswordSendOtpSerializer(serializers.Serializer):
 
         return {"message": SUCCESS_SENDING_OTP}
 
+
 # resend otp
 class ResendOtpSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -191,13 +192,16 @@ class ResendOtpSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=value)
         except User.DoesNotExist:
-            raise serializers.ValidationError({"message": ERROR_USER_NOT_FOUND})    
-            
+            raise serializers.ValidationError({"message": ERROR_USER_NOT_FOUND})
 
-        if user.last_otp_request and timezone.now() < user.last_otp_request + timedelta(minutes=10):
+        if user.last_otp_request and timezone.now() < user.last_otp_request + timedelta(
+            minutes=10
+        ):
             # If within an hour, check the retries_otp count
             if user.retries_otp >= 3:
-                 raise ResponseHandler.api_exception_error(message=OTP_LIMIT_REACHED_ERROR)
+                raise ResponseHandler.api_exception_error(
+                    message=OTP_LIMIT_REACHED_ERROR
+                )
         else:
             # Reset retries_otp if one hour has passed
             user.retries_otp = 0
