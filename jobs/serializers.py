@@ -99,17 +99,28 @@ class JobApplySerializer(serializers.ModelSerializer):
             # Send Notification only if logged in
             if recruiter_token_details:
 
-                # Send Firebase notification
-                recruiter_fcm_token = FCMToken.objects.get(user=recruiter_id).fcm_token
-                topic_name = f"bell_{recruiter_id}"
-                subscribe_to_topic(recruiter_fcm_token, topic_name)
+                try:
+                    # Send Firebase notification
+                    recruiter_fcm_token = FCMToken.objects.get(
+                        user=recruiter_id
+                    ).fcm_token
+                    topic_name = f"bell_{recruiter_id}"
+                    subscribe_to_topic(recruiter_fcm_token, topic_name)
 
-                # TBD - Move to constant
-                send_notification_to_topic(
-                    topic_name,
-                    "New Job Application Received",
-                    "A new submission is received from a student.",
-                )
+                    # TBD - Move to constant
+                    send_notification_to_topic(
+                        topic_name,
+                        "New Job Application Received",
+                        "A new submission is received from a student.",
+                    )
+
+                except FCMToken.DoesNotExist:
+                    print(
+                        "Recruiter doesn't have any active fcm session Skipping Sending Notification"
+                    )
+
+                except Exception as e:
+                    print(e, "err")
 
         except Token.DoesNotExist:
             print(
