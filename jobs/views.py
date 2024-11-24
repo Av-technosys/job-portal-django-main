@@ -66,7 +66,6 @@ def apply_job(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
 def list_jobs(request):
     return filter_search_handler(JobInfo, JobDetailsSerializer, request)
 
