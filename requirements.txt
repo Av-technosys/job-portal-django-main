@@ -9,4 +9,5 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 six==1.16.0
 boto3
-django-storages
+django-storages==1.14.4
+firebase-admin==6.6.0
