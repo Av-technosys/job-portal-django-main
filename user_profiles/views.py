@@ -111,6 +111,5 @@ def store_fcm_token(request):
     )
 
 @api_view(["GET"])
-# @permission_classes([IsAuthenticated, IsJobSeeker])
 def get_recruiter(request):
     return filter_search_handler(CompanyProfile, CompanyProfileSerializer,request)

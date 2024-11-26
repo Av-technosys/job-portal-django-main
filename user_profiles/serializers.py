@@ -158,8 +158,4 @@ class StoreFCMTokenSerializer(serializers.Serializer):
 
         raise ResponseHandler.api_exception_error(RESPONSE_ERROR)
     
-class CompanyProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CompanyProfile
-        fields = '__all__'
 
