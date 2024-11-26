@@ -109,3 +109,7 @@ def store_fcm_token(request):
     return serializer_handle_customize_response_only_validate(
         StoreFCMTokenSerializer, request
     )
+
+@api_view(["GET"])
+def get_recruiter(request):
+    return filter_search_handler(CompanyProfile, CompanyProfileSerializer,request)
