@@ -157,3 +157,9 @@ class StoreFCMTokenSerializer(serializers.Serializer):
                 return {"message": FCM_TOKEN_STORED}
 
         raise ResponseHandler.api_exception_error(RESPONSE_ERROR)
+    
+class CompanyProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyProfile
+        fields = '__all__'
+
