@@ -249,6 +249,11 @@ def filters(request):
                 | Q(contact_and_skills__skills_required__icontains=filter_result)
                 | Q(job_description__job_title__icontains=filter_result)
             )
+        elif "list_recruiters" in request.path:
+            q_filters = (
+                Q(company_name__icontains=filter_result)
+                | Q(company_description__icontains=filter_result)
+            )
 
     filter_mappings = {
         "education": "user__academicqualification__specialization__in",
@@ -259,6 +264,9 @@ def filters(request):
         "job_location": "location__in",
         "job_type": "job_type__in",
         "skills": "contact_info__skills_required__in",
+        "company_location": "city__in",
+        "company_state": "state__in",
+        "company_country": "country__in",
     }
 
     for key, filter_key in filter_mappings.items():
