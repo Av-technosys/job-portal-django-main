@@ -354,15 +354,18 @@ def application_handler(
         elif user_type == 2:
             id = request.data.get("id")
             if not id:
-                return ResponseHandler.error(
-                    message=ERROR_JOB_ID_REQUIRED,
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                # Get all applications for jobs where the current user is the recruiter
+                _id = list(
+                    modal_class.objects.filter(
+                        job__user=request.user
+                    ).values_list("student_id", flat=True)
                 )
-            _id = list(
-                modal_class.objects.filter(job_id=id).values_list(
-                    "student_id", flat=True
+            else:
+                _id = list(
+                    modal_class.objects.filter(job_id=id).values_list(
+                        "student_id", flat=True
+                    )
                 )
-            )
             return get_application_data(
                 _id,
                 modal_class,
