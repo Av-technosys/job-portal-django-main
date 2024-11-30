@@ -89,9 +89,8 @@ class JobApplySerializer(serializers.ModelSerializer):
 
     def send_notification(self):
         try:
-            job_id = self.data.get("job")
-            applied_job_detail = JobInfo.objects.get(id=job_id)
-            recruiter_id = applied_job_detail.user_id
+            # job_id = self.data.get("job")
+            recruiter_id = self.data.get("owner")
 
             # TBD Email to the student about application submitted
             recruiter_token_details = Token.objects.get(user=recruiter_id)

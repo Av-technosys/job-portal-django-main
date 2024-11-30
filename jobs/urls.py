@@ -28,6 +28,8 @@ urlpatterns = [
     path("apply_job/", apply_job, name="apply_job"),
     # API for job list
     path("list_jobs/", list_jobs, name="list_jobs"),
+    # API for my posted job list
+    path("my_posted_jobs/", my_posted_jobs, name="my_posted_jobs"),
     # get all the submitted application by the student to recruiter
     path(
         "submitted_jobs_application/",
