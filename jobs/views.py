@@ -62,11 +62,18 @@ def get_job_details(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def apply_job(request):
-    return job_apply_handler(JobApplySerializer, StudentProfile, request)
+    return job_apply_handler(JobApplySerializer, StudentProfile, JobInfo, request)
 
 
 @api_view(["GET"])
 def list_jobs(request):
+    return filter_search_handler(JobInfo, JobDetailsSerializer, request)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def my_posted_jobs(request):
+    request.data["owner"] = [request.user.id]
     return filter_search_handler(JobInfo, JobDetailsSerializer, request)
 
 

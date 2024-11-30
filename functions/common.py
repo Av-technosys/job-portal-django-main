@@ -250,9 +250,8 @@ def filters(request):
                 | Q(job_description__job_title__icontains=filter_result)
             )
         elif "list_recruiters" in request.path:
-            q_filters = (
-                Q(company_name__icontains=filter_result)
-                | Q(company_description__icontains=filter_result)
+            q_filters = Q(company_name__icontains=filter_result) | Q(
+                company_description__icontains=filter_result
             )
 
     filter_mappings = {
@@ -280,12 +279,20 @@ def filters(request):
 def filter_search_handler(model_class, serializer_class, request):
     q_filters, filter_kwargs = filters(request)
 
+    owner_filters = {}
+    if request.data.get("owner"):
+        owner_filters["user_id__in"] = request.data.get("owner")
+
+    print(request.data.get("owner"), "owner", owner_filters)
+
     try:
-        if not q_filters and not filter_kwargs:
+        if not q_filters and not filter_kwargs and not owner_filters:
             instances = model_class.objects.all()
 
         else:
-            instances = model_class.objects.filter(q_filters, **filter_kwargs)
+            instances = model_class.objects.filter(
+                q_filters, **filter_kwargs, **owner_filters
+            )
 
         if not instances.exists():
             ResponseHandler.error(
@@ -305,7 +312,8 @@ def filter_search_handler(model_class, serializer_class, request):
         }
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
-    except:
+    except Exception as e:
+        print(e, "error in filter search handler")
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -321,7 +329,7 @@ def paginator(queryset, request):
     return page_obj, paginator.count, paginator.num_pages
 
 
-def job_apply_handler(serializer_class, StudentProfile, request):
+def job_apply_handler(serializer_class, StudentProfile, JobInfo, request):
     try:
         if request.user.user_type == 2:
             return ResponseHandler.error(
@@ -329,9 +337,12 @@ def job_apply_handler(serializer_class, StudentProfile, request):
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         student_id = get_object_or_404(StudentProfile, user=request.user).id
+        job_owner_id = get_object_or_404(JobInfo, id=request.data.get("job")).user_id
         request.data["student"] = student_id
+        request.data["owner"] = job_owner_id
         return serializer_handle(serializer_class, request)
-    except:
+    except Exception as e:
+        print(e, "error in job apply handler")
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -364,9 +375,9 @@ def application_handler(
             if not id:
                 # Get all applications for jobs where the current user is the recruiter
                 _id = list(
-                    modal_class.objects.filter(
-                        job__user=request.user
-                    ).values_list("student_id", flat=True)
+                    modal_class.objects.filter(owner_id=request.user.id).values_list(
+                        "student_id", flat=True
+                    )
                 )
             else:
                 _id = list(
@@ -374,6 +385,7 @@ def application_handler(
                         "student_id", flat=True
                     )
                 )
+
             return get_application_data(
                 _id,
                 modal_class,

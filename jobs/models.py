@@ -137,6 +137,9 @@ class JobApply(models.Model):
     job = models.ForeignKey(
         JobInfo, on_delete=models.CASCADE, related_name="applications"
     )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="job_owner"
+    )
     status = models.PositiveSmallIntegerField(choices=JOB_STATUS_FIELDS, default=0)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
