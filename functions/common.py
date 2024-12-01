@@ -235,7 +235,7 @@ def filters(request):
     q_filters = Q()
     filter_kwargs = {}
 
-    if filter_result := request.data.get("search"):
+    if filter_result := request.GET.get("search"):
         if "filter_job_seeker" in request.path:
             q_filters = (
                 Q(user__academicqualification__specialization__icontains=filter_result)
@@ -269,7 +269,7 @@ def filters(request):
     }
 
     for key, filter_key in filter_mappings.items():
-        if terms := request.data.get(key):
+        if terms := request.GET.get(key):
             if isinstance(terms, list):
                 filter_kwargs[filter_key] = terms
 
@@ -282,8 +282,6 @@ def filter_search_handler(model_class, serializer_class, request):
     owner_filters = {}
     if request.data.get("owner"):
         owner_filters["user_id__in"] = request.data.get("owner")
-
-    print(request.data.get("owner"), "owner", owner_filters)
 
     try:
         if not q_filters and not filter_kwargs and not owner_filters:
@@ -299,7 +297,7 @@ def filter_search_handler(model_class, serializer_class, request):
                 message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
             )
 
-        sort_fields = request.data.get("sort", ["created_date"])
+        sort_fields = request.GET.get("sort", ["created_date"])
         instances = instances.order_by(*sort_fields)
 
         page_obj, count, total_pages = paginator(instances, request)
