@@ -78,7 +78,8 @@ def serializer_handle(Serializers, request):
         return ResponseHandler.error(
             serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
         )
-    except Exception:
+    except Exception as e:
+        print(e, "error in serializer_handle")
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -269,7 +270,7 @@ def filters(request):
     }
 
     for key, filter_key in filter_mappings.items():
-        if terms := request.GET.get(key):
+        if terms := request.GET.getlist(key):
             if isinstance(terms, list):
                 filter_kwargs[filter_key] = terms
 
@@ -297,7 +298,7 @@ def filter_search_handler(model_class, serializer_class, request):
                 message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
             )
 
-        sort_fields = request.GET.get("sort", ["created_date"])
+        sort_fields = request.GET.getlist("sort", ["created_date"])
         instances = instances.order_by(*sort_fields)
 
         page_obj, count, total_pages = paginator(instances, request)
@@ -327,15 +328,18 @@ def paginator(queryset, request):
     return page_obj, paginator.count, paginator.num_pages
 
 
-def job_apply_handler(serializer_class, StudentProfile, JobInfo, request):
+def job_apply_handler(serializer_class, JobInfo, request):
     try:
         if request.user.user_type == 2:
             return ResponseHandler.error(
                 message=ERROR_INVALID_CREDENTIALS,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
-        student_id = get_object_or_404(StudentProfile, user=request.user).id
-        job_owner_id = get_object_or_404(JobInfo, id=request.data.get("job")).user_id
+
+        # Student Id is used by logged in student user
+        student_id = request.user.id
+        job_id = request.data.get("job")
+        job_owner_id = get_object_or_404(JobInfo, id=job_id).user_id
         request.data["student"] = student_id
         request.data["owner"] = job_owner_id
         return serializer_handle(serializer_class, request)

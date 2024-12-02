@@ -1,13 +1,14 @@
 from django.urls import path
 from .views import (
+    account_details,
+    list_notifications,
     register_user,
+    resend_otp,
+    reset_password_otp,
     user_login,
     user_logout,
     verify_otp,
-    reset_password_otp,
-    resend_otp,
     verify_reset_password,
-    account_details,
 )
 
 urlpatterns = [
@@ -31,4 +32,5 @@ urlpatterns = [
         name="verify_otp_password_reset",
     ),
     path("details/", account_details, name="account_details"),
+    path("notifications/", list_notifications, name="list_notification"),
 ]

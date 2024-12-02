@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
 from constants.common import USER_TYPE
+from constants.user_profiles import NOTIFICATION_TYPE_CHOICES
 
 
 class User(AbstractUser):
@@ -16,3 +18,24 @@ class User(AbstractUser):
     last_otp_request = models.DateTimeField(blank=True, null=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+
+class Notification(models.Model):
+    id = models.AutoField(primary_key=True)
+    type = models.CharField(max_length=50, choices=NOTIFICATION_TYPE_CHOICES)
+    body = models.CharField(max_length=255)
+    sent_from = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_from"
+    )
+    received_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="received_by",
+    )
+    meta_data = models.JSONField(null=True, blank=True)
+    read_status = models.BooleanField(default=False)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Notification for {self.received_by.username}"
