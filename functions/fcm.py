@@ -5,6 +5,9 @@ from accounts.serializers import NotificationSerializer
 from rest_framework import status
 from types import SimpleNamespace
 from constants.errors import RESPONSE_ERROR
+from user_profiles.models import FCMToken
+from rest_framework.authtoken.models import Token
+from constants.user_profiles import NOTIFICATION_TYPE_CHOICES_TITLE
 
 
 def subscribe_to_topic(device_token, topic):
@@ -38,6 +41,45 @@ def unsubscribe_from_topic(device_token, topic):
         print(f"Failed to unsubscribe {device_token} from topic {topic}")
 
     return response
+
+
+def send_notification(send_to_id, topic_name, notification_type):
+    try:
+
+        # TBD Email to the student about application submitted
+        recruiter_token_details = Token.objects.get(user=send_to_id)
+
+        # Send Notification only if logged in
+        if recruiter_token_details:
+
+            try:
+                # Send Firebase notification
+                recruiter_fcm_token = FCMToken.objects.get(user=send_to_id).fcm_token
+                subscribe_to_topic(recruiter_fcm_token, topic_name)
+
+                send_notification_to_topic(
+                    topic_name,
+                    NOTIFICATION_TYPE_CHOICES_TITLE[notification_type][
+                        "notification_title"
+                    ],
+                    NOTIFICATION_TYPE_CHOICES_TITLE[notification_type][
+                        "notification_body"
+                    ],
+                )
+
+            except FCMToken.DoesNotExist:
+                print(
+                    "Recruiter doesn't have any active fcm session Skipping Sending Notification"
+                )
+
+            except Exception as e:
+                print(e, "err")
+
+    except Token.DoesNotExist:
+        print("Recruiter doesn't have any active session Skipping Sending Notification")
+
+    except Exception as e:
+        print("Error while sending notification", e)
 
 
 def list_notification(serializer, request):

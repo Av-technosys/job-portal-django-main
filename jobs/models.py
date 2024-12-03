@@ -147,3 +147,26 @@ class JobApply(models.Model):
 
     def __str__(self):
         return f"Application for {self.job.designation} by {self.student.username}"
+
+
+class Communication(models.Model):
+    application = models.ForeignKey(
+        JobApply, on_delete=models.CASCADE, related_name="communication_id"
+    )
+    message = models.TextField()
+    sent_from = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="message_sent_from",
+    )
+    received_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="message_received_by",
+    )
+    meta_data = models.JSONField(null=True, blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Message from {self.sent_from.username} to {self.received_by.username}"

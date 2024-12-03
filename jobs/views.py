@@ -107,3 +107,9 @@ def list_submitted_jobs(request):
 @permission_classes([IsAuthenticated, IsRecruiter])
 def application_status(request):
     return handle_application_status(JobApply, JobApplySerializer, request)
+
+
+@api_view(["GET", "POST", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def chat(request, application_id):
+    return message_handler(CommunicationSerializer, request, application_id)

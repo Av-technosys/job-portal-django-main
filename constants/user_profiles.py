@@ -30,17 +30,22 @@ DOCUMENT_TYPES = [
     ("typescript", "Typescript"),
 ]
 
-NOTIFICATION_TYPE_CHOICES_ID = [0]
+NOTIFICATION_TYPE_CHOICES_ID = [0, 1]
 
 
 NOTIFICATION_TYPE_CHOICES = [
     (NOTIFICATION_TYPE_CHOICES_ID[0], "new_job_application"),
+    (NOTIFICATION_TYPE_CHOICES_ID[1], "job_application_communication"),
 ]
 
 NOTIFICATION_TYPE_CHOICES_TITLE = {
     NOTIFICATION_TYPE_CHOICES_ID[0]: {
         "notification_title": "New Job Application Received",
         "notification_body": "A new submission is received from a student.",
+    },
+    NOTIFICATION_TYPE_CHOICES_ID[1]: {
+        "notification_title": "Job Application Update",
+        "notification_body": "A new message received",
     },
 }
 
@@ -76,7 +81,7 @@ COMPANY_PROFILE_FIELDS = [
     "id",
     "user",
     "company_email",
-    "company_name", 
+    "company_name",
     "company_description",
     "company_url",
     "address_line_1",
@@ -88,5 +93,5 @@ COMPANY_PROFILE_FIELDS = [
     "created_date",
     "updated_date",
     "company_id",
-    "job_details"
+    "job_details",
 ]

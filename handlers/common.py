@@ -1,5 +1,6 @@
 from functions.common import *
 from constants.errors import *
+from functions.message import *
 
 
 def request_handler(model, serializer, request):
@@ -12,6 +13,18 @@ def request_handler(model, serializer, request):
             return update_handle(model, serializer, request)
         case "DELETE":
             return delete_handle(model, request)
+        case _:
+            return ResponseHandler.error(
+                METHOD_ERROR, status_code=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+
+
+def message_handler(serializer_class, request, application_id):
+    match request.method:
+        case "GET":
+            return message_get_handle(serializer_class, request, application_id)
+        case "POST":
+            return message_post_handle(serializer_class, request)
         case _:
             return ResponseHandler.error(
                 METHOD_ERROR, status_code=status.HTTP_405_METHOD_NOT_ALLOWED
