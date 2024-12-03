@@ -189,3 +189,19 @@ AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY
 AWS_STORAGE_BUCKET_NAME = AWS_STORAGE_BUCKET_NAME
 AWS_S3_REGION_NAME = AWS_S3_REGION_NAME
 AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",  # Set to 'ERROR' to capture only error messages
+        },
+    },
+}
