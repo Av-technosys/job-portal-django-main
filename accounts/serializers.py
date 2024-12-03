@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import Notification, User
 from constants.errors import (
     ERROR_INVALID_CREDENTIALS,
     ERROR_OTP_VERIFICATION_FAILED,
@@ -278,3 +278,9 @@ class VerifyOtpAndChangePasswordSerializer(serializers.Serializer):
         user.save()
 
         return {"message": PASSWORD_RESET}
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = "__all__"

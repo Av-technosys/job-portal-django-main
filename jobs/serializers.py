@@ -1,6 +1,14 @@
 from rest_framework import serializers
 from user_profiles.models import FCMToken
-from functions.fcm import send_notification_to_topic, subscribe_to_topic
+from functions.fcm import (
+    save_notification,
+    send_notification_to_topic,
+    subscribe_to_topic,
+)
+from constants.user_profiles import (
+    NOTIFICATION_TYPE_CHOICES_ID,
+    NOTIFICATION_TYPE_CHOICES_TITLE,
+)
 from .models import *
 from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS
 from constants.jobs import JOB_DETAILS_FIELDS, VALID_STATUS_TRANSITIONS
@@ -61,7 +69,6 @@ class CombinedJobDetailsSerializer(serializers.ModelSerializer):
 
 
 class JobApplySerializer(serializers.ModelSerializer):
-    user_id = serializers.PrimaryKeyRelatedField(source="user", read_only=True)
 
     class Meta:
         model = JobApply
@@ -89,8 +96,20 @@ class JobApplySerializer(serializers.ModelSerializer):
 
     def send_notification(self):
         try:
-            # job_id = self.data.get("job")
+            job_id = self.data.get("job")
             recruiter_id = self.data.get("owner")
+            student_id = self.data.get("student")
+
+            # Save notification to the database
+            save_notification(
+                {
+                    "type": NOTIFICATION_TYPE_CHOICES_ID[0],
+                    "body": NOTIFICATION_TYPE_CHOICES_TITLE[0]["notification_title"],
+                    "metadata": {"job_id": job_id},
+                },
+                recruiter_id,
+                student_id,
+            )
 
             # TBD Email to the student about application submitted
             recruiter_token_details = Token.objects.get(user=recruiter_id)
@@ -106,11 +125,10 @@ class JobApplySerializer(serializers.ModelSerializer):
                     topic_name = f"bell_{recruiter_id}"
                     subscribe_to_topic(recruiter_fcm_token, topic_name)
 
-                    # TBD - Move to constant
                     send_notification_to_topic(
                         topic_name,
-                        "New Job Application Received",
-                        "A new submission is received from a student.",
+                        NOTIFICATION_TYPE_CHOICES_TITLE[0]["notification_title"],
+                        NOTIFICATION_TYPE_CHOICES_TITLE[0]["notification_body"],
                     )
 
                 except FCMToken.DoesNotExist:

@@ -7,6 +7,7 @@ import os
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
+import logging
 
 
 def generate_otp():
@@ -16,6 +17,8 @@ def generate_otp():
 
 from constants.errors import *
 from rest_framework.response import Response
+
+logger = logging.getLogger("django")
 
 
 def get_flattened_error_message(message):
@@ -78,7 +81,8 @@ def serializer_handle(Serializers, request):
         return ResponseHandler.error(
             serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
         )
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error in serializer_handle: {e}")
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -269,7 +273,7 @@ def filters(request):
     }
 
     for key, filter_key in filter_mappings.items():
-        if terms := request.GET.get(key):
+        if terms := request.GET.getlist(key):
             if isinstance(terms, list):
                 filter_kwargs[filter_key] = terms
 
@@ -297,7 +301,7 @@ def filter_search_handler(model_class, serializer_class, request):
                 message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
             )
 
-        sort_fields = request.GET.get("sort", ["created_date"])
+        sort_fields = request.GET.getlist("sort", ["created_date"])
         instances = instances.order_by(*sort_fields)
 
         page_obj, count, total_pages = paginator(instances, request)
@@ -311,7 +315,7 @@ def filter_search_handler(model_class, serializer_class, request):
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
     except Exception as e:
-        print(e, "error in filter search handler")
+        logger.error(f"Error in filter_search_handler: {e}")
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -327,20 +331,23 @@ def paginator(queryset, request):
     return page_obj, paginator.count, paginator.num_pages
 
 
-def job_apply_handler(serializer_class, StudentProfile, JobInfo, request):
+def job_apply_handler(serializer_class, JobInfo, request):
     try:
         if request.user.user_type == 2:
             return ResponseHandler.error(
                 message=ERROR_INVALID_CREDENTIALS,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
-        student_id = get_object_or_404(StudentProfile, user=request.user).id
-        job_owner_id = get_object_or_404(JobInfo, id=request.data.get("job")).user_id
+
+        # Student Id is used by logged in student user
+        student_id = request.user.id
+        job_id = request.data.get("job")
+        job_owner_id = get_object_or_404(JobInfo, id=job_id).user_id
         request.data["student"] = student_id
         request.data["owner"] = job_owner_id
         return serializer_handle(serializer_class, request)
     except Exception as e:
-        print(e, "error in job apply handler")
+        logger.error(f"Error in job_apply_handler: {e}")
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -352,9 +359,8 @@ def application_handler(
     user_type = request.user.user_type
     try:
         if user_type == 1:
-            student_id = get_object_or_404(student_profile, user=request.user).id
             _id = list(
-                modal_class.objects.filter(student_id=student_id).values_list(
+                modal_class.objects.filter(student_id=request.user.id).values_list(
                     "job_id", flat=True
                 )
             )
@@ -394,7 +400,8 @@ def application_handler(
                 "student",
             )
 
-    except:
+    except Exception as err:
+        logger.error(f"Error in application_handler: {err}")
         return ResponseHandler.error(
             message=RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
@@ -421,7 +428,12 @@ def get_application_data(
 
         applications = serializer_class(instances, many=True)
         related_ids = [application.get(lookup) for application in applications.data]
-        related_profiles = profile.objects.filter(id__in=related_ids)
+
+        if lookup == "student":
+            related_profiles = profile.objects.filter(user_id__in=related_ids)
+
+        elif lookup == "job":
+            related_profiles = profile.objects.filter(id__in=related_ids)
 
         page_obj, count, total_pages = paginator(related_profiles, request)
         serializer = profile_serializer(page_obj, many=True)
@@ -433,7 +445,8 @@ def get_application_data(
         }
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
-    except:
+    except Exception as err:
+        logger.error(f"Error in get_application_data: {err}")
         return ResponseHandler.error(
             message=RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )

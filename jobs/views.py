@@ -62,7 +62,7 @@ def get_job_details(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def apply_job(request):
-    return job_apply_handler(JobApplySerializer, StudentProfile, JobInfo, request)
+    return job_apply_handler(JobApplySerializer, JobInfo, request)
 
 
 @api_view(["GET"])

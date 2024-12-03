@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from accounts.models import User
+from functions.fcm import list_notification
 from .serializers import (
     UserSerializer,
     LoginSerializer,
@@ -9,6 +10,7 @@ from .serializers import (
     ResetPasswordSendOtpSerializer,
     ResendOtpSerializer,
     VerifyOtpAndChangePasswordSerializer,
+    NotificationSerializer,
 )
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
@@ -77,3 +79,9 @@ def verify_reset_password(request):
 @permission_classes([IsAuthenticated])
 def account_details(request):
     return get_customize_handler(User, UserSerializer, {"email": request.user})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_notifications(request):
+    return list_notification(NotificationSerializer, request)

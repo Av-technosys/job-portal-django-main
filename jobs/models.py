@@ -5,6 +5,7 @@ from user_profiles.models import StudentProfile
 
 
 from django.db import models
+from accounts.models import User
 
 
 # Section 1: Job Details (Page 1)
@@ -132,7 +133,7 @@ class SkillsCertificationsResponsibilities(models.Model):
 
 class JobApply(models.Model):
     student = models.ForeignKey(
-        StudentProfile, on_delete=models.CASCADE, related_name="students"
+        User, on_delete=models.CASCADE, related_name="student_id_applied"
     )
     job = models.ForeignKey(
         JobInfo, on_delete=models.CASCADE, related_name="applications"
@@ -145,4 +146,4 @@ class JobApply(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Application for {self.job.designation} by {self.student.user.username}"
+        return f"Application for {self.job.designation} by {self.student.username}"
