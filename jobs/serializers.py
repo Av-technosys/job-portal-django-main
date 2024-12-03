@@ -1,10 +1,5 @@
 from rest_framework import serializers
-from user_profiles.models import FCMToken
-from functions.fcm import (
-    save_notification,
-    send_notification_to_topic,
-    subscribe_to_topic,
-)
+from functions.fcm import save_notification, send_notification
 from constants.user_profiles import (
     NOTIFICATION_TYPE_CHOICES_ID,
     NOTIFICATION_TYPE_CHOICES_TITLE,
@@ -12,7 +7,6 @@ from constants.user_profiles import (
 from .models import *
 from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS
 from constants.jobs import JOB_DETAILS_FIELDS, VALID_STATUS_TRANSITIONS
-from rest_framework.authtoken.models import Token
 
 
 # Serializer for JobDetails model (Section 1)
@@ -91,10 +85,10 @@ class JobApplySerializer(serializers.ModelSerializer):
 
     def save(self):
         job = super().save()
-        self.send_notification()
+        self.send_apply_notification()
         return job
 
-    def send_notification(self):
+    def send_apply_notification(self):
         try:
             job_id = self.data.get("job")
             recruiter_id = self.data.get("owner")
@@ -111,38 +105,28 @@ class JobApplySerializer(serializers.ModelSerializer):
                 student_id,
             )
 
-            # TBD Email to the student about application submitted
-            recruiter_token_details = Token.objects.get(user=recruiter_id)
-
-            # Send Notification only if logged in
-            if recruiter_token_details:
-
-                try:
-                    # Send Firebase notification
-                    recruiter_fcm_token = FCMToken.objects.get(
-                        user=recruiter_id
-                    ).fcm_token
-                    topic_name = f"bell_{recruiter_id}"
-                    subscribe_to_topic(recruiter_fcm_token, topic_name)
-
-                    send_notification_to_topic(
-                        topic_name,
-                        NOTIFICATION_TYPE_CHOICES_TITLE[0]["notification_title"],
-                        NOTIFICATION_TYPE_CHOICES_TITLE[0]["notification_body"],
-                    )
-
-                except FCMToken.DoesNotExist:
-                    print(
-                        "Recruiter doesn't have any active fcm session Skipping Sending Notification"
-                    )
-
-                except Exception as e:
-                    print(e, "err")
-
-        except Token.DoesNotExist:
-            print(
-                "Recruiter doesn't have any active session Skipping Sending Notification"
+            send_notification(
+                recruiter_id, f"bell_{recruiter_id}", NOTIFICATION_TYPE_CHOICES_ID[0]
             )
 
         except Exception as e:
-            print("Error while sending notification", e)
+            print("Error while sending send_apply_notification", e)
+
+
+class CommunicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Communication
+        fields = "__all__"
+
+    def save(self):
+        message = super().save()
+        self.send_message_notification()
+        return message
+
+    def send_message_notification(self):
+        application_id = self.data.get("application")
+        received_by = self.data.get("received_by")
+
+        send_notification(
+            received_by, f"message_{application_id}", NOTIFICATION_TYPE_CHOICES_ID[1]
+        )
