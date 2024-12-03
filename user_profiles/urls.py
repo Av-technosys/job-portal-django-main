@@ -17,5 +17,6 @@ urlpatterns = [
     path("students_all_details/", students_all_details),
     path("application_status/", application_status),
     path("store_fcm_token/", store_fcm_token),
+    path('recruiter/<int:recruiter_id>/', get_recruiter_details, name='get_recruiter_by_id'),
     path('list_recruiters/', get_recruiter, name='list_recruiter'),
 ]

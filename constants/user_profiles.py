@@ -71,3 +71,22 @@ JOB_DETAILS_FIELDS = [
     "social_urls",
     "uploaded_files",
 ]
+
+COMPANY_PROFILE_FIELDS = [
+    "id",
+    "user",
+    "company_email",
+    "company_name", 
+    "company_description",
+    "company_url",
+    "address_line_1",
+    "address_line_2",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+    "created_date",
+    "updated_date",
+    "company_id",
+    "job_details"
+]
