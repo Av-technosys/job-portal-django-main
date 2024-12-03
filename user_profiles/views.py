@@ -116,6 +116,5 @@ def get_recruiter(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def get_recruiter_details(request):
-    recruiter_id = request.data.get("recruiter_id")
+def get_recruiter_details(request,recruiter_id):
     return get_data_from_id_and_serialize(CompanyProfile, CombinedCompanyDetailSerializer, recruiter_id)

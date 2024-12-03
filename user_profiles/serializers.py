@@ -160,6 +160,7 @@ class StoreFCMTokenSerializer(serializers.Serializer):
 
 class CombinedCompanyDetailSerializer(serializers.ModelSerializer):
     company_id = CompanyIdSerializer(many=False, read_only=True, source='user.company_id')
+    job_details=JobDetailsSerializer(many=False, read_only=True, source='user.job_details')
 
     class Meta:
         model = CompanyProfile

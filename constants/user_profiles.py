@@ -77,5 +77,6 @@ COMPANY_PROFILE_FIELDS = [
     "country",
     "created_date",
     "updated_date",
-    "company_id"
+    "company_id",
+    "job_details"
 ]
