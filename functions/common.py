@@ -273,7 +273,7 @@ def filters(request):
     }
 
     for key, filter_key in filter_mappings.items():
-        if terms := request.GET.getlist(key):
+        if terms := request.GET.getlist(f"{key}[]"):
             if isinstance(terms, list):
                 filter_kwargs[filter_key] = terms
 
@@ -301,7 +301,7 @@ def filter_search_handler(model_class, serializer_class, request):
                 message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
             )
 
-        sort_fields = request.GET.getlist("sort", ["created_date"])
+        sort_fields = request.GET.getlist("sort[]", ["created_date"])
         instances = instances.order_by(*sort_fields)
 
         page_obj, count, total_pages = paginator(instances, request)

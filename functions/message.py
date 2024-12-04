@@ -9,7 +9,7 @@ def message_get_handle(serializer_class, request, application_id):
     try:
         message_instance = Communication.objects.filter(application=application_id)
         # Descending order of created date is the latest message
-        message_instance = message_instance.order_by("-created_date")
+        message_instance = message_instance.order_by("created_date")
 
         page_obj, count, total_pages = paginator(message_instance, request)
         serializer = serializer_class(page_obj, many=True)
