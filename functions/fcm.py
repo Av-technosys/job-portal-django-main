@@ -23,6 +23,7 @@ def subscribe_to_topic(device_token, topic):
 
 def send_notification_to_topic(topic, title, body):
     message = messaging.Message(
+        data={"topic": topic},
         notification=messaging.Notification(title=title, body=body),
         topic=topic,
     )

@@ -128,5 +128,7 @@ class CommunicationSerializer(serializers.ModelSerializer):
         received_by = self.data.get("received_by")
 
         send_notification(
-            received_by, f"message_{application_id}", NOTIFICATION_TYPE_CHOICES_ID[1]
+            received_by,
+            f"message_{application_id}_{received_by}",
+            NOTIFICATION_TYPE_CHOICES_ID[1],
         )
