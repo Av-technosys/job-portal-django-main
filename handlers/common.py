@@ -24,7 +24,7 @@ def message_handler(serializer_class, request, application_id):
         case "GET":
             return message_get_handle(serializer_class, request, application_id)
         case "POST":
-            return message_post_handle(serializer_class, request)
+            return message_post_handle(serializer_class, request, application_id)
         case _:
             return ResponseHandler.error(
                 METHOD_ERROR, status_code=status.HTTP_405_METHOD_NOT_ALLOWED

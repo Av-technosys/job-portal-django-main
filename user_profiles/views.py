@@ -110,11 +110,15 @@ def store_fcm_token(request):
         StoreFCMTokenSerializer, request
     )
 
+
 @api_view(["GET"])
 def get_recruiter(request):
-    return filter_search_handler(CompanyProfile, CompanyProfileSerializer,request)
+    return filter_search_handler(CompanyProfile, CompanyProfileSerializer, request)
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def get_recruiter_details(request,recruiter_id):
-    return get_data_from_id_and_serialize(CompanyProfile, CombinedCompanyDetailSerializer, recruiter_id)
+def get_recruiter_details(request, recruiter_id):
+    return get_data_from_id_and_serialize(
+        CompanyProfile, CombinedCompanyDetailSerializer, recruiter_id
+    )

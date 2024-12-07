@@ -158,9 +158,14 @@ class StoreFCMTokenSerializer(serializers.Serializer):
 
         raise ResponseHandler.api_exception_error(RESPONSE_ERROR)
 
+
 class CombinedCompanyDetailSerializer(serializers.ModelSerializer):
-    company_id = CompanyIdSerializer(many=False, read_only=True, source='user.company_id')
-    job_details=JobDetailsSerializer(many=False, read_only=True, source='user.job_details')
+    company_id = CompanyIdSerializer(
+        many=False, read_only=True, source="user.company_id"
+    )
+    job_details = JobDetailsSerializer(
+        many=False, read_only=True, source="user.job_details"
+    )
 
     class Meta:
         model = CompanyProfile

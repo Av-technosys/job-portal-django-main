@@ -28,12 +28,13 @@ def message_get_handle(serializer_class, request, application_id):
         )
 
 
-def message_post_handle(serializer_class, request):
+def message_post_handle(serializer_class, request, application_id):
 
     try:
-        job_apply = get_object_or_404(JobApply, id=request.data["application"])
+        job_apply = get_object_or_404(JobApply, id=application_id)
 
         request.data["sent_from"] = request.user.id
+        request.data["application"] = application_id
 
         if request.user.user_type == 1:
             request.data["received_by"] = job_apply.owner.id
