@@ -67,7 +67,7 @@ def apply_job(request):
 
 @api_view(["GET"])
 def list_jobs(request):
-    return filter_search_handler(JobInfo, JobDetailsSerializer, request)
+    return filter_search_handler(JobInfo, JobListingSeekerViewSerializer, request)
 
 
 @api_view(["GET"])
@@ -114,12 +114,3 @@ def application_status(request):
 def chat(request, application_id):
     return message_handler(CommunicationSerializer, request, application_id)
 
-
-@api_view(["GET"])
-# @permission_classes([IsAuthenticated, IsRecruiter])
-def get_job_lisitng_seeker_view(request):
-    return filter_search_handler(
-        JobInfo,
-        JobListingSeekerViewSerializer,
-        request,
-    )

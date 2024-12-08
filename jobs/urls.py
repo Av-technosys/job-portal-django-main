@@ -42,10 +42,4 @@ urlpatterns = [
     path("application_status/", application_status, name="application_status"),
     # chat
     path("chat/<int:application_id>", chat, name="chat"),
-    # Job Lisitng Seeker View
-    path(
-        "job_listings_seeker_view/",
-        get_job_lisitng_seeker_view,
-        name="job_lisitings_seeker_view",
-    ),
 ]
