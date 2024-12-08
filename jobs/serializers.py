@@ -4,6 +4,12 @@ from constants.user_profiles import (
     NOTIFICATION_TYPE_CHOICES_ID,
     NOTIFICATION_TYPE_CHOICES_TITLE,
 )
+from functions.common import logger
+from functions.send_email import (
+    send_application_confirmation_to_job_seeker,
+    send_application_received_to_recruiter,
+)
+from user_profiles.models import CompanyProfile
 from .models import *
 from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS
 from constants.jobs import JOB_DETAILS_FIELDS, VALID_STATUS_TRANSITIONS
@@ -86,7 +92,29 @@ class JobApplySerializer(serializers.ModelSerializer):
     def save(self):
         job = super().save()
         self.send_apply_notification()
+        self.send_email_confirmation_for_the_application()
         return job
+
+    def send_email_confirmation_for_the_application(self):
+        try:
+            job_id = self.data.get("job")
+            recruiter_id = self.data.get("owner")
+            student_id = self.data.get("student")
+
+            student_details = User.objects.filter(pk=student_id).first()
+            recruiter_details = CompanyProfile.objects.filter(user=recruiter_id).first()
+            job_details = JobInfo.objects.filter(pk=job_id).first()
+
+            send_application_confirmation_to_job_seeker(
+                student_details, recruiter_details, job_details
+            )
+
+            send_application_received_to_recruiter(
+                student_details, recruiter_details, job_details
+            )
+
+        except Exception as e:
+            logger.error(f"Error in send_email_confirmation_for_the_application: {e}")
 
     def send_apply_notification(self):
         try:
