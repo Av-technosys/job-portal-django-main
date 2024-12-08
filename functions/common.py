@@ -305,7 +305,7 @@ def filter_search_handler(model_class, serializer_class, request):
         instances = instances.order_by(*sort_fields)
 
         page_obj, count, total_pages = paginator(instances, request)
-        serializer = serializer_class(page_obj, many=True)
+        serializer = serializer_class(page_obj, many=True, context={"request": request})
         response_data = {
             "total_count": count,
             "total_pages": total_pages,

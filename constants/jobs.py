@@ -47,3 +47,15 @@ VALID_STATUS_TRANSITIONS = {
     7: [8],  # Offered → Joined
     8: [],  # Joined → No further transitions
 }
+
+
+JOB_LIST_SEEKER_VIEW_FEILDS = [
+    "id",
+    "designation",
+    "job_type",
+    "location",
+    "department",
+    "company_name",
+    "salary_range",
+    "is_applied",
+]

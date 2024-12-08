@@ -6,7 +6,11 @@ from constants.user_profiles import (
 )
 from .models import *
 from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS
-from constants.jobs import JOB_DETAILS_FIELDS, VALID_STATUS_TRANSITIONS
+from constants.jobs import (
+    JOB_DETAILS_FIELDS,
+    VALID_STATUS_TRANSITIONS,
+    JOB_LIST_SEEKER_VIEW_FEILDS,
+)
 
 
 # Serializer for JobDetails model (Section 1)
@@ -132,3 +136,27 @@ class CommunicationSerializer(serializers.ModelSerializer):
             f"message_{application_id}_{received_by}",
             NOTIFICATION_TYPE_CHOICES_ID[1],
         )
+
+
+class JobListingSeekerViewSerializer(serializers.ModelSerializer):
+    company_name = serializers.SerializerMethodField()
+    salary_range = serializers.SerializerMethodField()
+    is_applied = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobInfo
+        fields = JOB_LIST_SEEKER_VIEW_FEILDS
+
+    def get_company_name(self, obj):
+        job_description = obj.job_description.first()
+        return job_description.company_name if job_description else None
+
+    def get_salary_range(self, obj):
+        job_overview = obj.job_overview_and_qualifications.first()
+        return job_overview.salary_range if job_overview else None
+
+    def get_is_applied(self, obj):
+        request = self.context.get("request")
+        if request and hasattr(request, "user") and request.user.is_authenticated:
+            return JobApply.objects.filter(job=obj, student_id=request.user.id).exists()
+        return False
