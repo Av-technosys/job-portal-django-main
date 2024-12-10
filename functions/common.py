@@ -505,3 +505,11 @@ def handle_application_status(model, serializer_class, request):
             return ResponseHandler.error(
                 RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+def get_user_photo(user, Model):
+    uploaded_files = Model.objects.filter(user=user)
+    profile_image_files = [
+        file.file.url for file in uploaded_files if file.file_type == "profile_image"
+    ]
+    return profile_image_files[0] if profile_image_files else None

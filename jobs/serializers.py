@@ -12,7 +12,9 @@ from constants.jobs import (
     JOB_LIST_SEEKER_VIEW_FEILDS,
 )
 
+from functions.common import get_user_photo
 from user_profiles.models import UploadedFile
+
 
 # Serializer for JobDetails model (Section 1)
 # Serializer for JobDetails model (Section 1)
@@ -147,7 +149,7 @@ class JobListingSeekerViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobInfo
-        fields = JOB_LIST_SEEKER_VIEW_FEILDS 
+        fields = JOB_LIST_SEEKER_VIEW_FEILDS
 
     def get_company_name(self, obj):
         job_description = obj.job_description.first()
@@ -164,6 +166,4 @@ class JobListingSeekerViewSerializer(serializers.ModelSerializer):
         return False
 
     def get_company_profile_image(self, obj):
-        uploaded_files = UploadedFile.objects.filter(user=obj.user)
-        profile_image_files = [file.file.url for file in uploaded_files if file.file_type == "profile_image"]
-        return profile_image_files if profile_image_files else None
+        return get_user_photo(obj.user, UploadedFile)
