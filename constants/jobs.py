@@ -58,4 +58,7 @@ JOB_LIST_SEEKER_VIEW_FEILDS = [
     "company_name",
     "salary_range",
     "is_applied",
+    "created_date",
+    "updated_date",
+    "company_profile_image"
 ]

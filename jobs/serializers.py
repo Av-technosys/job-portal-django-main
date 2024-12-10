@@ -12,6 +12,7 @@ from constants.jobs import (
     JOB_LIST_SEEKER_VIEW_FEILDS,
 )
 
+from user_profiles.models import UploadedFile
 
 # Serializer for JobDetails model (Section 1)
 # Serializer for JobDetails model (Section 1)
@@ -142,10 +143,11 @@ class JobListingSeekerViewSerializer(serializers.ModelSerializer):
     company_name = serializers.SerializerMethodField()
     salary_range = serializers.SerializerMethodField()
     is_applied = serializers.SerializerMethodField()
+    company_profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = JobInfo
-        fields = JOB_LIST_SEEKER_VIEW_FEILDS
+        fields = JOB_LIST_SEEKER_VIEW_FEILDS 
 
     def get_company_name(self, obj):
         job_description = obj.job_description.first()
@@ -160,3 +162,8 @@ class JobListingSeekerViewSerializer(serializers.ModelSerializer):
         if request and hasattr(request, "user") and request.user.is_authenticated:
             return JobApply.objects.filter(job=obj, student_id=request.user.id).exists()
         return False
+
+    def get_company_profile_image(self, obj):
+        uploaded_files = UploadedFile.objects.filter(user=obj.user)
+        profile_image_files = [file.file.url for file in uploaded_files if file.file_type == "profile_image"]
+        return profile_image_files if profile_image_files else None
