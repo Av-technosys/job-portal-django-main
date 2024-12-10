@@ -508,8 +508,7 @@ def handle_application_status(model, serializer_class, request):
 
 
 def get_user_photo(user, Model):
-    uploaded_files = Model.objects.filter(user=user)
-    profile_image_files = [
-        file.file.url for file in uploaded_files if file.file_type == "profile_image"
-    ]
-    return profile_image_files[0] if profile_image_files else None
+    photo = Model.objects.filter(user=user, file_type="profile_image").first()
+    return photo.file.url if photo and photo.file else None
+    
+    
