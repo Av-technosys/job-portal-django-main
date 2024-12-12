@@ -305,7 +305,7 @@ def filter_search_handler(model_class, serializer_class, request):
         instances = instances.order_by(*sort_fields)
 
         page_obj, count, total_pages = paginator(instances, request)
-        serializer = serializer_class(page_obj, many=True)
+        serializer = serializer_class(page_obj, many=True, context={"request": request})
         response_data = {
             "total_count": count,
             "total_pages": total_pages,
@@ -505,3 +505,10 @@ def handle_application_status(model, serializer_class, request):
             return ResponseHandler.error(
                 RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+def get_user_photo(user, Model):
+    photo = Model.objects.filter(user=user, file_type="profile_image").first()
+    return photo.file.url if photo and photo.file else None
+    
+    
