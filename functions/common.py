@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 import logging
+from datetime import datetime
 
 
 def generate_otp():
@@ -506,6 +507,11 @@ def handle_application_status(model, serializer_class, request):
                 RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+def get_todays_date():
+    # Get today's date and format it
+    today_date = datetime.today().strftime("%B %d, %Y")
+
+    return today_date
 
 def get_user_photo(user, Model):
     photo = Model.objects.filter(user=user, file_type="profile_image").first()
