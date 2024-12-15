@@ -73,7 +73,10 @@ def job_details(request):
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def company_id(request):
-    return request_handler(CompanyId, CompanyIdSerializer, request)
+    if request.method == "GET":
+        return get_handle_profile(CompanyId, CompanyIdSerializer, request)
+    else:
+        return request_handler(CompanyId, CompanyIdSerializer, request)
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])

@@ -174,7 +174,7 @@ class Communication(models.Model):
 
 class JobSaved(models.Model):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="user_id_saaved"
+        User, on_delete=models.CASCADE, related_name="user_id_saved"
     )
     job = models.ForeignKey(JobInfo, on_delete=models.CASCADE, related_name="saved_job")
     created_date = models.DateTimeField(auto_now_add=True)
