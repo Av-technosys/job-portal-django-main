@@ -114,3 +114,8 @@ def application_status(request):
 def chat(request, application_id):
     return message_handler(CommunicationSerializer, request, application_id)
 
+
+@api_view(["POST", "DELETE", "GET"])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def save_job(request):
+    return job_save_handler(JobSaveSerializer, JobSaved, request)

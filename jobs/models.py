@@ -170,3 +170,12 @@ class Communication(models.Model):
 
     def __str__(self):
         return f"Message from {self.sent_from.username} to {self.received_by.username}"
+
+
+class JobSaved(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="user_id_saved"
+    )
+    job = models.ForeignKey(JobInfo, on_delete=models.CASCADE, related_name="saved_job")
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
