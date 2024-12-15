@@ -5,7 +5,7 @@ from constants.user_profiles import (
     NOTIFICATION_TYPE_CHOICES_TITLE,
 )
 from .models import *
-from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS
+from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS, ALREADY_SAVED
 from constants.jobs import (
     JOB_DETAILS_FIELDS,
     VALID_STATUS_TRANSITIONS,
@@ -167,3 +167,18 @@ class JobListingSeekerViewSerializer(serializers.ModelSerializer):
 
     def get_company_profile_image(self, obj):
         return get_user_photo(obj.user, UploadedFile)
+
+
+class JobSaveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobSaved
+        fields = "__all__"
+
+    def validate(self, data):
+        user = data.get("user")
+        job = data.get("job")
+
+        if JobSaved.objects.filter(user=user, job=job).exists():
+            raise serializers.ValidationError({"message": ALREADY_SAVED})
+
+        return data
