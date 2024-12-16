@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Job Application has been Sent</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 0;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border: 1px solid #ddd;
+      }
+
+      .header {
+        text-align: center;
+        padding-bottom: 20px;
+      }
+
+      .header img {
+        max-width: 150px;
+      }
+
+      .content {
+        margin-bottom: 20px;
+      }
+
+      .footer {
+        text-align: center;
+        font-size: 12px;
+        color: #777;
+      }
+
+      .footer a {
+        color: #0056b3;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="email-container">
+      <div class="header">
+        <img src="{{ logo_url }}" alt="Job Assured Logo" />
+      </div>
+      <div class="content">
+        <h2>Dear {{ job_seeker_name }},</h2>
+        <p>
+          Thank you for applying to the
+          <strong>{{ job_title }}</strong> position at
+          <strong>{{ company_name }}</strong>. Your application has been
+          successfully submitted to the recruiter.
+        </p>
+        <p>
+          We will notify you as soon as there are any updates regarding your
+          application. In the meantime, feel free to check the status of your
+          application on your dashboard.
+        </p>
+        <p>
+          If you have any questions or need further assistance, please don't
+          hesitate to reach out to our support team.
+        </p>
+      </div>
+      <div class="footer">
+        <p>
+          Best Regards, <br />
+          The {{ company_name }} Team
+        </p>
+        <p>
+          For any inquiries, you can contact us at
+          <a href="{{ company_email }}">{{ company_email }}</a>
+        </p>
+        <p><a href="{{ website_url }}">Visit our website</a></p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -201,7 +201,7 @@ class CompanyId(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="company_id"
     )
-    registeration_number = models.PositiveSmallIntegerField()
+    registration_number = models.PositiveSmallIntegerField()
     firm_id = models.PositiveSmallIntegerField()
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
@@ -212,11 +212,6 @@ class UploadedFile(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-    )
-    student = models.ForeignKey(
-        StudentProfile,
-        on_delete=models.CASCADE,
-        related_name="uploaded_files",
     )
     file_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
     file = models.FileField(upload_to=file_rename, storage=S3FileStorage())
