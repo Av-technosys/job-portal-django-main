@@ -280,7 +280,7 @@ def filters(request):
     return q_filters, filter_kwargs
 
 
-def filter_search_handler(model_class, serializer_class, request):
+def filter_search_handler(model_class, serializer_class, request, job_ids=None):
     q_filters, filter_kwargs = filters(request)
 
     owner_filters = {}
@@ -288,16 +288,19 @@ def filter_search_handler(model_class, serializer_class, request):
         owner_filters["user_id__in"] = request.data.get("owner")
 
     try:
-        if not q_filters and not filter_kwargs and not owner_filters:
-            instances = model_class.objects.all()
-
+        # If job_ids is provided, filter the instances by job IDs
+        if job_ids:
+            instances = model_class.objects.filter(id__in=job_ids)
         else:
-            instances = model_class.objects.filter(
-                q_filters, **filter_kwargs, **owner_filters
-            )
+            if not q_filters and not filter_kwargs and not owner_filters:
+                instances = model_class.objects.all()
+            else:
+                instances = model_class.objects.filter(
+                    q_filters, **filter_kwargs, **owner_filters
+                )
 
         if not instances.exists():
-            ResponseHandler.error(
+            return ResponseHandler.error(
                 message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
             )
 
