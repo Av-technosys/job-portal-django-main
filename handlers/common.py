@@ -29,48 +29,6 @@ def message_handler(serializer_class, request, application_id):
             return ResponseHandler.error(
                 METHOD_ERROR, status_code=status.HTTP_405_METHOD_NOT_ALLOWED
             )
-def filter_search_handler(model_class, serializer_class, request, job_ids=None):
-    q_filters, filter_kwargs = filters(request)
-
-    owner_filters = {}
-    if request.data.get("owner"):
-        owner_filters["user_id__in"] = request.data.get("owner")
-
-    try:
-        # If job_ids is provided, filter the instances by job IDs
-        if job_ids:
-            instances = model_class.objects.filter(id__in=job_ids)
-        else:
-            if not q_filters and not filter_kwargs and not owner_filters:
-                instances = model_class.objects.all()
-            else:
-                instances = model_class.objects.filter(
-                    q_filters, **filter_kwargs, **owner_filters
-                )
-
-        if not instances.exists():
-            return ResponseHandler.error(
-                message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
-            )
-
-        sort_fields = request.GET.getlist("sort[]", ["created_date"])
-        instances = instances.order_by(*sort_fields)
-
-        page_obj, count, total_pages = paginator(instances, request)
-        serializer = serializer_class(page_obj, many=True, context={"request": request})
-        response_data = {
-            "total_count": count,
-            "total_pages": total_pages,
-            "current_page": page_obj.number,
-            "data": serializer.data,
-        }
-        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
-
-    except Exception as e:
-        logger.error(f"Error in filter_search_handler: {e}")
-        return ResponseHandler.error(
-            RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
-        )
 
 def job_save_handler(serializer_class, JobSaved, request):
     try:
