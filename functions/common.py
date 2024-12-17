@@ -291,13 +291,14 @@ def filter_search_handler(model_class, serializer_class, request):
     try:
         if not q_filters and not filter_kwargs and not owner_filters:
             instances = model_class.objects.all()
+
         else:
             instances = model_class.objects.filter(
                 q_filters, **filter_kwargs, **owner_filters
             )
 
         if not instances.exists():
-            return ResponseHandler.error(
+            ResponseHandler.error(
                 message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
             )
 
