@@ -117,18 +117,4 @@ def chat(request, application_id):
 @api_view(["POST", "DELETE", "GET"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def save_job(request):
-    if request.method == "GET":  # Handling for GET request
-        user_id = request.user.id
-        
-        # Step 1: Get all job IDs from the JobSaved table for the authenticated user
-        saved_jobs = JobSaved.objects.filter(user=user_id)
-        job_ids = saved_jobs.values_list('job', flat=True)
-
-        if job_ids:
-            # Step 2: Use filter_search_handler to filter JobInfo by job IDs
-            return filter_search_handler(JobInfo, JobListingSeekerViewSerializer, request, job_ids=job_ids)
-        else:
-            return ResponseHandler.success([], status_code=status.HTTP_200_OK)  # No saved jobs
-
-    return job_save_handler(JobSaveSerializer, JobSaved, request)
-
+    return job_save_handler(JobSaveSerializer, JobSaved, request) 

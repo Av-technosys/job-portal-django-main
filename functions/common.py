@@ -281,7 +281,7 @@ def filters(request):
     return q_filters, filter_kwargs
 
 
-def filter_search_handler(model_class, serializer_class, request, job_ids=None):
+def filter_search_handler(model_class, serializer_class, request):
     q_filters, filter_kwargs = filters(request)
 
     owner_filters = {}
@@ -289,16 +289,12 @@ def filter_search_handler(model_class, serializer_class, request, job_ids=None):
         owner_filters["user_id__in"] = request.data.get("owner")
 
     try:
-        # If job_ids is provided, filter the instances by job IDs
-        if job_ids:
-            instances = model_class.objects.filter(id__in=job_ids)
+        if not q_filters and not filter_kwargs and not owner_filters:
+            instances = model_class.objects.all()
         else:
-            if not q_filters and not filter_kwargs and not owner_filters:
-                instances = model_class.objects.all()
-            else:
-                instances = model_class.objects.filter(
-                    q_filters, **filter_kwargs, **owner_filters
-                )
+            instances = model_class.objects.filter(
+                q_filters, **filter_kwargs, **owner_filters
+            )
 
         if not instances.exists():
             return ResponseHandler.error(
@@ -356,31 +352,6 @@ def job_apply_handler(serializer_class, JobInfo, request):
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
 
-
-def job_save_handler(serializer_class, JobSaved, request):
-    try:
-        user_id = request.user.id
-        job_id = request.data.get("job")
-        request.data["user"] = user_id
-
-        if request.method == "POST":
-            return serializer_handle(serializer_class, request)
-
-        elif request.method == "DELETE":
-            instance = JobSaved.objects.get(id=job_id, user=request.user)
-            if instance:
-                instance.delete()
-                return ResponseHandler.success(
-                    {"message": REMOVE_SUCCESS}, status_code=status.HTTP_204_NO_CONTENT
-                )
-            return ResponseHandler.error(
-                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
-            )
-    except Exception as e:
-        logger.error(f"Error in job_save_handler: {e}")
-        return ResponseHandler.error(
-            RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
-        )
 
 
 def application_handler(
