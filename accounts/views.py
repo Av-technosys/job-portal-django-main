@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from accounts.models import User
+from accounts.models import User, CandidateSaved
 from functions.fcm import list_notification
 from .serializers import (
     UserSerializer,
@@ -11,6 +11,7 @@ from .serializers import (
     ResendOtpSerializer,
     VerifyOtpAndChangePasswordSerializer,
     NotificationSerializer,
+    CandidateSaveSerializer,
 )
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
@@ -21,6 +22,10 @@ from functions.common import (
     serializer_handle_customize_response_only_validate,
     get_customize_handler,
 )
+from handlers.common import candidate_save_handler
+from user_profiles.serializers import ListCandidateSerializer
+from user_profiles.models import StudentProfile
+from handlers.permissions import IsRecruiter
 
 
 @api_view(["POST"])
@@ -85,3 +90,15 @@ def account_details(request):
 @permission_classes([IsAuthenticated])
 def list_notifications(request):
     return list_notification(NotificationSerializer, request)
+
+
+@api_view(["POST", "DELETE", "GET"])
+@permission_classes([IsAuthenticated, IsRecruiter])
+def save_cadidate(request):
+    return candidate_save_handler(
+        CandidateSaveSerializer,
+        ListCandidateSerializer,
+        CandidateSaved,
+        StudentProfile,
+        request,
+    )
