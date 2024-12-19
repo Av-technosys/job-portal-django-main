@@ -117,4 +117,14 @@ def chat(request, application_id):
 @api_view(["POST", "DELETE", "GET"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def save_job(request):
-    return job_save_handler(JobSaveSerializer, JobSaved, request) 
+    return job_save_handler(JobSaveSerializer, JobSaved, request)
+ 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def applied_saved_jobs(request):
+    return jobs_profiles_counter_handler(JobSaved, JobApply, request) 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def posted_saved_profile(request):
+    return jobs_profiles_counter_handler(JobSaved, JobInfo, request) 

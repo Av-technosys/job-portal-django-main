@@ -519,3 +519,21 @@ def get_todays_date():
 def get_user_photo(user, Model):
     photo = Model.objects.filter(user=user, file_type="profile_image").first()
     return photo.file.url if photo and photo.file else None
+
+
+def jobs_profiles_counter_handler(job_modal, student_modal, request):
+    try:
+        user_id = request.user.id
+        applied_count = student_modal.objects.filter(student_id=user_id).count()
+        saved_count = job_modal.objects.filter(user_id=user_id).count()
+
+        return ResponseHandler.success(
+            data={"applied_jobs": "applied_count", "saved_count": saved_count},
+            status_code=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        print("s", e)
+        return ResponseHandler.error(
+                RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
