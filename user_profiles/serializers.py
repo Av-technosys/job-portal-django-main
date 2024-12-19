@@ -173,7 +173,6 @@ class CombinedCompanyDetailSerializer(serializers.ModelSerializer):
 
 class ListCandidateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', read_only=True)
-    last_name = serializers.CharField(source='user.last_name', read_only=True)
 
     class Meta:
         model = StudentProfile

@@ -99,7 +99,6 @@ COMPANY_PROFILE_FIELDS = [
 
 LIST_CANDIDATE_FEILDS = [
     "first_name",
-    "last_name",
     "id",
     "user",
     "designation",

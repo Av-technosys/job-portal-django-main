@@ -31,7 +31,9 @@ def message_handler(serializer_class, request, application_id):
             )
 
 
-def job_save_handler(serializer_class, serializer_class_2, JobSaved, JobInfo, request):
+def job_save_handler(
+    JobSaveSerializer, JobListSeekerViewSerializer, JobSaved, JobInfo, request
+):
     try:
         user_id = request.user.id
         job_id = JobSaved.objects.filter(user=request.user).values_list(
@@ -69,7 +71,7 @@ def job_save_handler(serializer_class, serializer_class_2, JobSaved, JobInfo, re
             instances = instances.order_by(*sort_fields)
 
             page_obj, count, total_pages = paginator(instances, request)
-            serializer = serializer_class_2(
+            serializer = JobListSeekerViewSerializer(
                 page_obj, many=True, context={"request": request}
             )
             response_data = {
@@ -83,7 +85,7 @@ def job_save_handler(serializer_class, serializer_class_2, JobSaved, JobInfo, re
             )
 
         elif request.method == "POST":
-            return serializer_handle(serializer_class, request)
+            return serializer_handle(JobSaveSerializer, request)
 
         elif request.method == "DELETE":
             if not job_id:
@@ -100,7 +102,7 @@ def job_save_handler(serializer_class, serializer_class_2, JobSaved, JobInfo, re
 
             if deleted_count > 0:
                 return ResponseHandler.success(
-                    message=REMOVE_SUCCESS,
+                    {"message": {REMOVE_SUCCESS}},
                     status_code=status.HTTP_204_NO_CONTENT,
                 )
             return ResponseHandler.error(
@@ -115,7 +117,11 @@ def job_save_handler(serializer_class, serializer_class_2, JobSaved, JobInfo, re
 
 
 def candidate_save_handler(
-    serializer_class, serializer_class_2, CandidateSaved, StudentProfile, request
+    CandidateSaveSerializer,
+    ListCandidateSerializer,
+    CandidateSaved,
+    StudentProfile,
+    request,
 ):
     try:
         user_id = request.user.id
@@ -151,7 +157,7 @@ def candidate_save_handler(
             instances = instances.order_by(*sort_fields)
 
             page_obj, count, total_pages = paginator(instances, request)
-            serializer = serializer_class_2(
+            serializer = ListCandidateSerializer(
                 page_obj, many=True, context={"request": request}
             )
             response_data = {
@@ -165,7 +171,7 @@ def candidate_save_handler(
             )
 
         if request.method == "POST":
-            return serializer_handle(serializer_class, request)
+            return serializer_handle(CandidateSaveSerializer, request)
 
         elif request.method == "DELETE":
             # Attempt to delete the CandidateSaved instances
@@ -178,7 +184,7 @@ def candidate_save_handler(
 
             if deleted_count > 0:
                 return ResponseHandler.success(
-                    message=REMOVE_SUCCESS,
+                    {"message": {REMOVE_SUCCESS}},
                     status_code=status.HTTP_204_NO_CONTENT,
                 )
             return ResponseHandler.error(
