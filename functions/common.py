@@ -520,7 +520,7 @@ def get_user_photo(user, Model):
     return photo.file.url if photo and photo.file else None
 
 
-def jobs_profiles_counter_handler(
+def summary_counter_handler(
     job_applied_model, job_saved_model,profiles_saved_modal,job_posted_modal ,request
 ):
     try:
