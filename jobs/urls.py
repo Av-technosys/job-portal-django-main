@@ -44,6 +44,5 @@ urlpatterns = [
     path("chat/<int:application_id>", chat, name="chat"),
     # save,delete and get saved jobs
     path("save_job/", save_job, name="save_job"),
-    path("applied_saved_jobs/", applied_saved_jobs, name="applied_saved_jobs"),
-    path("posted_saved_profile/", posted_saved_profile, name="posted_saved_profile"),
+    path("summary/", applied_saved_jobs, name="applied_saved_jobs"),
 ]

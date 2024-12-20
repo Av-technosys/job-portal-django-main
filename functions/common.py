@@ -526,7 +526,7 @@ from rest_framework import status
 
 
 def jobs_profiles_counter_handler(
-    job_applied_profile_model, job_posted_applied_model, request
+    job_applied_model, job_saved_model,profiles_saved_modal,job_posted_modal ,request
 ):
     try:
         user_id = request.user.id
@@ -534,10 +534,10 @@ def jobs_profiles_counter_handler(
 
         # Job Seeker
         if user_type == 1:
-            applied_jobs_count = job_applied_profile_model.objects.filter(
+            applied_jobs_count = job_applied_model.objects.filter(
                 student_id=user_id
             ).count()
-            saved_jobs_count = job_posted_applied_model.objects.filter(
+            saved_jobs_count = job_saved_model.objects.filter(
                 user_id=user_id
             ).count()
             return ResponseHandler.success(
@@ -547,10 +547,10 @@ def jobs_profiles_counter_handler(
 
         # Recruiter
         elif user_type == 2:
-            saved_profiles_count = job_applied_profile_model.objects.filter(
+            saved_profiles_count = profiles_saved_modal.objects.filter(
                 recruiter_id=user_id
             ).count()
-            posted_jobs_count = job_posted_applied_model.objects.filter(
+            posted_jobs_count = job_posted_modal.objects.filter(
                 user_id=user_id
             ).count()
             return ResponseHandler.success(

@@ -125,12 +125,6 @@ def save_job(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsJobSeeker])
+@permission_classes([IsAuthenticated])
 def applied_saved_jobs(request):
-    return jobs_profiles_counter_handler(JobApply, JobSaved, request)
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated, IsRecruiter])
-def posted_saved_profile(request):
-    return jobs_profiles_counter_handler(CandidateSaved, JobInfo, request)
+    return jobs_profiles_counter_handler(JobApply, JobSaved,CandidateSaved,JobInfo, request)
