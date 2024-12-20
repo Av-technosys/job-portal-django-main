@@ -8,6 +8,7 @@ from handlers.common import *
 from user_profiles.models import StudentProfile
 from user_profiles.serializers import StudentProfileSerializer
 from handlers.permissions import IsRecruiter, IsJobSeeker
+from accounts.models import CandidateSaved
 
 
 # Section 1: JobDetails
@@ -121,3 +122,9 @@ def save_job(request):
     return job_save_handler(
         JobSaveSerializer, JobListingSeekerViewSerializer, JobSaved, JobInfo, request
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def summary_view(request):
+    return summary_counter_handler(JobApply, JobSaved,CandidateSaved,JobInfo, request)

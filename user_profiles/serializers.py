@@ -171,8 +171,9 @@ class CombinedCompanyDetailSerializer(serializers.ModelSerializer):
         model = CompanyProfile
         fields = COMPANY_PROFILE_FIELDS
 
+
 class ListCandidateSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
 
     class Meta:
         model = StudentProfile

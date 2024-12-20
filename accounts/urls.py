@@ -9,7 +9,7 @@ from .views import (
     user_logout,
     verify_otp,
     verify_reset_password,
-    save_cadidate
+    save_cadidate,
 )
 
 urlpatterns = [
