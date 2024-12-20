@@ -127,4 +127,4 @@ def save_job(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def summary_view(request):
-    return summary_counter_handler(JobApply, JobSaved,CandidateSaved,JobInfo, request)
+    return summary_counter_handler(JobApply, JobSaved, CandidateSaved, JobInfo, request)
