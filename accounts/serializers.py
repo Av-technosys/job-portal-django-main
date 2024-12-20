@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Notification, User, CandidateSaved
+from constants.common import USER_TYPE
 from constants.errors import (
     ERROR_INVALID_CREDENTIALS,
     ERROR_OTP_VERIFICATION_FAILED,
@@ -12,7 +13,7 @@ from constants.errors import (
 )
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from functions.common import generate_otp, ResponseHandler
+from functions.common import generate_otp, generate_password_string, ResponseHandler
 from constants.accounts import (
     REGISTRATION_META_FIELDS,
     PASSWORD_RESET,
@@ -20,7 +21,7 @@ from constants.accounts import (
 )
 from django.utils import timezone
 from datetime import timedelta
-from functions.send_email import send_email_otp
+from functions.send_email import send_auto_generated_password, send_email_otp
 from functions.send_otp import send_phone_otp
 
 
@@ -77,6 +78,50 @@ class UserSerializer(serializers.ModelSerializer):
         send_email_otp(email, email_otp)
 
         return user
+
+
+class SSOUserSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    name = serializers.CharField(max_length=150)
+    user_type = serializers.ChoiceField(choices=USER_TYPE)
+
+    def save(self):
+        email = self.validated_data["email"]
+        name = self.validated_data["name"]
+        user_type = self.validated_data["user_type"]
+
+        user = User.objects.filter(email=email).first()
+
+        if user and user.is_active:
+            pass
+
+        elif user and not user.is_active:
+            user.is_active = True
+            user.save()
+
+        else:
+            user = User(
+                username=email,
+                email=email,
+                is_active=True,
+                first_name=name,
+                user_type=user_type,
+                country_code="+91",
+            )
+            auto_generated_password = generate_password_string()
+            user.set_password(auto_generated_password)
+            user.save()
+
+            # Send password via email
+            send_auto_generated_password(email, auto_generated_password)
+
+        # Generate or return a token for the user
+        token, _ = Token.objects.get_or_create(user=user)
+
+        if token:
+            return {"token": token.key}
+        else:
+            raise ResponseHandler.api_exception_error()
 
 
 class LoginSerializer(serializers.Serializer):
