@@ -22,4 +22,4 @@ ALREADY_APPLIED = "You have already applied for this job."
 ALREADY_SAVED = "You have already saved this job."
 INVALID_JOB_STATUS = "Invalid job status"
 OTP_LIMIT_REACHED_ERROR = "OTP resend limit reached. Try again after 1 hour."
-ERROR_STUDENT_ID_REQUIRED="Student ID is required",
+ERROR_STUDENT_ID_REQUIRED = ("Student ID is required",)

@@ -354,7 +354,6 @@ def job_apply_handler(serializer_class, JobInfo, request):
         )
 
 
-
 def application_handler(
     modal_class, serializer_class, profile, profile_serializer, student_profile, request
 ):
@@ -521,19 +520,46 @@ def get_user_photo(user, Model):
     return photo.file.url if photo and photo.file else None
 
 
-def jobs_profiles_counter_handler(job_modal, student_modal, request):
+from typing import Any
+from django.http import JsonResponse
+from rest_framework import status
+
+
+def jobs_profiles_counter_handler(
+    job_applied_profile_model, job_posted_applied_model, request
+):
     try:
         user_id = request.user.id
-        applied_count = student_modal.objects.filter(student_id=user_id).count()
-        saved_count = job_modal.objects.filter(user_id=user_id).count()
+        user_type = request.user.user_type
 
-        return ResponseHandler.success(
-            data={"applied_jobs": "applied_count", "saved_count": saved_count},
-            status_code=status.HTTP_200_OK
-        )
-
-    except Exception as e:
-        print("s", e)
-        return ResponseHandler.error(
-                RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        # Job Seeker
+        if user_type == 1:
+            applied_jobs_count = job_applied_profile_model.objects.filter(
+                student_id=user_id
+            ).count()
+            saved_jobs_count = job_posted_applied_model.objects.filter(
+                user_id=user_id
+            ).count()
+            return ResponseHandler.success(
+                data={"job_applied": applied_jobs_count, "saved_job": saved_jobs_count},
+                status_code=status.HTTP_200_OK,
             )
+
+        # Recruiter
+        elif user_type == 2:
+            saved_profiles_count = job_applied_profile_model.objects.filter(
+                recruiter_id=user_id
+            ).count()
+            posted_jobs_count = job_posted_applied_model.objects.filter(
+                user_id=user_id
+            ).count()
+            return ResponseHandler.success(
+                data={
+                    "posted_jobs": posted_jobs_count,
+                    "saved_profiles": saved_profiles_count,
+                },
+                status_code=status.HTTP_200_OK,
+            )
+
+    except:
+        return ResponseHandler.error(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

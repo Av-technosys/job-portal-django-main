@@ -108,4 +108,3 @@ LIST_CANDIDATE_FEILDS = [
     "experience",
     "job_search_status",
 ]
-

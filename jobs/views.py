@@ -8,6 +8,7 @@ from handlers.common import *
 from user_profiles.models import StudentProfile
 from user_profiles.serializers import StudentProfileSerializer
 from handlers.permissions import IsRecruiter, IsJobSeeker
+from accounts.models import CandidateSaved
 
 
 # Section 1: JobDetails
@@ -118,17 +119,18 @@ def chat(request, application_id):
 @api_view(["POST", "DELETE", "GET"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def save_job(request):
-     return job_save_handler(
+    return job_save_handler(
         JobSaveSerializer, JobListingSeekerViewSerializer, JobSaved, JobInfo, request
     )
- 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated, IsJobSeeker])
-def applied_saved_jobs(request):
-    return jobs_profiles_counter_handler(JobSaved, JobApply, request) 
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
+def applied_saved_jobs(request):
+    return jobs_profiles_counter_handler(JobApply, JobSaved, request)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsRecruiter])
 def posted_saved_profile(request):
-    return jobs_profiles_counter_handler(JobSaved, JobInfo, request) 
-   
+    return jobs_profiles_counter_handler(CandidateSaved, JobInfo, request)
