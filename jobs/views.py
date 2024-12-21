@@ -74,7 +74,7 @@ def list_jobs(request):
 @permission_classes([IsAuthenticated])
 def my_posted_jobs(request):
     request.data["owner"] = [request.user.id]
-    return filter_search_handler(JobInfo, JobDetailsSerializer, request)
+    return filter_search_handler(JobInfo, JobPostedSerializer, request)
 
 
 @api_view(["GET"])
