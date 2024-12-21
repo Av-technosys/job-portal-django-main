@@ -86,7 +86,6 @@ def submitted_jobs_application(request):
         JobApplySerializer,
         StudentProfile,
         StudentProfileSerializer,
-        StudentProfile,
         request,
     )
 
@@ -98,8 +97,7 @@ def list_submitted_jobs(request):
         JobApply,
         JobApplySerializer,
         JobInfo,
-        JobDetailsSerializer,
-        StudentProfile,
+        AppliedJobListViewSerializer,
         request,
     )
 
@@ -127,4 +125,4 @@ def save_job(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def summary_view(request):
-    return summary_counter_handler(JobApply, JobSaved,CandidateSaved,JobInfo, request)
+    return summary_counter_handler(JobApply, JobSaved, CandidateSaved, JobInfo, request)

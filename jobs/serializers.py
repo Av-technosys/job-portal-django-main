@@ -16,6 +16,7 @@ from constants.jobs import (
     JOB_DETAILS_FIELDS,
     VALID_STATUS_TRANSITIONS,
     JOB_LIST_SEEKER_VIEW_FEILDS,
+    JOB_APPLIED_VIEW_FEILDS
 )
 
 from functions.common import get_user_photo
@@ -210,3 +211,20 @@ class JobSaveSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"message": ALREADY_SAVED})
 
         return data
+
+class AppliedJobListViewSerializer(serializers.ModelSerializer):
+    designation = serializers.CharField(source="job.designation")
+    location = serializers.CharField(source="job.location")
+    job_type = serializers.CharField(source="job.job_type")
+    salary_range = serializers.SerializerMethodField()
+    applied_date = serializers.DateTimeField(source="created_date")
+
+    class Meta:
+        model = JobApply
+        fields = JOB_APPLIED_VIEW_FEILDS
+
+    def get_salary_range(self, obj):
+        job_overview = obj.job.job_overview_and_qualifications.first()
+        return job_overview.salary_range if job_overview else None
+
+

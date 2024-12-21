@@ -61,3 +61,11 @@ JOB_LIST_SEEKER_VIEW_FEILDS = [
     "created_date",
     "company_profile_image",
 ]
+
+JOB_APPLIED_VIEW_FEILDS = [
+    "designation",
+    "location",
+    "job_type",
+    "salary_range",
+    "applied_date",
+]
