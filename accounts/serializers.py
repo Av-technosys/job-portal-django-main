@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Notification, User
+from .models import Notification, User, CandidateSaved
 from constants.errors import (
     ERROR_INVALID_CREDENTIALS,
     ERROR_OTP_VERIFICATION_FAILED,
@@ -8,6 +8,7 @@ from constants.errors import (
     ERROR_OTP_EXPIRED,
     ERROR_NEW_PASSWORD_NOT_FOUND,
     OTP_LIMIT_REACHED_ERROR,
+    ALREADY_SAVED,
 )
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
@@ -283,4 +284,10 @@ class VerifyOtpAndChangePasswordSerializer(serializers.Serializer):
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
+        fields = "__all__"
+
+
+class CandidateSaveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CandidateSaved
         fields = "__all__"

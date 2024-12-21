@@ -9,6 +9,7 @@ from .views import (
     user_logout,
     verify_otp,
     verify_reset_password,
+    save_cadidate,
 )
 
 urlpatterns = [
@@ -33,4 +34,5 @@ urlpatterns = [
     ),
     path("details/", account_details, name="account_details"),
     path("notifications/", list_notifications, name="list_notification"),
+    path("save_candidate/", save_cadidate, name="save_candidate"),
 ]

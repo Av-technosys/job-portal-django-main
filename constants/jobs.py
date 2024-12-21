@@ -69,3 +69,4 @@ JOB_APPLIED_VIEW_FEILDS = [
     "salary_range",
     "applied_date",
 ]
+

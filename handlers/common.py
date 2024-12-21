@@ -30,13 +30,23 @@ def message_handler(serializer_class, request, application_id):
                 METHOD_ERROR, status_code=status.HTTP_405_METHOD_NOT_ALLOWED
             )
 
-def job_save_handler(serializer_class, JobSaved, request):
+
+def job_save_handler(
+    JobSaveSerializer, JobListSeekerViewSerializer, JobSaved, JobInfo, request
+):
     try:
         user_id = request.user.id
-        job_id = request.data.get("job")
+        job_id = JobSaved.objects.filter(user=request.user).values_list(
+            "job_id", flat=True
+        )
         request.data["user"] = user_id
 
         if request.method == "GET":
+            # Check if JobSaved table is empty
+            if not JobSaved.objects.filter(user=request.user).exists():
+                return ResponseHandler.error(
+                    message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+                )
             # Implementing filter_search_handler functionality
             q_filters, filter_kwargs = filters(request)
 
@@ -46,14 +56,11 @@ def job_save_handler(serializer_class, JobSaved, request):
 
             # If job_ids is provided, filter the instances by job IDs
             if job_id:
-                instances = JobSaved.objects.filter(id__in=[job_id])
+                instances = JobInfo.objects.filter(id__in=[job_id])
             else:
-                if not q_filters and not filter_kwargs and not owner_filters:
-                    instances = JobSaved.objects.all()
-                else:
-                    instances = JobSaved.objects.filter(
-                        q_filters, **filter_kwargs, **owner_filters
-                    )
+                instances = JobInfo.objects.filter(
+                    q_filters, **filter_kwargs, **owner_filters
+                )
 
             if not instances.exists():
                 return ResponseHandler.error(
@@ -64,31 +71,128 @@ def job_save_handler(serializer_class, JobSaved, request):
             instances = instances.order_by(*sort_fields)
 
             page_obj, count, total_pages = paginator(instances, request)
-            serializer = serializer_class(page_obj, many=True, context={"request": request})
+            serializer = JobListSeekerViewSerializer(
+                page_obj, many=True, context={"request": request}
+            )
             response_data = {
                 "total_count": count,
                 "total_pages": total_pages,
                 "current_page": page_obj.number,
                 "data": serializer.data,
             }
-            return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+            return ResponseHandler.success(
+                response_data, status_code=status.HTTP_200_OK
+            )
 
         elif request.method == "POST":
-            return serializer_handle(serializer_class, request)
+            return serializer_handle(JobSaveSerializer, request)
 
         elif request.method == "DELETE":
-            instance = JobSaved.objects.get(job_id=job_id, user=request.user)
-            if instance:
-                instance.delete()
+            if not job_id:
+                return ResponseHandler.error(
+                    message=ERROR_STUDENT_ID_REQUIRED,
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Attempt to delete the CandidateSaved instances
+            instances = JobSaved.objects.filter(job__in=job_id, user=user_id)
+            deleted_count, _ = (
+                instances.delete()
+            )  # Delete and get the count of deleted instances
+
+            if deleted_count > 0:
                 return ResponseHandler.success(
-                    {"message": REMOVE_SUCCESS}, status_code=status.HTTP_204_NO_CONTENT
+                    {"message": {REMOVE_SUCCESS}},
+                    status_code=status.HTTP_204_NO_CONTENT,
                 )
             return ResponseHandler.error(
-                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+                message=ERROR_NOT_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND,
             )
     except Exception as e:
-        logger.error(f"Error in job_save_handler: {e}")
+        logger.error(e)
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
 
+
+def candidate_save_handler(
+    CandidateSaveSerializer,
+    ListCandidateSerializer,
+    CandidateSaved,
+    StudentProfile,
+    request,
+):
+    try:
+        user_id = request.user.id
+        student_id = CandidateSaved.objects.filter(recruiter=user_id).values_list(
+            "student_id", flat=True
+        )
+        request.data["recruiter"] = user_id  # Set the recruiter ID
+        print(student_id)
+
+        if request.method == "GET":  # Added GET method handling
+            # Check if CandidateSaved table is empty
+            if not CandidateSaved.objects.filter(recruiter=user_id).exists():
+                return ResponseHandler.error(
+                    message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+                )
+            q_filters, filter_kwargs = filters(request)
+            owner_filters = {}
+            if request.data.get("owner"):
+                owner_filters["user_id__in"] = request.data.get("owner")
+            if student_id:
+                instances = StudentProfile.objects.filter(id__in=[student_id])
+            else:
+                instances = StudentProfile.objects.filter(
+                    q_filters, **filter_kwargs, **owner_filters
+                )
+
+            if not instances.exists():
+                return ResponseHandler.error(
+                    message=ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+                )
+
+            sort_fields = request.GET.getlist("sort[]", ["created_date"])
+            instances = instances.order_by(*sort_fields)
+
+            page_obj, count, total_pages = paginator(instances, request)
+            serializer = ListCandidateSerializer(
+                page_obj, many=True, context={"request": request}
+            )
+            response_data = {
+                "total_count": count,
+                "total_pages": total_pages,
+                "current_page": page_obj.number,
+                "data": serializer.data,
+            }
+            return ResponseHandler.success(
+                response_data, status_code=status.HTTP_200_OK
+            )
+
+        if request.method == "POST":
+            return serializer_handle(CandidateSaveSerializer, request)
+
+        elif request.method == "DELETE":
+            # Attempt to delete the CandidateSaved instances
+            instances = CandidateSaved.objects.filter(
+                student__in=student_id, recruiter=user_id
+            )
+            deleted_count, _ = (
+                instances.delete()
+            )  # Delete and get the count of deleted instances
+
+            if deleted_count > 0:
+                return ResponseHandler.success(
+                    {"message": {REMOVE_SUCCESS}},
+                    status_code=status.HTTP_204_NO_CONTENT,
+                )
+            return ResponseHandler.error(
+                message=ERROR_NOT_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+    except Exception as e:
+        logger.error(e)
+        return ResponseHandler.error(
+            RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
+        )

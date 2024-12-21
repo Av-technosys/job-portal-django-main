@@ -95,3 +95,16 @@ COMPANY_PROFILE_FIELDS = [
     "company_id",
     "job_details",
 ]
+
+
+LIST_CANDIDATE_FEILDS = [
+    "first_name",
+    "id",
+    "user",
+    "designation",
+    "city",
+    "state",
+    "country",
+    "experience",
+    "job_search_status",
+]

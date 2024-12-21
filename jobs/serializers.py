@@ -226,8 +226,3 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
     def get_salary_range(self, obj):
         job_overview = obj.job.job_overview_and_qualifications.first()
         return job_overview.salary_range if job_overview else None
-
-
-
-
-    
