@@ -1,5 +1,6 @@
 from rest_framework.request import Request
 import random
+import string
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from django.utils import timezone
@@ -521,7 +522,7 @@ def get_user_photo(user, Model):
 
 
 def summary_counter_handler(
-    job_applied_model, job_saved_model,profiles_saved_modal,job_posted_modal ,request
+    job_applied_model, job_saved_model, profiles_saved_modal, job_posted_modal, request
 ):
     try:
         user_id = request.user.id
@@ -532,9 +533,7 @@ def summary_counter_handler(
             applied_jobs_count = job_applied_model.objects.filter(
                 student_id=user_id
             ).count()
-            saved_jobs_count = job_saved_model.objects.filter(
-                user_id=user_id
-            ).count()
+            saved_jobs_count = job_saved_model.objects.filter(user_id=user_id).count()
             return ResponseHandler.success(
                 data={"job_applied": applied_jobs_count, "saved_job": saved_jobs_count},
                 status_code=status.HTTP_200_OK,
@@ -545,9 +544,7 @@ def summary_counter_handler(
             saved_profiles_count = profiles_saved_modal.objects.filter(
                 recruiter_id=user_id
             ).count()
-            posted_jobs_count = job_posted_modal.objects.filter(
-                user_id=user_id
-            ).count()
+            posted_jobs_count = job_posted_modal.objects.filter(user_id=user_id).count()
             return ResponseHandler.success(
                 data={
                     "posted_jobs": posted_jobs_count,
@@ -558,3 +555,11 @@ def summary_counter_handler(
 
     except:
         return ResponseHandler.error(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def generate_password_string(length=8):
+    # Define the possible characters: lowercase, uppercase, and digits
+    characters = string.ascii_letters + string.digits
+    # Randomly choose characters from the pool to create the string
+    random_string = "".join(random.choices(characters, k=length))
+    return random_string
