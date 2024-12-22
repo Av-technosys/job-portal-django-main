@@ -1,5 +1,6 @@
 from rest_framework.request import Request
 import random
+import string
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from django.utils import timezone
@@ -354,32 +355,17 @@ def job_apply_handler(serializer_class, JobInfo, request):
         )
 
 
-
 def application_handler(
-    modal_class, serializer_class, profile, profile_serializer, student_profile, request
+    modal_class, serializer_class, profile, profile_serializer, request
 ):
     user_type = request.user.user_type
     try:
         if user_type == 1:
-            _id = list(
-                modal_class.objects.filter(student_id=request.user.id).values_list(
-                    "job_id", flat=True
-                )
-            )
-            return get_application_data(
-                _id,
-                modal_class,
-                serializer_class,
-                profile,
-                profile_serializer,
-                request,
-                "job",
-            )
+            related_profiles = modal_class.objects.filter(student_id=request.user.id)
 
-        elif user_type == 2:
+        if user_type == 2:
             id = request.data.get("id")
             if not id:
-                # Get all applications for jobs where the current user is the recruiter
                 _id = list(
                     modal_class.objects.filter(owner_id=request.user.id).values_list(
                         "student_id", flat=True
@@ -392,15 +378,23 @@ def application_handler(
                     )
                 )
 
-            return get_application_data(
+            related_profiles = get_application_data(
                 _id,
                 modal_class,
                 serializer_class,
                 profile,
-                profile_serializer,
-                request,
                 "student",
-            )
+                )
+
+        page_obj, count, total_pages = paginator(related_profiles, request)
+        serializer = profile_serializer(page_obj, many=True)
+        response_data = {
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
+        }
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
     except Exception as err:
         logger.error(f"Error in application_handler: {err}")
@@ -409,16 +403,10 @@ def application_handler(
         )
 
 
-def get_application_data(
-    _id, modal_class, serializer_class, profile, profile_serializer, request, lookup
-):
+def get_application_data(_id, modal_class, serializer_class, profile, lookup):
     try:
         if lookup == "student":
             instances = modal_class.objects.filter(student_id__in=_id).select_related(
-                lookup
-            )
-        elif lookup == "job":
-            instances = modal_class.objects.filter(job_id__in=_id).select_related(
                 lookup
             )
 
@@ -434,19 +422,7 @@ def get_application_data(
         if lookup == "student":
             related_profiles = profile.objects.filter(user_id__in=related_ids)
 
-        elif lookup == "job":
-            related_profiles = profile.objects.filter(id__in=related_ids)
-
-        page_obj, count, total_pages = paginator(related_profiles, request)
-        serializer = profile_serializer(page_obj, many=True)
-        response_data = {
-            "total_count": count,
-            "total_pages": total_pages,
-            "current_page": page_obj.number,
-            "data": serializer.data,
-        }
-        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
-
+        return related_profiles
     except Exception as err:
         logger.error(f"Error in get_application_data: {err}")
         return ResponseHandler.error(
@@ -519,3 +495,47 @@ def get_todays_date():
 def get_user_photo(user, Model):
     photo = Model.objects.filter(user=user, file_type="profile_image").first()
     return photo.file.url if photo and photo.file else None
+
+
+def summary_counter_handler(
+    job_applied_model, job_saved_model, profiles_saved_modal, job_posted_modal, request
+):
+    try:
+        user_id = request.user.id
+        user_type = request.user.user_type
+
+        # Job Seeker
+        if user_type == 1:
+            applied_jobs_count = job_applied_model.objects.filter(
+                student_id=user_id
+            ).count()
+            saved_jobs_count = job_saved_model.objects.filter(user_id=user_id).count()
+            return ResponseHandler.success(
+                data={"job_applied": applied_jobs_count, "saved_job": saved_jobs_count},
+                status_code=status.HTTP_200_OK,
+            )
+
+        # Recruiter
+        elif user_type == 2:
+            saved_profiles_count = profiles_saved_modal.objects.filter(
+                recruiter_id=user_id
+            ).count()
+            posted_jobs_count = job_posted_modal.objects.filter(user_id=user_id).count()
+            return ResponseHandler.success(
+                data={
+                    "posted_jobs": posted_jobs_count,
+                    "saved_profiles": saved_profiles_count,
+                },
+                status_code=status.HTTP_200_OK,
+            )
+
+    except:
+        return ResponseHandler.error(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def generate_password_string(length=8):
+    # Define the possible characters: lowercase, uppercase, and digits
+    characters = string.ascii_letters + string.digits
+    # Randomly choose characters from the pool to create the string
+    random_string = "".join(random.choices(characters, k=length))
+    return random_string

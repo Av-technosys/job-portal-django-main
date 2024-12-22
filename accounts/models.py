@@ -38,7 +38,8 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.received_by.username}"
-    
+
+
 class CandidateSaved(models.Model):
     student = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="student_id_saved"
@@ -48,4 +49,3 @@ class CandidateSaved(models.Model):
     )
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
-
