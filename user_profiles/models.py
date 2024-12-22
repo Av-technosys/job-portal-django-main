@@ -203,7 +203,7 @@ class SocialMediaLinkRecruiter(models.Model):
         related_name="social_media_links",
     )
     id = models.AutoField(primary_key=True)
-    platform = models.CharField(max_length=50, choices=PLATFORM_CHOICES)
+    platform = models.CharField(max_length=50)
     url = models.URLField(max_length=255)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)

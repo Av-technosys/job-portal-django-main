@@ -38,14 +38,6 @@ JOB_RECRUITER_DOCUMENT_TYPES = [
     ("other", "Other"),
 ]
 
-PLATFORM_CHOICES = [
-    ("google", "Google"),
-    ("facebook", "Facebook"),
-    ("twitter", "Twitter"),
-    ("linkedin", "LinkedIn"),
-    ("instagram", "Instagram"),
-    # Add more platforms as needed
-]
 
 NOTIFICATION_TYPE_CHOICES_ID = [0, 1]
 
