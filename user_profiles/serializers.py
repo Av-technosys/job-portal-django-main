@@ -161,7 +161,7 @@ class StoreFCMTokenSerializer(serializers.Serializer):
 
 
 class CombinedCompanyDetailSerializer(serializers.ModelSerializer):
-    job_details = FoundingInfoSerializer(
+    founding_info = FoundingInfoSerializer(
         many=False, read_only=True, source="user.founding_info"
     )
 
