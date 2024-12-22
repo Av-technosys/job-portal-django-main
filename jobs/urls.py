@@ -6,22 +6,6 @@ urlpatterns = [
     path("job_details/", job_details_api_view, name="job_details_post"),
     # Section 2: JobDescription
     path("job_description/", job_description_api_view, name="job_description_post"),
-    # Section 2: ContactAndSkills
-    path(
-        "contact_and_skills/", contact_and_skills_api_view, name="contact_skills_post"
-    ),
-    # Section 3: JobOverviewAndQualifications
-    path(
-        "job_overview_qualifications/",
-        job_overview_and_qualifications_api_view,
-        name="job_overview_qualifications_post",
-    ),
-    # Section 3: SkillsCertificationsResponsibilities
-    path(
-        "skills_certifications_responsibilities/",
-        skills_certifications_responsibilities_api_view,
-        name="skills_certifications_responsibilities_post",
-    ),
     # Combined View for JobDetails
     path("job_details_combined/", get_job_details, name="get_job_details"),
     # Apply for job by student

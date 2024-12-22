@@ -16,64 +16,23 @@ from constants.jobs import (
     JOB_DETAILS_FIELDS,
     VALID_STATUS_TRANSITIONS,
     JOB_LIST_SEEKER_VIEW_FEILDS,
-    JOB_APPLIED_VIEW_FEILDS
+    JOB_APPLIED_VIEW_FEILDS,
+    JOB_POSTED_VIEW_FEILDS
 )
 
 from functions.common import get_user_photo
 from user_profiles.models import UploadedFile
 
-
-# Serializer for JobDetails model (Section 1)
-# Serializer for JobDetails model (Section 1)
-class JobDetailsSerializer(serializers.ModelSerializer):
+class JobSerializer(serializers.ModelSerializer):
     class Meta:
-        model = JobInfo
-        fields = "__all__"
+        model = Job
+        fields = '__all__'
 
-
-# Serializer for JobDescription model (Section 2)
 class JobDescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobDescription
-        fields = "__all__"
+        fields = '__all__'
 
-
-# Serializer for ContactAndSkills model (Section 2)
-class ContactAndSkillsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ContactAndSkills
-        fields = "__all__"
-
-
-# Serializer for JobOverviewAndQualifications model (Section 3)
-class JobOverviewAndQualificationsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JobOverviewAndQualifications
-        fields = "__all__"
-
-
-# Serializer for SkillsCertificationsResponsibilities model (Section 3)
-class SkillsCertificationsResponsibilitiesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SkillsCertificationsResponsibilities
-        fields = "__all__"
-
-
-# Combined Serializer for JobDetails (Nested)
-class CombinedJobDetailsSerializer(serializers.ModelSerializer):
-    # Nested serializers for related models
-    job_description = JobDescriptionSerializer(many=True, read_only=True)
-    contact_and_skills = ContactAndSkillsSerializer(many=True, read_only=True)
-    job_overview_and_qualifications = JobOverviewAndQualificationsSerializer(
-        many=True, read_only=True
-    )
-    skills_certifications_responsibilities = (
-        SkillsCertificationsResponsibilitiesSerializer(many=True, read_only=True)
-    )
-
-    class Meta:
-        model = JobInfo
-        fields = JOB_DETAILS_FIELDS
 
 
 class JobApplySerializer(serializers.ModelSerializer):
@@ -111,7 +70,7 @@ class JobApplySerializer(serializers.ModelSerializer):
 
             student_details = User.objects.filter(pk=student_id).first()
             recruiter_details = CompanyProfile.objects.filter(user=recruiter_id).first()
-            job_details = JobInfo.objects.filter(pk=job_id).first()
+            job_details = Job.objects.filter(pk=job_id).first()
 
             send_application_confirmation_to_job_seeker(
                 student_details, recruiter_details, job_details
@@ -177,7 +136,7 @@ class JobListingSeekerViewSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
 
     class Meta:
-        model = JobInfo
+        model = Job
         fields = JOB_LIST_SEEKER_VIEW_FEILDS
 
     def get_company_name(self, obj):
@@ -226,3 +185,18 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
     def get_salary_range(self, obj):
         job_overview = obj.job.job_overview_and_qualifications.first()
         return job_overview.salary_range if job_overview else None
+
+class JobPostedListSerializer(serializers.ModelSerializer):
+    salary_range = serializers.SerializerMethodField()
+    applicants_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Job
+        fields = JOB_POSTED_VIEW_FEILDS
+
+    def get_salary_range(self, obj):
+        overview = obj.job_overview_and_qualifications.first()
+        return overview.salary_range if overview else 0
+
+    def get_applicants_count(self, obj):
+        return obj.applications.count()
