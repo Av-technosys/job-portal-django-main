@@ -84,46 +84,47 @@ class SocialUrlsSerializer(serializers.ModelSerializer):
         return social_url
 
 
-class CompanyProfileSerializer(serializers.ModelSerializer):
+class OrganizationInfoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CompanyProfile
+        model = OrganizationInfo
         fields = "__all__"
 
     def create(self, validated_data):
-        company_profile = CompanyProfile(**validated_data)
+        company_profile = OrganizationInfo(**validated_data)
         company_profile.save()
         return company_profile
 
 
-class JobDetailsSerializer(serializers.ModelSerializer):
+class FoundingInfoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = JobDetails
+        model = FoundingInfo
         fields = "__all__"
 
     def create(self, validated_data):
-        job_details = JobDetails(**validated_data)
+        job_details = FoundingInfo(**validated_data)
         job_details.save()
         return job_details
 
 
-class CompanyIdSerializer(serializers.ModelSerializer):
+
+class UploadedFileRecruiterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CompanyId
+        model = JobRecruiterUploadedFile
         fields = "__all__"
 
     def create(self, validated_data):
-        company_id = CompanyId(**validated_data)
-        company_id.save()
-        return company_id
+        uploaded_file = JobRecruiterUploadedFile(**validated_data)
+        uploaded_file.save()
+        return uploaded_file
+    
 
-
-class UploadedFileSerializer(serializers.ModelSerializer):
+class UploadedFileSeekerSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UploadedFile
+        model = JobSeekerUploadedFile
         fields = "__all__"
 
     def create(self, validated_data):
-        uploaded_file = UploadedFile(**validated_data)
+        uploaded_file = JobSeekerUploadedFile(**validated_data)
         uploaded_file.save()
         return uploaded_file
 
@@ -135,7 +136,7 @@ class CombineStudentProfileSerializer(serializers.ModelSerializer):
     certifications = CertificationsSerializer(many=True, read_only=True)
     projects = ProjectsSerializer(many=True, read_only=True)
     social_urls = SocialUrlsSerializer(many=True, read_only=True)
-    uploaded_files = UploadedFileSerializer(many=True, read_only=True)
+    uploaded_files = UploadedFileSeekerSerializer(many=True, read_only=True)
 
     class Meta:
         model = StudentProfile
@@ -160,15 +161,12 @@ class StoreFCMTokenSerializer(serializers.Serializer):
 
 
 class CombinedCompanyDetailSerializer(serializers.ModelSerializer):
-    company_id = CompanyIdSerializer(
-        many=False, read_only=True, source="user.company_id"
-    )
-    job_details = JobDetailsSerializer(
-        many=False, read_only=True, source="user.job_details"
+    job_details = FoundingInfoSerializer(
+        many=False, read_only=True, source="user.founding_info"
     )
 
     class Meta:
-        model = CompanyProfile
+        model = OrganizationInfo
         fields = COMPANY_PROFILE_FIELDS
 
 class ListCandidateSerializer(serializers.ModelSerializer):

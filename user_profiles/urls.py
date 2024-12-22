@@ -11,7 +11,7 @@ urlpatterns = [
     path("social_urls/", social_urls),
     path("company_profile/", company_profile),
     path("job_details/", job_details),
-    path("company_id/", company_id),
+    # path("company_id/", company_id),
     path("upload_document/", file_upload),
     path("filter_job_seeker/", job_seeker),
     path("students_all_details/", students_all_details),

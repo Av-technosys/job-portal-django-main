@@ -196,7 +196,7 @@ class FoundingInfo(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
-class SocialMediaLink(models.Model):
+class SocialMediaLinkRecruiter(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

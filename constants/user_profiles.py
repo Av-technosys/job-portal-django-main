@@ -97,10 +97,8 @@ JOB_DETAILS_FIELDS = [
 COMPANY_PROFILE_FIELDS = [
     "id",
     "user",
-    "company_email",
-    "company_name",
-    "company_description",
-    "company_url",
+    "company_about us",
+    "company_website",
     "address_line_1",
     "address_line_2",
     "city",
@@ -110,7 +108,7 @@ COMPANY_PROFILE_FIELDS = [
     "created_date",
     "updated_date",
     "company_id",
-    "job_details",
+    "founding_info",
 ]
 
 

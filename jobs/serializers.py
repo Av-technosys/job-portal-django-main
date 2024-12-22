@@ -9,7 +9,6 @@ from functions.send_email import (
     send_application_confirmation_to_job_seeker,
     send_application_received_to_recruiter,
 )
-from user_profiles.models import CompanyProfile
 from .models import *
 from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS, ALREADY_SAVED
 from constants.jobs import (
@@ -19,7 +18,7 @@ from constants.jobs import (
 )
 
 from functions.common import get_user_photo
-from user_profiles.models import UploadedFile
+from user_profiles.models import OrganizationInfo, JobRecruiterUploadedFile
 
 
 # Serializer for JobDetails model (Section 1)
@@ -109,7 +108,9 @@ class JobApplySerializer(serializers.ModelSerializer):
             student_id = self.data.get("student")
 
             student_details = User.objects.filter(pk=student_id).first()
-            recruiter_details = CompanyProfile.objects.filter(user=recruiter_id).first()
+            recruiter_details = OrganizationInfo.objects.filter(
+                user=recruiter_id
+            ).first()
             job_details = JobInfo.objects.filter(pk=job_id).first()
 
             send_application_confirmation_to_job_seeker(
@@ -194,7 +195,7 @@ class JobListingSeekerViewSerializer(serializers.ModelSerializer):
         return False
 
     def get_company_profile_image(self, obj):
-        return get_user_photo(obj.user, UploadedFile)
+        return get_user_photo(obj.user, JobRecruiterUploadedFile)
 
 
 class JobSaveSerializer(serializers.ModelSerializer):
