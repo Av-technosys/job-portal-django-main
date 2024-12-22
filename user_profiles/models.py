@@ -171,7 +171,7 @@ class OrganizationInfo(models.Model):
         ),
     )
     company_about_us = models.TextField(max_length=500)
-    # company_url = models.URLField(blank=True)
+    company_website = models.URLField(blank=True)
     address_line_1 = models.CharField(max_length=100)
     address_line_2 = models.CharField(max_length=100, blank=True, null=True)
     city = models.CharField(max_length=100)
