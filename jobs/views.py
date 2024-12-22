@@ -75,7 +75,7 @@ def list_jobs(request):
 @permission_classes([IsAuthenticated])
 def my_posted_jobs(request):
     request.data["owner"] = [request.user.id]
-    return filter_search_handler(JobInfo, JobDetailsSerializer, request)
+    return filter_search_handler(JobInfo, JobPostedListSerializer, request)
 
 
 @api_view(["GET"])
@@ -86,7 +86,6 @@ def submitted_jobs_application(request):
         JobApplySerializer,
         StudentProfile,
         StudentProfileSerializer,
-        StudentProfile,
         request,
     )
 
@@ -98,8 +97,7 @@ def list_submitted_jobs(request):
         JobApply,
         JobApplySerializer,
         JobInfo,
-        JobDetailsSerializer,
-        StudentProfile,
+        AppliedJobListViewSerializer,
         request,
     )
 
