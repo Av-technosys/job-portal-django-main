@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from constants.accounts import (
-    EMAIL_OTP_SUBJECT,
+    AUTO_GENERATE_PASSWORD_SUBJECT,
+    AUTO_GENERATE_PASSWORD_TEMPLATE,
     EMAIL_OTP_MESSAGE_TEMPLATE,
+    EMAIL_OTP_SUBJECT,
 )
 from django.core.mail import send_mail
 from django.conf import settings
@@ -16,7 +18,7 @@ from functions.common import get_todays_date
 
 
 def send_email_core_fucntion(
-    subject, message, from_email, recipient_list, html_message
+    subject, message, from_email, recipient_list, html_message=""
 ):
     send_mail(
         subject,
@@ -39,6 +41,20 @@ def send_email_otp(email, otp):
     except Exception as e:
         raise serializers.ValidationError(
             {"error": f"Failed to send OTP via email: {str(e)}"}
+        )
+
+
+def send_auto_generated_password(email, password):
+    subject = AUTO_GENERATE_PASSWORD_SUBJECT
+    message = AUTO_GENERATE_PASSWORD_TEMPLATE.format(password=password)
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [email]
+
+    try:
+        send_email_core_fucntion(subject, message, from_email, recipient_list)
+    except Exception as e:
+        raise serializers.ValidationError(
+            {"error": f"Failed to send auto generated otp via email: {str(e)}"}
         )
 
 

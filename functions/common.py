@@ -1,5 +1,6 @@
 from rest_framework.request import Request
 import random
+import string
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from django.utils import timezone
@@ -530,3 +531,11 @@ def summary_counter_handler(
 
     except:
         return ResponseHandler.error(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def generate_password_string(length=8):
+    # Define the possible characters: lowercase, uppercase, and digits
+    characters = string.ascii_letters + string.digits
+    # Randomly choose characters from the pool to create the string
+    random_string = "".join(random.choices(characters, k=length))
+    return random_string

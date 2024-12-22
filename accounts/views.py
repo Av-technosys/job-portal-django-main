@@ -9,6 +9,7 @@ from .serializers import (
     VerifyOtpSerializer,
     ResetPasswordSendOtpSerializer,
     ResendOtpSerializer,
+    SSOUserSerializer,
     VerifyOtpAndChangePasswordSerializer,
     NotificationSerializer,
     CandidateSaveSerializer,
@@ -31,6 +32,11 @@ from handlers.permissions import IsRecruiter
 @api_view(["POST"])
 def register_user(request):
     return serializer_handle(UserSerializer, request)
+
+
+@api_view(["POST"])
+def sso_user(request):
+    return serializer_handle_customize_response(SSOUserSerializer, request)
 
 
 @api_view(["POST"])
