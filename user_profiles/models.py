@@ -161,17 +161,17 @@ class SocialUrls(models.Model):
         return f"{self.link} - {self.link_title}"
 
 
-class CompanyProfile(models.Model):
+class OrganizationInfo(models.Model):
     id = models.AutoField(primary_key=True)
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="company_profile",
+    user = (
+        models.OneToOneField(
+            settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE,
+            related_name="organizations_info",
+        ),
     )
-    company_email = models.EmailField()
-    company_name = models.CharField(max_length=200)
-    company_description = models.TextField(max_length=300)
-    company_url = models.URLField(blank=True)
+    company_about_us = models.TextField(max_length=500)
+    # company_url = models.URLField(blank=True)
     address_line_1 = models.CharField(max_length=100)
     address_line_2 = models.CharField(max_length=100, blank=True, null=True)
     city = models.CharField(max_length=100)
@@ -182,38 +182,57 @@ class CompanyProfile(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
 
-class JobDetails(models.Model):
+class FoundingInfo(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="job_details"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="founding_info"
     )
-    industry = models.CharField(max_length=200)
-    location = models.CharField(max_length=200)
-    job_type = models.PositiveSmallIntegerField(choices=JOB_TYPE_CHOICES)
+    organization_type = models.CharField(max_length=200)
+    industry_type = models.CharField(max_length=200)
     company_size = models.PositiveSmallIntegerField()
-    mission = models.TextField()
+    company_website = models.CharField(max_length=300)
+    mission = models.TextField(null=True, blank=True)
+    vision = models.TextField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
-
-class CompanyId(models.Model):
-    id = models.AutoField(primary_key=True)
+class SocialMediaLink(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="company_id"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="social_media_links",
     )
-    registration_number = models.PositiveSmallIntegerField()
-    firm_id = models.PositiveSmallIntegerField()
+    id = models.AutoField(primary_key=True)
+    platform = models.CharField(max_length=50, choices=PLATFORM_CHOICES)
+    url = models.URLField(max_length=255)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f"{self.get_platform_display()} - {self.url}"
 
-class UploadedFile(models.Model):
+class JobRecruiterUploadedFile(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
-    file_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
+    file_type = models.CharField(max_length=50, choices=JOB_RECRUITER_DOCUMENT_TYPES)
+    file = models.FileField(upload_to=file_rename, storage=S3FileStorage())
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.file_type} for user {self.user.username}"
+
+
+class JobSeekerUploadedFile(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    file_type = models.CharField(max_length=50, choices=JOB_SEEKER_DOCUMENT_TYPES)
     file = models.FileField(upload_to=file_rename, storage=S3FileStorage())
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)

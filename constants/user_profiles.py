@@ -23,11 +23,28 @@ JOB_TYPE_CHOICES = [
     (2, "Full Time"),
 ]
 
-DOCUMENT_TYPES = [
+JOB_SEEKER_DOCUMENT_TYPES = [
     ("resume", "Resume"),
     ("cover_letter", "Cover Letter"),
     ("profile_image", "Profile Image"),
     ("typescript", "Typescript"),
+]
+
+JOB_RECRUITER_DOCUMENT_TYPES = [
+    ("organization_registration_number", "Organization Registration Number"),
+    ("CIN_number", "CIN Number"),
+    ("profile_image", "Profile Image"),
+    ("GST_number", "GST Number"),
+    ("other", "Other"),
+]
+
+PLATFORM_CHOICES = [
+    ("google", "Google"),
+    ("facebook", "Facebook"),
+    ("twitter", "Twitter"),
+    ("linkedin", "LinkedIn"),
+    ("instagram", "Instagram"),
+    # Add more platforms as needed
 ]
 
 NOTIFICATION_TYPE_CHOICES_ID = [0, 1]
@@ -108,4 +125,3 @@ LIST_CANDIDATE_FEILDS = [
     "experience",
     "job_search_status",
 ]
-
