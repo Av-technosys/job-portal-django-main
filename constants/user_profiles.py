@@ -23,12 +23,21 @@ JOB_TYPE_CHOICES = [
     (2, "Full Time"),
 ]
 
-DOCUMENT_TYPES = [
+JOB_SEEKER_DOCUMENT_TYPES = [
     ("resume", "Resume"),
     ("cover_letter", "Cover Letter"),
     ("profile_image", "Profile Image"),
     ("typescript", "Typescript"),
 ]
+
+RECRUITER_DOCUMENT_TYPES = [
+    ("organization_registration_number", "Organization Registration Number"),
+    ("CIN_number", "CIN Number"),
+    ("profile_image", "Profile Image"),
+    ("GST_number", "GST Number"),
+    ("other", "Other"),
+]
+
 
 NOTIFICATION_TYPE_CHOICES_ID = [0, 1]
 
@@ -80,10 +89,8 @@ JOB_DETAILS_FIELDS = [
 COMPANY_PROFILE_FIELDS = [
     "id",
     "user",
-    "company_email",
-    "company_name",
-    "company_description",
-    "company_url",
+    "company_about_us",
+    "company_website",
     "address_line_1",
     "address_line_2",
     "city",
@@ -93,7 +100,7 @@ COMPANY_PROFILE_FIELDS = [
     "created_date",
     "updated_date",
     "company_id",
-    "job_details",
+    "founding_info",
 ]
 
 

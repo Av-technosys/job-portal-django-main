@@ -7,10 +7,11 @@ from .models import (
     Certifications,
     Projects,
     SocialUrls,
-    CompanyProfile,
-    JobDetails,
-    CompanyId,
-    UploadedFile,
+    OrganizationInfo,
+    FoundingInfo,
+    RecruiterUploadedFile,
+    JobSeekerUploadedFile,
+    SocialMediaLinkRecruiter,
     FCMToken,
 )
 
@@ -22,8 +23,9 @@ admin.site.register(SkillSet)
 admin.site.register(Certifications)
 admin.site.register(Projects)
 admin.site.register(SocialUrls)
-admin.site.register(CompanyProfile)
-admin.site.register(JobDetails)
-admin.site.register(CompanyId)
-admin.site.register(UploadedFile)
+admin.site.register(OrganizationInfo)
+admin.site.register(FoundingInfo)
+admin.site.register(JobSeekerUploadedFile)
+admin.site.register(RecruiterUploadedFile)
+admin.site.register(SocialMediaLinkRecruiter)
 admin.site.register(FCMToken)

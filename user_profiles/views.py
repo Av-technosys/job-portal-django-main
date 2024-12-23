@@ -59,30 +59,27 @@ def social_urls(request):
 @permission_classes([IsAuthenticated])
 def company_profile(request):
     if request.method == "GET":
-        return get_handle_profile(CompanyProfile, CompanyProfileSerializer, request)
+        return get_handle_profile(OrganizationInfo, OrganizationInfoSerializer, request)
     else:
-        return request_handler(CompanyProfile, CompanyProfileSerializer, request)
+        return request_handler(OrganizationInfo, OrganizationInfoSerializer, request)
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def job_details(request):
-    return request_handler(JobDetails, JobDetailsSerializer, request)
+    return request_handler(FoundingInfo, FoundingInfoSerializer, request)
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
-def company_id(request):
-    if request.method == "GET":
-        return get_handle_profile(CompanyId, CompanyIdSerializer, request)
-    else:
-        return request_handler(CompanyId, CompanyIdSerializer, request)
+def file_upload_recruiter(request):
+    return upload_handler(RecruiterUploadedFile, UploadedFileRecruiterSerializer, request)
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
-def file_upload(request):
-    return upload_handler(UploadedFile, UploadedFileSerializer, request)
+def file_upload_job_seeker(request):
+    return upload_handler(JobSeekerUploadedFile, UploadedFileSeekerSerializer, request)
 
 
 @api_view(["GET"])
@@ -116,12 +113,12 @@ def store_fcm_token(request):
 
 @api_view(["GET"])
 def get_recruiter(request):
-    return filter_search_handler(CompanyProfile, CompanyProfileSerializer, request)
+    return filter_search_handler(OrganizationInfo, OrganizationInfoSerializer, request)
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_recruiter_details(request, recruiter_id):
     return get_data_from_id_and_serialize(
-        CompanyProfile, CombinedCompanyDetailSerializer, recruiter_id
+        OrganizationInfo, CombinedCompanyDetailSerializer, recruiter_id
     )
