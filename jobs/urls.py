@@ -4,10 +4,8 @@ from .views import *
 urlpatterns = [
     # Section 1: JobDetails
     path("job_details/", job_details_api_view, name="job_details_post"),
-    # Section 2: JobDescription
-    path("job_description/", job_description_api_view, name="job_description_post"),
-    # Combined View for JobDetails
-    path("job_details_combined/", get_job_details, name="get_job_details"),
+    
+   
     # Apply for job by student
     path("apply_job/", apply_job, name="apply_job"),
     # API for job list

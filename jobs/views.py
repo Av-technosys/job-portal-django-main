@@ -12,10 +12,10 @@ from accounts.models import CandidateSaved
 
 
 # Section 1: JobDetails
-@api_view(["POST", "GET", "PATCH", "DELETE"])
+@api_view(["POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def job_details_api_view(request):
-    return request_handler(Job, JobSerializer, request)
+    return request_handler(JobInfo, JobCombinedSerializer, request)
 
 
 # Section 2: JobDescription
@@ -26,29 +26,29 @@ def job_description_api_view(request):
 
 
 # Combined View for JobDetails
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def get_job_details(request):
-    job_id = request.data.get("job_id")
-    return get_data_from_id_and_serialize(Job, CombinedJobDetailsSerializer, job_id)
+# @api_view(["GET"])
+# @permission_classes([IsAuthenticated])
+# def get_job_details(request):
+#     job_id = request.data.get("job_id")
+#     return get_data_from_id_and_serialize(Job, CombinedJobDetailsSerializer, job_id)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def apply_job(request):
-    return job_apply_handler(JobApplySerializer, Job, request)
+    return job_apply_handler(JobApplySerializer, JobInfo, request)
 
 
 @api_view(["GET"])
 def list_jobs(request):
-    return filter_search_handler(Job, JobListingSeekerViewSerializer, request)
+    return filter_search_handler(JobInfo, JobListingSeekerViewSerializer, request)
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def my_posted_jobs(request):
     request.data["owner"] = [request.user.id]
-    return filter_search_handler(Job, JobPostedListSerializer, request)
+    return filter_search_handler(JobInfo, JobPostedListSerializer, request)
 
 
 @api_view(["GET"])
@@ -69,7 +69,7 @@ def list_submitted_jobs(request):
     return application_handler(
         JobApply,
         JobApplySerializer,
-        Job,
+        JobInfo,
         AppliedJobListViewSerializer,
         request,
     )
@@ -91,11 +91,11 @@ def chat(request, application_id):
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def save_job(request):
     return job_save_handler(
-        JobSaveSerializer, JobListingSeekerViewSerializer, JobSaved, Job, request
+        JobSaveSerializer, JobListingSeekerViewSerializer, JobSaved, JobInfo, request
     )
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def summary_view(request):
-    return summary_counter_handler(JobApply, JobSaved, CandidateSaved, Job, request)
+    return summary_counter_handler(JobApply, JobSaved, CandidateSaved, JobInfo, request)

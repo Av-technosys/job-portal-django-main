@@ -1,12 +1,17 @@
 from django.db import models
 from django.conf import settings
-from constants.jobs import JOB_STATUS_FIELDS, JOB_TYPE_CHOICES, JOB_LEVEL_CHOICES, JOB_ROLE_FIELDS
+from constants.jobs import (
+    JOB_STATUS_FIELDS,
+    JOB_TYPE_CHOICES,
+    JOB_LEVEL_CHOICES,
+    JOB_ROLE_FIELDS,
+)
 from django.db import models
 from accounts.models import User
-class Job(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
+
+
+class JobInfo(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     role = models.CharField(max_length=100, choices=JOB_ROLE_FIELDS)
     max_salary = models.PositiveIntegerField()
@@ -16,16 +21,14 @@ class Job(models.Model):
     vacancies = models.PositiveIntegerField()
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
     def __str__(self):
         return self.title
-    
+
+
 class JobDescription(models.Model):
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
-    job = models.ForeignKey(
-        Job, on_delete=models.CASCADE
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    job = models.ForeignKey(JobInfo, on_delete=models.CASCADE)
     education = models.CharField(max_length=100)
     experience = models.PositiveIntegerField()
     city = models.CharField(max_length=100)
@@ -38,13 +41,14 @@ class JobDescription(models.Model):
 
     def __str__(self):
         return self.education
-    
+
+
 class JobApply(models.Model):
     student = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="student_id_applied"
     )
     job = models.ForeignKey(
-        Job, on_delete=models.CASCADE, related_name="applications"
+        JobInfo, on_delete=models.CASCADE, related_name="applications"
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="job_owner"
@@ -84,6 +88,6 @@ class JobSaved(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="user_id_saved"
     )
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="saved_job")
+    job = models.ForeignKey(JobInfo, on_delete=models.CASCADE, related_name="saved_job")
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)

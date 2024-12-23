@@ -74,7 +74,7 @@ def serializer_handle(Serializers, request):
     try:
         if request.user.id:
             request.data["user"] = request.user.id
-        serializer = Serializers(data=request.data)
+            serializer = Serializers(data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return ResponseHandler.success(
