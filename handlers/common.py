@@ -129,7 +129,6 @@ def candidate_save_handler(
             "student_id", flat=True
         )
         request.data["recruiter"] = user_id  # Set the recruiter ID
-        print(student_id)
 
         if request.method == "GET":  # Added GET method handling
             # Check if CandidateSaved table is empty
@@ -142,7 +141,7 @@ def candidate_save_handler(
             if request.data.get("owner"):
                 owner_filters["user_id__in"] = request.data.get("owner")
             if student_id:
-                instances = StudentProfile.objects.filter(id__in=[student_id])
+                instances = StudentProfile.objects.filter(user__in=student_id)
             else:
                 instances = StudentProfile.objects.filter(
                     q_filters, **filter_kwargs, **owner_filters
