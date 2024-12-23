@@ -90,4 +90,8 @@ JOB_INFO_SERIALIZER_FEILDS = [
     "job_type",
     "job_level",
     "vacancies",
+    "job_id",
+    "application_id" 
 ]
+
+JOB_POSTED_VIEW_FEILDS = ["designation", "salary_range", "applicants_count", "location"]

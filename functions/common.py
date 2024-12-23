@@ -378,13 +378,13 @@ def application_handler(
                     )
                 )
 
-        related_profiles = get_application_data(
+            related_profiles = get_application_data(
             _id,
             modal_class,
             serializer_class,
             profile,
             "student",
-        )
+            )
 
         page_obj, count, total_pages = paginator(related_profiles, request)
         serializer = profile_serializer(page_obj, many=True)
