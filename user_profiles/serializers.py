@@ -106,7 +106,6 @@ class FoundingInfoSerializer(serializers.ModelSerializer):
         return job_details
 
 
-
 class UploadedFileRecruiterSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecruiterUploadedFile
@@ -116,7 +115,7 @@ class UploadedFileRecruiterSerializer(serializers.ModelSerializer):
         uploaded_file = RecruiterUploadedFile(**validated_data)
         uploaded_file.save()
         return uploaded_file
-    
+
 
 class UploadedFileSeekerSerializer(serializers.ModelSerializer):
     class Meta:

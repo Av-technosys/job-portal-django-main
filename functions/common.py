@@ -384,7 +384,7 @@ def application_handler(
                 serializer_class,
                 profile,
                 "student",
-                )
+            )
 
         page_obj, count, total_pages = paginator(related_profiles, request)
         serializer = profile_serializer(page_obj, many=True)

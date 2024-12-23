@@ -69,8 +69,7 @@ JOB_APPLIED_VIEW_FEILDS = [
     "salary_range",
     "applied_date",
     "job_id",
-    "application_id"
-    
+    "application_id",
 ]
 
 JOB_POSTED_VIEW_FEILDS = ["designation", "salary_range", "applicants_count", "location"]
