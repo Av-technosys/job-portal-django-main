@@ -30,7 +30,7 @@ JOB_SEEKER_DOCUMENT_TYPES = [
     ("typescript", "Typescript"),
 ]
 
-JOB_RECRUITER_DOCUMENT_TYPES = [
+RECRUITER_DOCUMENT_TYPES = [
     ("organization_registration_number", "Organization Registration Number"),
     ("CIN_number", "CIN Number"),
     ("profile_image", "Profile Image"),
@@ -89,7 +89,7 @@ JOB_DETAILS_FIELDS = [
 COMPANY_PROFILE_FIELDS = [
     "id",
     "user",
-    "company_about us",
+    "company_about_us",
     "company_website",
     "address_line_1",
     "address_line_2",

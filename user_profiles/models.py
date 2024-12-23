@@ -211,13 +211,13 @@ class SocialMediaLinkRecruiter(models.Model):
     def __str__(self):
         return f"{self.get_platform_display()} - {self.url}"
 
-class JobRecruiterUploadedFile(models.Model):
+class RecruiterUploadedFile(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
-    file_type = models.CharField(max_length=50, choices=JOB_RECRUITER_DOCUMENT_TYPES)
+    file_type = models.CharField(max_length=50, choices=RECRUITER_DOCUMENT_TYPES)
     file = models.FileField(upload_to=file_rename, storage=S3FileStorage())
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)

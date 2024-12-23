@@ -13,7 +13,7 @@ urlpatterns = [
     path("job_details/", job_details),
     # path("company_id/", company_id),
     path("upload_document_recruiter/", file_upload_recruiter),
-    path("upload_document_seeker/", file_upload_seeker),
+    path("upload_document_seeker/", file_upload_job_seeker),
     path("filter_job_seeker/", job_seeker),
     path("students_all_details/", students_all_details),
     path("application_status/", application_status),

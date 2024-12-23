@@ -9,7 +9,7 @@ from .models import (
     SocialUrls,
     OrganizationInfo,
     FoundingInfo,
-    JobRecruiterUploadedFile,
+    RecruiterUploadedFile,
     JobSeekerUploadedFile,
     SocialMediaLinkRecruiter,
     FCMToken,
@@ -26,6 +26,6 @@ admin.site.register(SocialUrls)
 admin.site.register(OrganizationInfo)
 admin.site.register(FoundingInfo)
 admin.site.register(JobSeekerUploadedFile)
-admin.site.register(JobRecruiterUploadedFile)
+admin.site.register(RecruiterUploadedFile)
 admin.site.register(SocialMediaLinkRecruiter)
 admin.site.register(FCMToken)

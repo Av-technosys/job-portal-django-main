@@ -109,11 +109,11 @@ class FoundingInfoSerializer(serializers.ModelSerializer):
 
 class UploadedFileRecruiterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = JobRecruiterUploadedFile
+        model = RecruiterUploadedFile
         fields = "__all__"
 
     def create(self, validated_data):
-        uploaded_file = JobRecruiterUploadedFile(**validated_data)
+        uploaded_file = RecruiterUploadedFile(**validated_data)
         uploaded_file.save()
         return uploaded_file
     
