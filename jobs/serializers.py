@@ -227,6 +227,7 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
         job_overview = obj.job.job_overview_and_qualifications.first()
         return job_overview.salary_range if job_overview else None
 
+
 class JobPostedListSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
     title = serializers.CharField() 
@@ -238,15 +239,7 @@ class JobPostedListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobInfo
-        fields = [
-            "company_profile_image",
-            "title",
-            "salary",
-            "applicants_count",
-            "location",
-            "application_count",
-            "job_id",
-        ]
+        fields = JOB_POSTED_VIEW_FEILDS
 
     def get_company_profile_image(self, obj):
         return get_user_photo(obj.user, RecruiterUploadedFile)
