@@ -232,7 +232,6 @@ class JobPostedListSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
     title = serializers.CharField() 
     salary = serializers.SerializerMethodField()  
-    applicants_count = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
     application_count = serializers.IntegerField(source="applications.count")  
     job_id = serializers.IntegerField(source="id") 
@@ -248,8 +247,6 @@ class JobPostedListSerializer(serializers.ModelSerializer):
         # Assuming salary comes from `max_salary` and `min_salary` fields
         return f"{obj.min_salary} - {obj.max_salary}"
 
-    def get_applicants_count(self, obj):
-        return obj.applications.count()
 
     def get_location(self, obj):
         description = obj.job_descriptions.first()  

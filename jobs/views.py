@@ -12,26 +12,10 @@ from accounts.models import CandidateSaved
 
 
 # Section 1: JobDetails
-@api_view(["POST", "PATCH", "DELETE"])
+@api_view(["GET","POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def job_details_api_view(request):
     return request_handler(JobInfo, JobCombinedSerializer, request)
-
-
-# Section 2: JobDescription
-@api_view(["POST", "GET", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
-def job_description_api_view(request):
-    return request_handler(JobDescription, JobDescriptionSerializer, request)
-
-
-# Combined View for JobDetails
-# @api_view(["GET"])
-# @permission_classes([IsAuthenticated])
-# def get_job_details(request):
-#     job_id = request.data.get("job_id")
-#     return get_data_from_id_and_serialize(Job, CombinedJobDetailsSerializer, job_id)
-
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

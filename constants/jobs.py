@@ -69,8 +69,9 @@ JOB_APPLIED_VIEW_FEILDS = [
     "job_type",
     "salary_range",
     "applied_date",
+    "job_id",
+    "application_id",
 ]
-JOB_POSTED_VIEW_FEILDS = ["designation", "salary_range", "applicants_count", "location"]
 
 JOB_DESCRIPTION_SERIALIZER_FEILDS = [
     "education",
@@ -96,8 +97,13 @@ JOB_POSTED_VIEW_FEILDS = [
             "company_profile_image",
             "title",
             "salary",
-            "applicants_count",
             "location",
             "application_count",
             "job_id",
         ]
+
+
+JOB_POST_STATUS_FEILDS = [
+    ("active", "active"),
+    ("expired", "expired")
+]
