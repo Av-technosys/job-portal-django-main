@@ -196,6 +196,7 @@ class FoundingInfo(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+
 class SocialMediaLinkRecruiter(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -210,6 +211,7 @@ class SocialMediaLinkRecruiter(models.Model):
 
     def __str__(self):
         return f"{self.get_platform_display()} - {self.url}"
+
 
 class RecruiterUploadedFile(models.Model):
     id = models.AutoField(primary_key=True)

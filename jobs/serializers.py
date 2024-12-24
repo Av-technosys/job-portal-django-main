@@ -20,11 +20,10 @@ from constants.jobs import (
     JOB_POSTED_VIEW_FEILDS,
     JOB_INFO_SERIALIZER_FEILDS,
     JOB_DESCRIPTION_SERIALIZER_FEILDS,
-    JOB_POSTED_VIEW_FEILDS
 )
 
 from functions.common import get_user_photo
-from user_profiles.models import OrganizationInfo, JobRecruiterUploadedFile
+from user_profiles.models import OrganizationInfo, RecruiterUploadedFile
 
 
 class JobInfoSerializer(serializers.ModelSerializer):
@@ -61,12 +60,12 @@ class JobCombinedSerializer(serializers.Serializer):
             field: validated_data[field] for field in JOB_INFO_SERIALIZER_FEILDS
         }
         job_info_data["user"] = user
+        job_info = JobInfo.objects.create(**job_info_data)
         job_description_data = {
             field: validated_data[field] for field in JOB_DESCRIPTION_SERIALIZER_FEILDS
         }
-        job_info = JobInfo.objects.create(**job_info_data)
-        job_description_data["job"] = job_info
-        job_description_data["owner"] = job_info.user
+        job_description_data["job"] = job_info  # Link to JobInfo instance
+        job_description_data["user"] = user  # Link the user
         JobDescription.objects.create(**job_description_data)
 
         return validated_data
@@ -193,7 +192,7 @@ class JobListingSeekerViewSerializer(serializers.ModelSerializer):
         return False
 
     def get_company_profile_image(self, obj):
-        return get_user_photo(obj.user, JobRecruiterUploadedFile)
+        return get_user_photo(obj.user, RecruiterUploadedFile)
 
 
 class JobSaveSerializer(serializers.ModelSerializer):
@@ -228,18 +227,41 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
         job_overview = obj.job.job_overview_and_qualifications.first()
         return job_overview.salary_range if job_overview else None
 
-
 class JobPostedListSerializer(serializers.ModelSerializer):
-    salary_range = serializers.SerializerMethodField()
+    company_profile_image = serializers.SerializerMethodField()
+    title = serializers.CharField() 
+    salary = serializers.SerializerMethodField()  
     applicants_count = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
+    application_count = serializers.IntegerField(source="applications.count")  
+    job_id = serializers.IntegerField(source="id") 
 
     class Meta:
         model = JobInfo
-        fields = JOB_POSTED_VIEW_FEILDS
+        fields = [
+            "company_profile_image",
+            "title",
+            "salary",
+            "applicants_count",
+            "location",
+            "application_count",
+            "job_id",
+        ]
 
-    def get_salary_range(self, obj):
-        overview = obj.job_overview_and_qualifications.first()
-        return overview.salary_range if overview else 0
+    def get_company_profile_image(self, obj):
+        return get_user_photo(obj.user, RecruiterUploadedFile)
+
+    def get_salary(self, obj):
+        # Assuming salary comes from `max_salary` and `min_salary` fields
+        return f"{obj.min_salary} - {obj.max_salary}"
 
     def get_applicants_count(self, obj):
         return obj.applications.count()
+
+    def get_location(self, obj):
+        description = obj.job_descriptions.first()  
+        if description:
+            return f"{description.city}, {description.state}, {description.country}"
+        return None
+
+

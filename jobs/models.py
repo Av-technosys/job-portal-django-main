@@ -19,6 +19,7 @@ class JobInfo(models.Model):
     job_type = models.CharField(max_length=50, choices=JOB_TYPE_CHOICES)
     job_level = models.CharField(max_length=100, choices=JOB_LEVEL_CHOICES)
     vacancies = models.PositiveIntegerField()
+    status = models.CharField(default="active")
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
@@ -28,7 +29,7 @@ class JobInfo(models.Model):
 
 class JobDescription(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    job = models.ForeignKey(JobInfo, on_delete=models.CASCADE)
+    job = models.ForeignKey(JobInfo, on_delete=models.CASCADE, related_name="job_descriptions")
     education = models.CharField(max_length=100)
     experience = models.PositiveIntegerField()
     city = models.CharField(max_length=100)
