@@ -187,12 +187,14 @@ class JobSeekerListingViewSerializer(serializers.ModelSerializer):
         return get_location_formatted(obj)
 
     def get_is_applied(self, obj):
+        return False
         request = self.context.get("request")
         if request and hasattr(request, "user") and request.user.is_authenticated:
             return JobApply.objects.filter(job=obj, student_id=request.user.id).exists()
         return False
 
     def get_company_profile_image(self, obj):
+        return ""
         return get_user_photo(obj.user, RecruiterUploadedFile)
 
 
