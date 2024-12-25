@@ -331,12 +331,6 @@ def paginator(queryset, request):
 
 def job_apply_handler(serializer_class, JobInfo, request):
     try:
-        if request.user.user_type == 2:
-            return ResponseHandler.error(
-                message=ERROR_INVALID_CREDENTIALS,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
         # Student Id is used by logged in student user
         student_id = request.user.id
         job_id = request.data.get("job")
@@ -427,30 +421,7 @@ def get_application_data(_id, modal_class, serializer_class, profile, lookup):
 
 
 def handle_application_status(model, serializer_class, request):
-    if request.method == "GET":
-        _id = request.data.get("id")
-
-        if not _id:
-            return ResponseHandler.error(status_code=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            instance = model.objects.filter(job_id=_id)
-            if not instance.exists():
-                return ResponseHandler.error(
-                    ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
-                )
-
-            serializer = serializer_class(instance, many=True)
-            return ResponseHandler.success(
-                serializer.data, status_code=status.HTTP_200_OK
-            )
-
-        except:
-            return ResponseHandler.error(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    elif request.method in ["PATCH"]:
+    if request.method in ["PATCH"]:
         try:
             job_id = request.data.get("job_id")
             student_id = request.data.get("student_id")

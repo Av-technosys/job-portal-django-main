@@ -211,6 +211,12 @@ class JobSaveSerializer(serializers.ModelSerializer):
         return data
 
 
+class CandidateSaveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CandidateSaved
+        fields = "__all__"
+
+
 class AppliedJobListViewSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source="job.title")
     salary = serializers.SerializerMethodField()

@@ -19,6 +19,11 @@ class User(AbstractUser):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["email"], name="user_email_index"),
+        ]
+
 
 class Notification(models.Model):
     type = models.CharField(max_length=50, choices=NOTIFICATION_TYPE_CHOICES)
@@ -36,16 +41,11 @@ class Notification(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["received_by"], name="noti_received_by_index"),
+            models.Index(fields=["created_date"], name="noti_created_date_index"),
+        ]
+
     def __str__(self):
         return f"Notification for {self.received_by.username}"
-
-
-class CandidateSaved(models.Model):
-    student = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="student_id_saved"
-    )
-    recruiter = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="recruiter_id_saved"
-    )
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
