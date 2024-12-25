@@ -61,7 +61,7 @@ NOTIFICATION_TYPE_CHOICES_TITLE = {
 JOB_DETAILS_FIELDS = [
     "id",
     "user",
-    "designation",
+    "title",
     "address_line_1",
     "address_line_2",
     "city",

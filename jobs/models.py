@@ -5,7 +5,7 @@ from constants.jobs import (
     JOB_TYPE_CHOICES,
     JOB_LEVEL_CHOICES,
     JOB_ROLE_FIELDS,
-    JOB_POST_STATUS_FEILDS
+    JOB_POST_STATUS_FEILDS,
 )
 from django.db import models
 from accounts.models import User
@@ -20,7 +20,9 @@ class JobInfo(models.Model):
     job_type = models.CharField(max_length=50, choices=JOB_TYPE_CHOICES)
     job_level = models.CharField(max_length=100, choices=JOB_LEVEL_CHOICES)
     vacancies = models.PositiveIntegerField()
-    status = models.CharField(default=JOB_POST_STATUS_FEILDS[0][0], choices=JOB_POST_STATUS_FEILDS )
+    status = models.CharField(
+        default=JOB_POST_STATUS_FEILDS[0][0], choices=JOB_POST_STATUS_FEILDS
+    )
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
@@ -30,7 +32,9 @@ class JobInfo(models.Model):
 
 class JobDescription(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    job = models.ForeignKey(JobInfo, on_delete=models.CASCADE, related_name="job_descriptions")
+    job = models.ForeignKey(
+        JobInfo, on_delete=models.CASCADE, related_name="job_descriptions"
+    )
     education = models.CharField(max_length=100)
     experience = models.PositiveIntegerField()
     city = models.CharField(max_length=100)
@@ -60,7 +64,7 @@ class JobApply(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Application for {self.job.designation} by {self.student.username}"
+        return f"Application for {self.job.title} by {self.student.username}"
 
 
 class Communication(models.Model):

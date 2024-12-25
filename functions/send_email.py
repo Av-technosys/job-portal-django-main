@@ -69,7 +69,7 @@ def send_application_confirmation_to_job_seeker(
         "email_templates/job_seeker_application_email.html",
         {
             "job_seeker_name": student_details.first_name,
-            "job_title": job_details.department,
+            "job_title": job_details.role,
             "company_name": recruiter_details.company_name,
             "company_email": recruiter_details.company_email,
             "website_url": recruiter_details.company_url,
@@ -103,7 +103,7 @@ def send_application_received_to_recruiter(
         {
             "job_seeker_name": student_details.first_name,
             "job_seeker_email": student_details.email,
-            "job_title": job_details.department,
+            "job_title": job_details.role,
             "application_date": get_todays_date(),
             "company_name": recruiter_details.company_name,
             "company_email": recruiter_details.company_email,

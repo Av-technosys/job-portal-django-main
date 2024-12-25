@@ -1,15 +1,3 @@
-JOB_DETAILS_FIELDS = [
-    "id",
-    "designation",
-    "department",
-    "location",
-    "job_type",
-    "job_description",
-    "contact_and_skills",
-    "job_overview_and_qualifications",
-    "skills_certifications_responsibilities",
-]
-
 JOB_TYPE_CHOICES = [
     (0, "Full Time"),
     (1, "Part Time"),
@@ -50,24 +38,24 @@ VALID_STATUS_TRANSITIONS = {
 }
 
 
-JOB_LIST_SEEKER_VIEW_FEILDS = [
+JOB_SEEKER_LIST_VIEW_FIELDS = [
     "id",
-    "designation",
+    "title",
     "job_type",
     "location",
-    "department",
+    "role",
     "company_name",
-    "salary_range",
+    "salary",
     "is_applied",
     "created_date",
     "company_profile_image",
 ]
 
-JOB_APPLIED_VIEW_FEILDS = [
-    "designation",
+JOB_APPLIED_VIEW_FIELDS = [
+    "title",
     "location",
     "job_type",
-    "salary_range",
+    "salary",
     "applied_date",
     "job_id",
     "application_id",
@@ -94,16 +82,14 @@ JOB_INFO_SERIALIZER_FEILDS = [
 ]
 
 JOB_POSTED_VIEW_FEILDS = [
-            "company_profile_image",
-            "title",
-            "salary",
-            "location",
-            "application_count",
-            "job_id",
-        ]
-
-
-JOB_POST_STATUS_FEILDS = [
-    ("active", "active"),
-    ("expired", "expired")
+    "company_profile_image",
+    "title",
+    "salary",
+    "location",
+    "job_type",
+    "application_count",
+    "job_id",
 ]
+
+
+JOB_POST_STATUS_FEILDS = [("active", "active"), ("expired", "expired")]
