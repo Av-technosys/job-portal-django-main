@@ -47,6 +47,7 @@ JOB_SEEKER_LIST_VIEW_FIELDS = [
     "company_name",
     "salary",
     "is_applied",
+    "is_saved",
     "created_date",
     "company_profile_image",
 ]
