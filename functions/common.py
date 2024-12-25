@@ -251,9 +251,7 @@ def filters(request):
             )
         elif "list_jobs" in request.path:
             q_filters = (
-                Q(designation__icontains=filter_result)
-                | Q(contact_and_skills__skills_required__icontains=filter_result)
-                | Q(job_description__job_title__icontains=filter_result)
+                Q(title__icontains=filter_result)
             )
         elif "list_recruiters" in request.path:
             q_filters = Q(company_name__icontains=filter_result) | Q(
@@ -492,6 +490,16 @@ def get_todays_date():
     return today_date
 
 
+def get_salary_formatted(JobInfo):
+        # Assuming salary comes from `max_salary` and `min_salary` fields
+        return f"{JobInfo.min_salary} - {JobInfo.max_salary}"
+
+def get_location_formatted(JobInfo):
+    description = JobInfo.job_descriptions.first()
+    if description:
+        return f"{description.city}, {description.state}, {description.country}"
+    return None
+    
 def get_user_photo(user, Model):
     photo = Model.objects.filter(user=user, file_type="profile_image").first()
     return photo.file.url if photo and photo.file else None

@@ -12,10 +12,11 @@ from accounts.models import CandidateSaved
 
 
 # Section 1: JobDetails
-@api_view(["GET","POST", "PATCH", "DELETE"])
+@api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def job_details_api_view(request):
     return request_handler(JobInfo, JobCombinedSerializer, request)
+
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -25,7 +26,7 @@ def apply_job(request):
 
 @api_view(["GET"])
 def list_jobs(request):
-    return filter_search_handler(JobInfo, JobListingSeekerViewSerializer, request)
+    return filter_search_handler(JobInfo, JobSeekerListingViewSerializer, request)
 
 
 @api_view(["GET"])
@@ -75,7 +76,7 @@ def chat(request, application_id):
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def save_job(request):
     return job_save_handler(
-        JobSaveSerializer, JobListingSeekerViewSerializer, JobSaved, JobInfo, request
+        JobSaveSerializer, JobSeekerListingViewSerializer, JobSaved, JobInfo, request
     )
 
 
