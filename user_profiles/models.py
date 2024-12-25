@@ -235,6 +235,7 @@ class RecruiterUploadedFile(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name="recruiter_upload_user_id",
     )
     file_type = models.CharField(max_length=50, choices=RECRUITER_DOCUMENT_TYPES)
     file = models.FileField(upload_to=file_rename, storage=S3FileStorage())
@@ -244,6 +245,7 @@ class RecruiterUploadedFile(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=["user"], name="ruf_user_index"),
+            models.Index(fields=["file_type"], name="ruf_file_type_index"),
             models.Index(
                 fields=["created_date"],
                 name="ruf_created_date_index",

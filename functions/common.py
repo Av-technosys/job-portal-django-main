@@ -19,6 +19,8 @@ def generate_otp():
 
 from constants.errors import *
 from rest_framework.response import Response
+from constants.common import USER_TYPE
+from constants.user_profiles import RECRUITER_DOCUMENT_TYPES
 
 logger = logging.getLogger("django")
 
@@ -473,6 +475,25 @@ def get_location_formatted(JobInfo):
 
 def get_user_photo(user, Model):
     photo = Model.objects.filter(user=user, file_type="profile_image").first()
+    return photo.file.url if photo and photo.file else None
+
+
+def is_job_seeker(request):
+    if (
+        request
+        and hasattr(request, "user")
+        and request.user.is_authenticated
+        and request.user.user_type == USER_TYPE[0][0]
+    ):
+        return True
+    return False
+
+
+def get_recruiter_profile_image(user):
+    # Fetching with the foreign key related name
+    photo = user.recruiter_upload_user_id.filter(
+        file_type=RECRUITER_DOCUMENT_TYPES[2][0]
+    ).first()
     return photo.file.url if photo and photo.file else None
 
 

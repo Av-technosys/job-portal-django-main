@@ -73,7 +73,7 @@ class JobApply(models.Model):
         User, on_delete=models.CASCADE, related_name="student_id_applied"
     )
     job = models.ForeignKey(
-        JobInfo, on_delete=models.CASCADE, related_name="applications"
+        JobInfo, on_delete=models.CASCADE, related_name="job_id_applied"
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="job_owner"
