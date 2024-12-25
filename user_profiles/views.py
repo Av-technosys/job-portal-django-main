@@ -71,7 +71,7 @@ def job_details(request):
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsRecruiter])
 def file_upload_recruiter(request):
     return upload_handler(
         RecruiterUploadedFile, UploadedFileRecruiterSerializer, request
@@ -79,7 +79,7 @@ def file_upload_recruiter(request):
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsJobSeeker])
 def file_upload_job_seeker(request):
     return upload_handler(JobSeekerUploadedFile, UploadedFileSeekerSerializer, request)
 

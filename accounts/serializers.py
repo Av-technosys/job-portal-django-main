@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Notification, User, CandidateSaved
+from .models import Notification, User
 from constants.common import USER_TYPE
 from constants.errors import (
     ERROR_INVALID_CREDENTIALS,
@@ -329,10 +329,4 @@ class VerifyOtpAndChangePasswordSerializer(serializers.Serializer):
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = "__all__"
-
-
-class CandidateSaveSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CandidateSaved
         fields = "__all__"

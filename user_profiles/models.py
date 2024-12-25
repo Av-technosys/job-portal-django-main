@@ -12,7 +12,6 @@ class S3FileStorage(S3Boto3Storage):
 
 
 class StudentProfile(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -40,7 +39,6 @@ class StudentProfile(models.Model):
 
 
 class AcademicQualification(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -62,7 +60,6 @@ class AcademicQualification(models.Model):
 
 
 class WorkExperience(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -84,7 +81,6 @@ class WorkExperience(models.Model):
 
 
 class SkillSet(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -105,7 +101,6 @@ class SkillSet(models.Model):
 
 
 class Certifications(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -127,7 +122,6 @@ class Certifications(models.Model):
 
 
 class Projects(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     student = models.ForeignKey(
         StudentProfile,
@@ -145,7 +139,6 @@ class Projects(models.Model):
 
 
 class SocialUrls(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     student = models.ForeignKey(
         StudentProfile,
@@ -162,13 +155,10 @@ class SocialUrls(models.Model):
 
 
 class OrganizationInfo(models.Model):
-    id = models.AutoField(primary_key=True)
-    user = (
-        models.OneToOneField(
-            settings.AUTH_USER_MODEL,
-            on_delete=models.CASCADE,
-            related_name="organizations_info",
-        ),
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="organization_info",
     )
     company_about_us = models.TextField(max_length=500)
     company_website = models.URLField(blank=True)
@@ -181,9 +171,18 @@ class OrganizationInfo(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="oi_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="oi_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="oi_id_user_index"),
+        ]
+
 
 class FoundingInfo(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="founding_info"
     )
@@ -196,6 +195,16 @@ class FoundingInfo(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="fi_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="fi_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="fi_id_user_index"),
+        ]
+
 
 class SocialMediaLinkRecruiter(models.Model):
     user = models.OneToOneField(
@@ -203,18 +212,26 @@ class SocialMediaLinkRecruiter(models.Model):
         on_delete=models.CASCADE,
         related_name="social_media_links",
     )
-    id = models.AutoField(primary_key=True)
     platform = models.CharField(max_length=50)
     url = models.URLField(max_length=255)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="sm_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="sm_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="sm_id_user_index"),
+        ]
 
     def __str__(self):
         return f"{self.get_platform_display()} - {self.url}"
 
 
 class RecruiterUploadedFile(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -224,12 +241,25 @@ class RecruiterUploadedFile(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="ruf_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="ruf_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="ruf_id_user_index"),
+            models.Index(
+                fields=["user", "file_type"],
+                name="ruf_user_fie_type_index",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.file_type} for user {self.user.username}"
 
 
 class JobSeekerUploadedFile(models.Model):
-    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -239,16 +269,35 @@ class JobSeekerUploadedFile(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="jsup_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="jsup_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="jsup_id_user_index"),
+            models.Index(
+                fields=["user", "file_type"],
+                name="jsup_user_fie_type_index",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.file_type} for user {self.user.username}"
 
 
 class FCMToken(models.Model):
-    id = models.AutoField(primary_key=True)
     fcm_token = models.CharField(max_length=255, unique=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="fcm_token_user_index"),
+            models.Index(fields=["created_date"], name="fcm_token_created_date_index"),
+        ]
 
     def __str__(self):
         return f"FCM token for {self.user.username}"

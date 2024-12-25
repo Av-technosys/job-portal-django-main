@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from accounts.models import User, CandidateSaved
+from rest_framework.permissions import IsAuthenticated
+from accounts.models import User
 from functions.fcm import list_notification
 from .serializers import (
     UserSerializer,
@@ -12,7 +12,6 @@ from .serializers import (
     SSOUserSerializer,
     VerifyOtpAndChangePasswordSerializer,
     NotificationSerializer,
-    CandidateSaveSerializer,
 )
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
@@ -23,10 +22,6 @@ from functions.common import (
     serializer_handle_customize_response_only_validate,
     get_customize_handler,
 )
-from handlers.common import candidate_save_handler
-from user_profiles.serializers import ListCandidateSerializer
-from user_profiles.models import StudentProfile
-from handlers.permissions import IsRecruiter
 
 
 @api_view(["POST"])
@@ -60,26 +55,22 @@ def user_logout(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
 def verify_otp(request):
     return serializer_handle_customize_response(VerifyOtpSerializer, request)
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
 def reset_password_otp(request):
     return serializer_handle_customize_response(ResetPasswordSendOtpSerializer, request)
 
 
 # ResendOTP
 @api_view(["POST"])
-@permission_classes([AllowAny])
 def resend_otp(request):
     return serializer_handle_customize_response(ResendOtpSerializer, request)
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
 def verify_reset_password(request):
     return serializer_handle_customize_response(
         VerifyOtpAndChangePasswordSerializer, request
@@ -96,15 +87,3 @@ def account_details(request):
 @permission_classes([IsAuthenticated])
 def list_notifications(request):
     return list_notification(NotificationSerializer, request)
-
-
-@api_view(["POST", "DELETE", "GET"])
-@permission_classes([IsAuthenticated, IsRecruiter])
-def save_cadidate(request):
-    return candidate_save_handler(
-        CandidateSaveSerializer,
-        ListCandidateSerializer,
-        CandidateSaved,
-        StudentProfile,
-        request,
-    )

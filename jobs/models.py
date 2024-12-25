@@ -26,6 +26,16 @@ class JobInfo(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["title"], name="job_info_title_index"),
+            models.Index(fields=["job_type"], name="job_info_job_type_index"),
+            models.Index(fields=["user"], name="job_info_user_index"),
+            models.Index(fields=["created_date"], name="job_info_created_date_index"),
+            models.Index(fields=["id", "user"], name="job_info_id_user_index"),
+            # TBD Chore: Add Filter & Search Index
+        ]
+
     def __str__(self):
         return self.title
 
@@ -44,6 +54,15 @@ class JobDescription(models.Model):
     description = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["job"], name="jd_job_index"),
+            models.Index(fields=["user"], name="jd_user_index"),
+            models.Index(fields=["created_date"], name="jd_created_date_index"),
+            models.Index(fields=["id", "user"], name="jd_id_user_index"),
+            # TBD Chore: Add Filter & Search Index
+        ]
 
     def __str__(self):
         return self.education
@@ -66,6 +85,16 @@ class JobApply(models.Model):
     def __str__(self):
         return f"Application for {self.job.title} by {self.student.username}"
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["student"], name="job_apply_student_index"),
+            models.Index(fields=["job"], name="job_apply_job_index"),
+            models.Index(fields=["owner"], name="job_apply_owner_index"),
+            models.Index(fields=["created_date"], name="job_apply_created_date_index"),
+            models.Index(fields=["student", "job"], name="job_apply_student_job_index"),
+            models.Index(fields=["job", "student"], name="job_apply_job_student_index"),
+        ]
+
 
 class Communication(models.Model):
     application = models.ForeignKey(
@@ -86,6 +115,12 @@ class Communication(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["application"], name="comm_application_index"),
+            models.Index(fields=["created_date"], name="comm_created_date_index"),
+        ]
+
     def __str__(self):
         return f"Message from {self.sent_from.username} to {self.received_by.username}"
 
@@ -97,3 +132,37 @@ class JobSaved(models.Model):
     job = models.ForeignKey(JobInfo, on_delete=models.CASCADE, related_name="saved_job")
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="job_saved_user_index"),
+            models.Index(fields=["job"], name="job_saved_job_index"),
+            models.Index(fields=["created_date"], name="job_saved_created_date_index"),
+            models.Index(fields=["user", "job"], name="job_saved_user_job_index"),
+            models.Index(fields=["job", "user"], name="job_saved_job_user_index"),
+        ]
+
+
+class CandidateSaved(models.Model):
+    student = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="student_id_saved"
+    )
+    job = models.ForeignKey(
+        JobInfo, on_delete=models.CASCADE, related_name="job_id_saved"
+    )
+    recruiter = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="recruiter_id_saved"
+    )
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["recruiter"], name="cs_recruiter_index"),
+            models.Index(fields=["job"], name="cs_job_index"),
+            models.Index(fields=["created_date"], name="cs_created_date_index"),
+            models.Index(
+                fields=["student", "recruiter"],
+                name="cs_student_recruiter_index",
+            ),
+        ]
