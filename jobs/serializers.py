@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.conf import settings
 from functions.fcm import save_notification, send_notification
 from constants.user_profiles import (
     NOTIFICATION_TYPE_CHOICES_ID,
@@ -17,63 +18,57 @@ from constants.jobs import (
     JOB_LIST_SEEKER_VIEW_FEILDS,
     JOB_APPLIED_VIEW_FEILDS,
     JOB_POSTED_VIEW_FEILDS,
+    JOB_INFO_SERIALIZER_FEILDS,
+    JOB_DESCRIPTION_SERIALIZER_FEILDS,
 )
 
 from functions.common import get_user_photo
 from user_profiles.models import OrganizationInfo, RecruiterUploadedFile
 
 
-# Serializer for JobDetails model (Section 1)
-# Serializer for JobDetails model (Section 1)
-class JobDetailsSerializer(serializers.ModelSerializer):
+class JobInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobInfo
         fields = "__all__"
 
 
-# Serializer for JobDescription model (Section 2)
 class JobDescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobDescription
         fields = "__all__"
 
 
-# Serializer for ContactAndSkills model (Section 2)
-class ContactAndSkillsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ContactAndSkills
-        fields = "__all__"
+class JobCombinedSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=100)
+    role = serializers.CharField(max_length=100)
+    max_salary = serializers.IntegerField()
+    min_salary = serializers.IntegerField()
+    job_type = serializers.CharField(max_length=50)
+    job_level = serializers.CharField(max_length=100)
+    vacancies = serializers.IntegerField()
+    education = serializers.CharField(max_length=100)
+    experience = serializers.IntegerField()
+    city = serializers.CharField(max_length=100)
+    state = serializers.CharField(max_length=100)
+    country = serializers.CharField(max_length=100)
+    skills = serializers.CharField()
+    description = serializers.CharField()
 
+    def create(self, validated_data):
+        user = self.context["request"].user
+        job_info_data = {
+            field: validated_data[field] for field in JOB_INFO_SERIALIZER_FEILDS
+        }
+        job_info_data["user"] = user
+        job_info = JobInfo.objects.create(**job_info_data)
+        job_description_data = {
+            field: validated_data[field] for field in JOB_DESCRIPTION_SERIALIZER_FEILDS
+        }
+        job_description_data["job"] = job_info  # Link to JobInfo instance
+        job_description_data["user"] = user  # Link the user
+        JobDescription.objects.create(**job_description_data)
 
-# Serializer for JobOverviewAndQualifications model (Section 3)
-class JobOverviewAndQualificationsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JobOverviewAndQualifications
-        fields = "__all__"
-
-
-# Serializer for SkillsCertificationsResponsibilities model (Section 3)
-class SkillsCertificationsResponsibilitiesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SkillsCertificationsResponsibilities
-        fields = "__all__"
-
-
-# Combined Serializer for JobDetails (Nested)
-class CombinedJobDetailsSerializer(serializers.ModelSerializer):
-    # Nested serializers for related models
-    job_description = JobDescriptionSerializer(many=True, read_only=True)
-    contact_and_skills = ContactAndSkillsSerializer(many=True, read_only=True)
-    job_overview_and_qualifications = JobOverviewAndQualificationsSerializer(
-        many=True, read_only=True
-    )
-    skills_certifications_responsibilities = (
-        SkillsCertificationsResponsibilitiesSerializer(many=True, read_only=True)
-    )
-
-    class Meta:
-        model = JobInfo
-        fields = JOB_DETAILS_FIELDS
+        return validated_data
 
 
 class JobApplySerializer(serializers.ModelSerializer):
@@ -234,16 +229,29 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
 
 
 class JobPostedListSerializer(serializers.ModelSerializer):
-    salary_range = serializers.SerializerMethodField()
-    applicants_count = serializers.SerializerMethodField()
+    company_profile_image = serializers.SerializerMethodField()
+    title = serializers.CharField() 
+    salary = serializers.SerializerMethodField()  
+    location = serializers.SerializerMethodField()
+    application_count = serializers.IntegerField(source="applications.count")  
+    job_id = serializers.IntegerField(source="id") 
 
     class Meta:
         model = JobInfo
         fields = JOB_POSTED_VIEW_FEILDS
 
-    def get_salary_range(self, obj):
-        overview = obj.job_overview_and_qualifications.first()
-        return overview.salary_range if overview else 0
+    def get_company_profile_image(self, obj):
+        return get_user_photo(obj.user, RecruiterUploadedFile)
 
-    def get_applicants_count(self, obj):
-        return obj.applications.count()
+    def get_salary(self, obj):
+        # Assuming salary comes from `max_salary` and `min_salary` fields
+        return f"{obj.min_salary} - {obj.max_salary}"
+
+
+    def get_location(self, obj):
+        description = obj.job_descriptions.first()  
+        if description:
+            return f"{description.city}, {description.state}, {description.country}"
+        return None
+
+

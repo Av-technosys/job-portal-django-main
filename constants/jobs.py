@@ -17,7 +17,7 @@ JOB_TYPE_CHOICES = [
 ]
 
 
-SKILL_LEVEL_CHOICES = [
+JOB_LEVEL_CHOICES = [
     (0, "Beginner"),
     (1, "Intermediate"),
     (2, "Expert"),
@@ -36,6 +36,7 @@ JOB_STATUS_FIELDS = [
     (8, "Joined"),
 ]
 
+JOB_ROLE_FIELDS = [(0, "Developer"), (1, "Designer"), (2, "Manager")]
 VALID_STATUS_TRANSITIONS = {
     0: [1, 2],  # Received → In Review, On Hold
     1: [3, 5],  # In Review → Shortlisted, Rejected
@@ -72,4 +73,37 @@ JOB_APPLIED_VIEW_FEILDS = [
     "application_id",
 ]
 
-JOB_POSTED_VIEW_FEILDS = ["designation", "salary_range", "applicants_count", "location"]
+JOB_DESCRIPTION_SERIALIZER_FEILDS = [
+    "education",
+    "experience",
+    "city",
+    "state",
+    "country",
+    "skills",
+    "description",
+]
+
+JOB_INFO_SERIALIZER_FEILDS = [
+    "title",
+    "role",
+    "max_salary",
+    "min_salary",
+    "job_type",
+    "job_level",
+    "vacancies",
+]
+
+JOB_POSTED_VIEW_FEILDS = [
+            "company_profile_image",
+            "title",
+            "salary",
+            "location",
+            "application_count",
+            "job_id",
+        ]
+
+
+JOB_POST_STATUS_FEILDS = [
+    ("active", "active"),
+    ("expired", "expired")
+]
