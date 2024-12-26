@@ -19,3 +19,12 @@ REGISTRATION_META_FIELDS = [
     "phone_number",
     "id",
 ]
+
+USER_META_FIELDS = [
+    "email",
+    "first_name",
+    "user_type",
+    "phone_number",
+    "id",
+    "profile_picture",
+]

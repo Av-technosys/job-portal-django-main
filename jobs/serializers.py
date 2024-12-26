@@ -277,7 +277,9 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source="job.title")
     salary = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
+    company_profile_image = serializers.SerializerMethodField()
     job_type = serializers.CharField(source="job.job_type")
+    role = serializers.CharField(source="job.role")
     applied_date = serializers.DateTimeField(source="created_date")
     job_id = serializers.IntegerField(source="job.id")
     application_id = serializers.IntegerField(source="id")
@@ -291,6 +293,9 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
 
     def get_location(self, obj):
         return get_location_formatted(obj.job)
+
+    def get_company_profile_image(self, obj):
+        return get_recruiter_profile_image(obj.job.user)
 
 
 class JobPostedListSerializer(serializers.ModelSerializer):

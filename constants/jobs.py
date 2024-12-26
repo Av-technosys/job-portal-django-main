@@ -74,6 +74,8 @@ JOB_APPLIED_VIEW_FIELDS = [
     "applied_date",
     "job_id",
     "application_id",
+    "company_profile_image",
+    "role",
 ]
 
 JOB_DESCRIPTION_SERIALIZER_FEILDS = [
