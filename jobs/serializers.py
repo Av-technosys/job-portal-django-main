@@ -5,6 +5,7 @@ from constants.user_profiles import (
     NOTIFICATION_TYPE_CHOICES_TITLE,
 )
 from functions.common import (
+    get_days_remaining_for_job,
     get_location_formatted,
     get_recruiter_profile_image,
     get_salary_formatted,
@@ -18,12 +19,13 @@ from functions.send_email import (
 from .models import *
 from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS, ALREADY_SAVED
 from constants.jobs import (
-    VALID_STATUS_TRANSITIONS,
-    JOB_SEEKER_LIST_VIEW_FIELDS,
     JOB_APPLIED_VIEW_FIELDS,
-    JOB_POSTED_VIEW_FEILDS,
-    JOB_INFO_SERIALIZER_FEILDS,
     JOB_DESCRIPTION_SERIALIZER_FEILDS,
+    JOB_INFO_SERIALIZER_FEILDS,
+    JOB_POSTED_VIEW_FEILDS,
+    JOB_SEEKER_LIST_VIEW_FIELDS,
+    SAVED_JOBS_JOB_SEEKER_LIST_VIEW_FIELDS,
+    VALID_STATUS_TRANSITIONS,
 )
 
 from functions.common import get_user_photo
@@ -175,7 +177,6 @@ class JobSeekerListingViewSerializer(serializers.ModelSerializer):
     company_name = serializers.SerializerMethodField()
     salary = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
-    is_applied = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
     company_profile_image = serializers.SerializerMethodField()
 
@@ -205,11 +206,46 @@ class JobSeekerListingViewSerializer(serializers.ModelSerializer):
             return obj.saved_job.filter(user=job_seeker_id).exists()
         return False
 
+    def get_company_profile_image(self, obj):
+        return get_recruiter_profile_image(obj.user)
+
+
+class SavedJobsJobSeekerListingViewSerializer(serializers.ModelSerializer):
+    company_name = serializers.SerializerMethodField()
+    salary = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
+    is_applied = serializers.SerializerMethodField()
+    company_profile_image = serializers.SerializerMethodField()
+    days_remaining = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobInfo
+        fields = SAVED_JOBS_JOB_SEEKER_LIST_VIEW_FIELDS
+
+    def check_for_meta_data(self):
+        request = self.context.get("request")
+        return is_job_seeker(request)
+
+    def get_logged_in_job_seeker_id(self):
+        return self.context.get("request").user.id
+
+    def get_company_name(self, obj):
+        return obj.user.first_name
+
+    def get_salary(self, obj):
+        return get_salary_formatted(obj)
+
+    def get_location(self, obj):
+        return get_location_formatted(obj)
+
     def get_is_applied(self, obj):
         if self.check_for_meta_data():
             job_seeker_id = self.get_logged_in_job_seeker_id()
             return obj.job_id_applied.filter(student=job_seeker_id).exists()
         return False
+
+    def get_days_remaining(self, obj):
+        return get_days_remaining_for_job(obj)
 
     def get_company_profile_image(self, obj):
         return get_recruiter_profile_image(obj.user)
