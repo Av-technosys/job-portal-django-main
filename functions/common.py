@@ -523,6 +523,15 @@ def get_days_remaining_for_job(jobInfo):
     return None
 
 
+def get_job_post_status(jobInfo):
+    remaining_days = get_days_remaining_for_job(jobInfo=jobInfo)
+    if remaining_days is None:
+        # Expired
+        return JOB_POST_STATUS_FEILDS[1][0]
+    # Active
+    return JOB_POST_STATUS_FEILDS[0][0]
+
+
 def summary_counter_handler(
     job_applied_model, job_saved_model, profiles_saved_modal, job_posted_modal, request
 ):
