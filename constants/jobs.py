@@ -104,6 +104,7 @@ JOB_POSTED_VIEW_FEILDS = [
     "job_type",
     "application_count",
     "job_id",
+    "job_status",
 ]
 
 
