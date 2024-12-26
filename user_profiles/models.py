@@ -205,20 +205,17 @@ class FoundingInfo(models.Model):
             models.Index(fields=["id", "user"], name="fi_id_user_index"),
         ]
 
+
 class SocialMediaLinkRecruiter(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="social_media_recruiter_links",
+        related_name="social_media_links",
     )
-    platform = models.CharField(max_length=50)  
+    platform = models.CharField(max_length=50)
     url = models.URLField(max_length=255)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.platform} - {self.user.username}"
-
 
     class Meta:
         indexes = [
@@ -230,8 +227,8 @@ class SocialMediaLinkRecruiter(models.Model):
             models.Index(fields=["id", "user"], name="sm_id_user_index"),
         ]
 
-    def __str__(self):
-        return f"{self.get_platform_display()} - {self.url}"
+    # def __str__(self):
+    #     return f"{self.get_platform_display()} - {self.url}"
 
 
 class RecruiterUploadedFile(models.Model):
