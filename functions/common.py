@@ -21,7 +21,7 @@ def generate_otp():
 from constants.errors import *
 from rest_framework.response import Response
 from constants.common import USER_TYPE
-from constants.user_profiles import RECRUITER_DOCUMENT_TYPES
+from constants.user_profiles import JOB_SEEKER_DOCUMENT_TYPES, RECRUITER_DOCUMENT_TYPES
 from constants.jobs import JOB_POST_STATUS_FEILDS
 
 logger = logging.getLogger("django")
@@ -504,6 +504,14 @@ def get_recruiter_profile_image(user):
     # Fetching with the foreign key related name
     photo = user.recruiter_upload_user_id.filter(
         file_type=RECRUITER_DOCUMENT_TYPES[2][0]
+    ).first()
+    return photo.file.url if photo and photo.file else None
+
+
+def get_job_seeker_profile_image(user):
+    # Fetching with the foreign key related name
+    photo = user.job_seeker_upload_user_id.filter(
+        file_type=JOB_SEEKER_DOCUMENT_TYPES[2][0]
     ).first()
     return photo.file.url if photo and photo.file else None
 

@@ -3,15 +3,17 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from accounts.models import User
 from functions.fcm import list_notification
+from user_profiles.models import FCMToken
 from .serializers import (
-    UserSerializer,
     LoginSerializer,
-    VerifyOtpSerializer,
-    ResetPasswordSendOtpSerializer,
-    ResendOtpSerializer,
-    SSOUserSerializer,
-    VerifyOtpAndChangePasswordSerializer,
     NotificationSerializer,
+    ResendOtpSerializer,
+    ResetPasswordSendOtpSerializer,
+    SSOUserSerializer,
+    UserMetaSerializer,
+    UserSerializer,
+    VerifyOtpAndChangePasswordSerializer,
+    VerifyOtpSerializer,
 )
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
@@ -44,6 +46,9 @@ def user_login(request):
 def user_logout(request):
     try:
         request.user.auth_token.delete()
+        instances = FCMToken.objects.filter(user=request.user)
+        if instances.exists():
+            instances.delete()
         return ResponseHandler.success(
             data={"message": SUCCESS_LOGOUT}, status_code=status.HTTP_200_OK
         )
@@ -80,7 +85,7 @@ def verify_reset_password(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def account_details(request):
-    return get_customize_handler(User, UserSerializer, {"email": request.user})
+    return get_customize_handler(User, UserMetaSerializer, {"email": request.user})
 
 
 @api_view(["GET"])

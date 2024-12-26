@@ -265,6 +265,7 @@ class JobSeekerUploadedFile(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name="job_seeker_upload_user_id",
     )
     file_type = models.CharField(max_length=50, choices=JOB_SEEKER_DOCUMENT_TYPES)
     file = models.FileField(upload_to=file_rename, storage=S3FileStorage())
