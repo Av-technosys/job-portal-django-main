@@ -1,9 +1,7 @@
-from django.shortcuts import render
 from .serializers import *
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .models import *
-from functions.common import get_data_from_id_and_serialize
 from handlers.common import *
 from user_profiles.models import StudentProfile
 from user_profiles.serializers import ListCandidateSerializer, StudentProfileSerializer
@@ -74,7 +72,11 @@ def chat(request, application_id):
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def save_job(request):
     return job_save_handler(
-        JobSaveSerializer, JobSeekerListingViewSerializer, JobSaved, JobInfo, request
+        JobSaveSerializer,
+        SavedJobsJobSeekerListingViewSerializer,
+        JobSaved,
+        JobInfo,
+        request,
     )
 
 

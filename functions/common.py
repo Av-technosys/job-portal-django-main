@@ -10,6 +10,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 import logging
 from datetime import datetime
+from datetime import timedelta
 
 
 def generate_otp():
@@ -21,6 +22,7 @@ from constants.errors import *
 from rest_framework.response import Response
 from constants.common import USER_TYPE
 from constants.user_profiles import RECRUITER_DOCUMENT_TYPES
+from constants.jobs import JOB_POST_STATUS_FEILDS
 
 logger = logging.getLogger("django")
 
@@ -280,6 +282,14 @@ def filters(request):
     return q_filters, filter_kwargs
 
 
+def exlcude(request, instances):
+    if "list_jobs" in request.path:
+        if is_job_seeker(request=request):
+            # Exludes jobs which are already applied by the logged in user
+            return instances.exclude(job_id_applied__student=request.user.id)
+    return instances
+
+
 def filter_search_handler(model_class, serializer_class, request):
     q_filters, filter_kwargs = filters(request)
 
@@ -304,6 +314,7 @@ def filter_search_handler(model_class, serializer_class, request):
         sort_fields = request.GET.getlist("sort[]", ["created_date"])
         instances = instances.order_by(*sort_fields)
 
+        instances = exlcude(request=request, instances=instances)
         page_obj, count, total_pages = paginator(instances, request)
         serializer = serializer_class(page_obj, many=True, context={"request": request})
         response_data = {
@@ -495,6 +506,21 @@ def get_recruiter_profile_image(user):
         file_type=RECRUITER_DOCUMENT_TYPES[2][0]
     ).first()
     return photo.file.url if photo and photo.file else None
+
+
+def get_days_remaining_for_job(jobInfo):
+    if jobInfo.status == JOB_POST_STATUS_FEILDS[0][0]:
+        now = timezone.now()
+        time_difference = now - jobInfo.created_date
+
+        # TBD Chore: Change 90 to whatever user has selected while creating job
+        remaining_time = timedelta(days=90) - time_difference
+
+        if remaining_time > timedelta(days=0):
+            return remaining_time.days
+        else:
+            return None
+    return None
 
 
 def summary_counter_handler(

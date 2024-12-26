@@ -46,9 +46,23 @@ JOB_SEEKER_LIST_VIEW_FIELDS = [
     "role",
     "company_name",
     "salary",
-    "is_applied",
     "is_saved",
     "created_date",
+    "company_profile_image",
+]
+
+SAVED_JOBS_JOB_SEEKER_LIST_VIEW_FIELDS = [
+    "status",
+    "id",
+    "title",
+    "job_type",
+    "location",
+    "role",
+    "company_name",
+    "salary",
+    "is_applied",
+    "created_date",
+    "days_remaining",
     "company_profile_image",
 ]
 
