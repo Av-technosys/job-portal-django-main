@@ -69,15 +69,21 @@ def company_profile(request):
 def job_details(request):
     return request_handler(FoundingInfo, FoundingInfoSerializer, request)
 
-@api_view(["GET", "POST", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
-def upload_recruiters(request):
-    return request_handler(RecruiterUploadedFile, UploadedFileRecruiterSerializer, request)
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
+def upload_recruiters(request):
+    return request_handler(
+        RecruiterUploadedFile, UploadedFileRecruiterSerializer, request
+    )
+
+
+@api_view(["GET", "POST", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated, IsRecruiter])
 def social_links_recruiter(request):
-    return request_handler(SocialMediaLinkRecruiter, SocialLinksRecruiterSerializer, request)
+    return request_handler(
+        SocialMediaLinkRecruiter, SocialLinksRecruiterSerializer, request
+    )
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
