@@ -4,9 +4,15 @@ from constants.user_profiles import (
     NOTIFICATION_TYPE_CHOICES_ID,
     NOTIFICATION_TYPE_CHOICES_TITLE,
 )
-from functions.common import (get_days_remaining_for_job, get_job_post_status,
-    get_location_formatted, get_recruiter_profile_image, get_salary_formatted, is_job_seeker,
-    logger)
+from functions.common import (
+    get_days_remaining_for_job,
+    get_job_post_status,
+    get_location_formatted,
+    get_recruiter_profile_image,
+    get_salary_formatted,
+    is_job_seeker,
+    logger,
+)
 from functions.send_email import (
     send_application_confirmation_to_job_seeker,
     send_application_received_to_recruiter,
@@ -308,6 +314,6 @@ class JobPostedListSerializer(serializers.ModelSerializer):
 
     def get_location(self, obj):
         return get_location_formatted(obj)
-    
+
     def get_job_status(self, obj):
-       return get_job_post_status(obj)
+        return get_job_post_status(obj)
