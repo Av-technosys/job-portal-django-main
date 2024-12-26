@@ -207,7 +207,7 @@ class FoundingInfo(models.Model):
 
 
 class SocialMediaLinkRecruiter(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="social_media_links",
@@ -228,7 +228,7 @@ class SocialMediaLinkRecruiter(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.get_platform_display()} - {self.url}"
+        return f"{self.platform} - {self.url}"
 
 
 class RecruiterUploadedFile(models.Model):

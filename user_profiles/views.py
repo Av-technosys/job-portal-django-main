@@ -72,6 +72,22 @@ def job_details(request):
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated, IsRecruiter])
+def upload_recruiters(request):
+    return request_handler(
+        RecruiterUploadedFile, UploadedFileRecruiterSerializer, request
+    )
+
+
+@api_view(["GET", "POST", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated, IsRecruiter])
+def social_links_recruiter(request):
+    return request_handler(
+        SocialMediaLinkRecruiter, SocialLinksRecruiterSerializer, request
+    )
+
+
+@api_view(["GET", "POST", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated, IsRecruiter])
 def file_upload_recruiter(request):
     return upload_handler(
         RecruiterUploadedFile, UploadedFileRecruiterSerializer, request
