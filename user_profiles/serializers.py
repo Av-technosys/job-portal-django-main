@@ -175,3 +175,10 @@ class ListCandidateSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
         fields = LIST_CANDIDATE_FEILDS
+
+
+class SocialLinksRecruiterSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SocialMediaLinkRecruiter
+        fields = "__all__"
