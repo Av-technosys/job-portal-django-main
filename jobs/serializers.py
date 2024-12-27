@@ -300,6 +300,7 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
 
 class JobPostedListSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
+    role= serializers.CharField()
     title = serializers.CharField()
     salary = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
