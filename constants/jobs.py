@@ -100,6 +100,7 @@ JOB_INFO_SERIALIZER_FEILDS = [
 
 JOB_POSTED_VIEW_FEILDS = [
     "company_profile_image",
+    "role",
     "title",
     "salary",
     "location",
