@@ -115,6 +115,28 @@ COMPANY_PROFILE_FIELDS = [
     "founding_info",
 ]
 
+STUDENT_PROFILE_COMBINED_FIELDS = [
+    "id",
+    "user",
+    "date_of_birth",
+    "gender",
+    "address_line_1",
+    "address_line_2",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+    "created_date",
+    "updated_date",
+    "academic_qualifications",
+    "work_experiences",
+    "skill_sets",
+    "certifications",
+    "projects",
+    "salary",
+    "uploaded_files",
+]
+
 
 LIST_CANDIDATE_FEILDS = [
     "first_name",

@@ -79,17 +79,25 @@ class UploadedFileJobSeekerSerializer(serializers.ModelSerializer):
 
 
 class CombineStudentProfileSerializer(serializers.ModelSerializer):
-    academic_qualifications = AcademicQualificationSerializer(many=True, read_only=True)
-    work_experiences = WorkExperienceSerializer(many=True, read_only=True)
-    skill_sets = SkillSetSerializer(many=True, read_only=True)
-    certifications = CertificationsSerializer(many=True, read_only=True)
-    projects = ProjectsSerializer(many=True, read_only=True)
-    salary = SalarySerializer(many=True, read_only=True)
-    uploaded_files = UploadedFileJobSeekerSerializer(many=True, read_only=True)
+    academic_qualifications = AcademicQualificationSerializer(
+        many=True, read_only=True, source="user.aq_fk_user"
+    )
+    work_experiences = WorkExperienceSerializer(
+        many=True, read_only=True, source="user.we_fk_user"
+    )
+    skill_sets = SkillSetSerializer(many=True, read_only=True, source="user.ss_fk_user")
+    certifications = CertificationsSerializer(
+        many=True, read_only=True, source="user.ces_fk_user"
+    )
+    projects = ProjectsSerializer(many=True, read_only=True, source="user.ps_fk_user")
+    salary = SalarySerializer(many=True, read_only=True, source="user.sy_fk_user")
+    uploaded_files = UploadedFileJobSeekerSerializer(
+        many=True, read_only=True, source="user.social_media_links_job_seeker"
+    )
 
     class Meta:
         model = StudentProfile
-        fields = "__all__"
+        fields = STUDENT_PROFILE_COMBINED_FIELDS
 
 
 class StoreFCMTokenSerializer(serializers.Serializer):
