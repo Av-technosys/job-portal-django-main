@@ -12,21 +12,11 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         model = StudentProfile
         fields = "__all__"
 
-    def create(self, validated_data):
-        student = StudentProfile(**validated_data)
-        student.save()
-        return student
-
 
 class AcademicQualificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = AcademicQualification
         fields = "__all__"
-
-    def create(self, validated_data):
-        academic_qualification = AcademicQualification(**validated_data)
-        academic_qualification.save()
-        return academic_qualification
 
 
 class WorkExperienceSerializer(serializers.ModelSerializer):
@@ -34,21 +24,11 @@ class WorkExperienceSerializer(serializers.ModelSerializer):
         model = WorkExperience
         fields = "__all__"
 
-    def create(self, validated_data):
-        work_experience = WorkExperience(**validated_data)
-        work_experience.save()
-        return work_experience
-
 
 class SkillSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = SkillSet
         fields = "__all__"
-
-    def create(self, validated_data):
-        skill_set = SkillSet(**validated_data)
-        skill_set.save()
-        return skill_set
 
 
 class CertificationsSerializer(serializers.ModelSerializer):
@@ -56,32 +36,17 @@ class CertificationsSerializer(serializers.ModelSerializer):
         model = Certifications
         fields = "__all__"
 
-    def create(self, validated_data):
-        certification = Certifications(**validated_data)
-        certification.save()
-        return certification
-
 
 class ProjectsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projects
         fields = "__all__"
 
-    def create(self, validated_data):
-        project = Projects(**validated_data)
-        project.save()
-        return project
 
-
-class SocialUrlsSerializer(serializers.ModelSerializer):
+class SalarySerializer(serializers.ModelSerializer):
     class Meta:
-        model = SocialUrls
+        model = Salary
         fields = "__all__"
-
-    def create(self, validated_data):
-        social_url = SocialUrls(**validated_data)
-        social_url.save()
-        return social_url
 
 
 class OrganizationInfoSerializer(serializers.ModelSerializer):
@@ -89,21 +54,11 @@ class OrganizationInfoSerializer(serializers.ModelSerializer):
         model = OrganizationInfo
         fields = "__all__"
 
-    def create(self, validated_data):
-        company_profile = OrganizationInfo(**validated_data)
-        company_profile.save()
-        return company_profile
-
 
 class FoundingInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = FoundingInfo
         fields = "__all__"
-
-    def create(self, validated_data):
-        job_details = FoundingInfo(**validated_data)
-        job_details.save()
-        return job_details
 
 
 class UploadedFileRecruiterSerializer(serializers.ModelSerializer):
@@ -111,13 +66,8 @@ class UploadedFileRecruiterSerializer(serializers.ModelSerializer):
         model = RecruiterUploadedFile
         fields = "__all__"
 
-    def create(self, validated_data):
-        uploaded_file = RecruiterUploadedFile(**validated_data)
-        uploaded_file.save()
-        return uploaded_file
 
-
-class UploadedFileSeekerSerializer(serializers.ModelSerializer):
+class UploadedFileJobSeekerSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobSeekerUploadedFile
         fields = "__all__"
@@ -129,17 +79,25 @@ class UploadedFileSeekerSerializer(serializers.ModelSerializer):
 
 
 class CombineStudentProfileSerializer(serializers.ModelSerializer):
-    academic_qualifications = AcademicQualificationSerializer(many=True, read_only=True)
-    work_experiences = WorkExperienceSerializer(many=True, read_only=True)
-    skill_sets = SkillSetSerializer(many=True, read_only=True)
-    certifications = CertificationsSerializer(many=True, read_only=True)
-    projects = ProjectsSerializer(many=True, read_only=True)
-    social_urls = SocialUrlsSerializer(many=True, read_only=True)
-    uploaded_files = UploadedFileSeekerSerializer(many=True, read_only=True)
+    academic_qualifications = AcademicQualificationSerializer(
+        many=True, read_only=True, source="user.aq_fk_user"
+    )
+    work_experiences = WorkExperienceSerializer(
+        many=True, read_only=True, source="user.we_fk_user"
+    )
+    skill_sets = SkillSetSerializer(many=True, read_only=True, source="user.ss_fk_user")
+    certifications = CertificationsSerializer(
+        many=True, read_only=True, source="user.ces_fk_user"
+    )
+    projects = ProjectsSerializer(many=True, read_only=True, source="user.ps_fk_user")
+    salary = SalarySerializer(many=True, read_only=True, source="user.sy_fk_user")
+    uploaded_files = UploadedFileJobSeekerSerializer(
+        many=True, read_only=True, source="user.social_media_links_job_seeker"
+    )
 
     class Meta:
         model = StudentProfile
-        fields = JOB_DETAILS_FIELDS
+        fields = STUDENT_PROFILE_COMBINED_FIELDS
 
 
 class StoreFCMTokenSerializer(serializers.Serializer):
@@ -181,4 +139,11 @@ class SocialLinksRecruiterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SocialMediaLinkRecruiter
+        fields = "__all__"
+
+
+class SocialLinksJobSeekerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SocialMediaLinkJobSeeker
         fields = "__all__"

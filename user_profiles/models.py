@@ -13,145 +13,197 @@ class S3FileStorage(S3Boto3Storage):
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sp_fk_user"
     )
-    designation = models.CharField(max_length=100)
+    date_of_birth = models.DateField()
+    gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES)
     address_line_1 = models.CharField(max_length=100)
     address_line_2 = models.CharField(max_length=100, blank=True, null=True)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
     postal_code = models.IntegerField(validators=[MaxValueValidator(999999)])
     country = models.CharField(max_length=100)
-    experience = models.PositiveSmallIntegerField(validators=[MaxValueValidator(99)])
-    gender = models.PositiveSmallIntegerField(choices=GENDER_CHOICES)
-    current_salary = models.DecimalField(max_digits=10, decimal_places=2)
-    expecting_salary = models.DecimalField(max_digits=10, decimal_places=2)
-    job_search_status = models.PositiveSmallIntegerField(choices=SEARCH_STATUS_CHOICES)
-    interests = models.TextField(blank=True, null=True, max_length=400)
-    notice_period = models.PositiveSmallIntegerField(choices=NOTICE_PERIOD_CHOICES)
-    short_bio = models.TextField(max_length=400)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="sp_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="sp_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="sp_id_user_index"),
+        ]
+
     def __str__(self):
-        return f"{self.short_bio} - {self.designation}"
+        return f"{self.gender} - {self.user}"
 
 
 class AcademicQualification(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="aq_fk_user"
     )
-    student = models.ForeignKey(
-        StudentProfile,
-        on_delete=models.CASCADE,
-        related_name="academic_qualifications",
-    )
+    qualification_type = models.CharField(max_length=100)
     institution_name = models.CharField(max_length=200)
-    specialization = models.CharField(max_length=100)
+    qualification_status = models.CharField(choices=QUALIFICATION_STATUS, max_length=50)
+    score = models.FloatField(
+        validators=[MinValueValidator(0.0), MaxValueValidator(100.0)]
+    )
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.institution_name} - {self.specialization}"
-
-
-class WorkExperience(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
-    student = models.ForeignKey(
-        StudentProfile,
-        on_delete=models.CASCADE,
-        related_name="work_experiences",
-    )
-    organization_name = models.CharField(max_length=200)
-    designation = models.CharField(max_length=100)
-    start_date = models.DateField()
-    end_date = models.DateField(null=True, blank=True)
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="aq_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="aq_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="aq_id_user_index"),
+        ]
 
     def __str__(self):
-        return f"{self.organization_name} - {self.designation}"
+        return f"{self.institution_name} - {self.qualification_type}"
 
 
 class SkillSet(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-    )
-    student = models.ForeignKey(
-        StudentProfile,
-        on_delete=models.CASCADE,
-        related_name="skill_sets",
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ss_fk_user"
     )
     skill_name = models.CharField(max_length=100)
-    proficiency_level = models.CharField(max_length=50)
-    experience = models.PositiveIntegerField()
+    proficiency_level = models.CharField(max_length=50, choices=PROFICIENCY_LEVEL)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="ss_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="ss_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="ss_id_user_index"),
+        ]
 
     def __str__(self):
         return f"{self.user} - {self.skill_name}"
 
 
-class Certifications(models.Model):
+class WorkExperience(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="we_fk_user"
     )
-    student = models.ForeignKey(
-        StudentProfile,
-        on_delete=models.CASCADE,
-        related_name="certifications",
+    organization_name = models.CharField(max_length=200)
+    designation = models.CharField(max_length=100)
+    experience = models.PositiveIntegerField()
+    salary = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
     )
-    certification_name = models.CharField(max_length=200)
-    start_date = models.DateField(null=True, blank=True)
+    start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
-    certificate_url = models.URLField(blank=True, null=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="we_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="we_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="we_id_user_index"),
+        ]
+
+    def __str__(self):
+        return f"{self.organization_name} - {self.designation}"
+
+
+class Certifications(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ces_fk_user"
+    )
+    certification_name = models.CharField(max_length=200)
+    institution_name = models.CharField(max_length=200)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="ces_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="ces_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="ces_id_user_index"),
+        ]
 
     def __str__(self):
         return f"{self.certification_name}"
 
 
 class Projects(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    student = models.ForeignKey(
-        StudentProfile,
-        on_delete=models.CASCADE,
-        related_name="projects",
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ps_fk_user"
     )
     project_name = models.CharField(max_length=200)
-    description = models.TextField(max_length=500, blank=True, null=True)
-    project_url = models.URLField(blank=True, null=True)
+    project_organization_name = models.TextField(max_length=500, blank=True, null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="ps_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="ps_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="ps_id_user_index"),
+        ]
 
     def __str__(self):
         return f"{self.project_name} - {self.user}"
 
 
-class SocialUrls(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    student = models.ForeignKey(
-        StudentProfile,
-        on_delete=models.CASCADE,
-        related_name="social_urls",
+class Salary(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sy_fk_user"
     )
-    link = models.URLField(blank=True)
-    link_title = models.CharField(blank=True, null=True)
+    current_salary = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+    )
+    expected_salary = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+    )
+    job_search_status = models.PositiveSmallIntegerField(choices=SEARCH_STATUS_CHOICES)
+    notice_period = models.PositiveSmallIntegerField(choices=NOTICE_PERIOD_CHOICES)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="sy_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="sy_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="sy_id_user_index"),
+        ]
+
     def __str__(self):
-        return f"{self.link} - {self.link_title}"
+        return f"{self.notice_period} - {self.user}"
 
 
 class OrganizationInfo(models.Model):
@@ -204,6 +256,31 @@ class FoundingInfo(models.Model):
             ),
             models.Index(fields=["id", "user"], name="fi_id_user_index"),
         ]
+
+
+class SocialMediaLinkJobSeeker(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="social_media_links_job_seeker",
+    )
+    platform = models.CharField(max_length=50)
+    url = models.URLField(max_length=255)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"], name="sm_js_user_index"),
+            models.Index(
+                fields=["created_date"],
+                name="sm_js_created_date_index",
+            ),
+            models.Index(fields=["id", "user"], name="sm_js_id_user_index"),
+        ]
+
+    def __str__(self):
+        return f"{self.platform} - {self.url}"
 
 
 class SocialMediaLinkRecruiter(models.Model):
