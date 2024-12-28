@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes
 from functions.common import *
+from user_profiles.models import *
 from .serializers import *
 from handlers.common import request_handler
 from rest_framework.permissions import IsAuthenticated
@@ -51,12 +52,6 @@ def certifications(request):
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
-def social_urls(request):
-    return request_handler(SocialUrls, SocialUrlsSerializer, request)
-
-
-@api_view(["GET", "POST", "PATCH", "DELETE"])
-@permission_classes([IsAuthenticated])
 def company_profile(request):
     if request.method == "GET":
         return get_handle_profile(OrganizationInfo, OrganizationInfoSerializer, request)
@@ -87,6 +82,20 @@ def social_links_recruiter(request):
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def social_links_job_seeker(request):
+    return request_handler(
+        SocialMediaLinkJobSeeker, SocialLinksJobSeekerSerializer, request
+    )
+
+
+@api_view(["GET", "POST", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def salary(request):
+    return request_handler(Salary, SalarySerializer, request)
+
+
+@api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated, IsRecruiter])
 def file_upload_recruiter(request):
     return upload_handler(
@@ -97,7 +106,9 @@ def file_upload_recruiter(request):
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def file_upload_job_seeker(request):
-    return upload_handler(JobSeekerUploadedFile, UploadedFileSeekerSerializer, request)
+    return upload_handler(
+        JobSeekerUploadedFile, UploadedFileJobSeekerSerializer, request
+    )
 
 
 @api_view(["GET"])

@@ -4,6 +4,18 @@ GENDER_CHOICES = [
     (2, "Other"),
 ]
 
+QUALIFICATION_STATUS = [
+    (0, "Pursuing"),
+    (1, "Completed"),
+]
+
+PROFICIENCY_LEVEL = [
+    (0, "Beginner"),
+    (1, "Intermediate"),
+    (2, "Advanced"),
+    (3, "Expert"),
+]
+
 NOTICE_PERIOD_CHOICES = [
     (0, "Immediately"),
     (1, "15 days"),
@@ -25,9 +37,9 @@ JOB_TYPE_CHOICES = [
 
 JOB_SEEKER_DOCUMENT_TYPES = [
     ("resume", "Resume"),
-    ("cover_letter", "Cover Letter"),
-    ("profile_image", "Profile Image"),
-    ("typescript", "Typescript"),
+    ("video_resume", "Video Resume"),
+    ("certificate", "Certificate"),
+    ("other", "Other"),
 ]
 
 RECRUITER_DOCUMENT_TYPES = [
@@ -82,7 +94,7 @@ JOB_DETAILS_FIELDS = [
     "skill_sets",
     "certifications",
     "projects",
-    "social_urls",
+    "salary",
     "uploaded_files",
 ]
 
