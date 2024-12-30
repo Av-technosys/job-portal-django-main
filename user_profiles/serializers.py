@@ -13,6 +13,52 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class JobSeekerPersonalProfileSerializer(serializers.ModelSerializer):
+    date_of_birth = serializers.CharField(source="sp_fk_user.date_of_birth")
+    gender = serializers.IntegerField(source="sp_fk_user.gender")
+    address_line_1 = serializers.CharField(source="sp_fk_user.address_line_1")
+    address_line_2 = serializers.CharField(source="sp_fk_user.address_line_2")
+    city = serializers.CharField(source="sp_fk_user.city")
+    state = serializers.CharField(source="sp_fk_user.state")
+    country = serializers.CharField(source="sp_fk_user.country")
+    postal_code = serializers.IntegerField(source="sp_fk_user.postal_code")
+    student_profile_id = serializers.IntegerField(
+        source="sp_fk_user.id", required=False
+    )
+
+    class Meta:
+        model = User
+        fields = JOB_SEEKER_PROFILE_PERSONAL_INFO
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+
+        user_info_data = {}
+        for key in JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_1:
+            if validated_data[key] is not None:
+                user_info_data[key] = validated_data[key]
+
+        User.objects.filter(pk=user.id).update(**user_info_data)
+        user_sp_info_data = {
+            "user": user,
+        }
+        validated_sp_data = validated_data["sp_fk_user"]
+        for key in JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_2:
+            if validated_sp_data[key] is not None:
+                user_sp_info_data[key] = validated_sp_data[key]
+        sp_lookup = {
+            "user": user.id,
+        }
+        if "id" in validated_sp_data and validated_sp_data["id"] is not None:
+            sp_lookup["id"] = validated_sp_data["id"]
+        StudentProfile.objects.update_or_create(
+            **sp_lookup,
+            defaults=user_sp_info_data,
+        )
+
+        return validated_data
+
+
 class AcademicQualificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = AcademicQualification
