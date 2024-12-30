@@ -5,7 +5,8 @@ from constants.errors import RESPONSE_ERROR
 from functions.common import ResponseHandler
 from constants.fcm import FCM_TOKEN_STORED
 from .models import *
-from functions.common import get_user_photo,get_location_formatted
+from functions.common import get_recruiter_profile_image, get_location_formatted
+
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -152,7 +153,9 @@ class SocialLinksJobSeekerSerializer(serializers.ModelSerializer):
 class FindRecruiterListSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
     company_name = serializers.SerializerMethodField(source="user.first_name")
-    organization_type = serializers.CharField(source="user.founding_info.organization_type")
+    organization_type = serializers.CharField(
+        source="user.founding_info.organization_type"
+    )
     industry_type = serializers.CharField(source="user.founding_info.industry_type")
     created_date = serializers.DateTimeField()
     updated_date = serializers.DateTimeField()
@@ -164,12 +167,10 @@ class FindRecruiterListSerializer(serializers.ModelSerializer):
         fields = FIND_RECUITER_VIEW_FEILDS
 
     def get_company_profile_image(self, obj):
-        return get_user_photo(obj.user, RecruiterUploadedFile)
+        return get_recruiter_profile_image(obj.user, RecruiterUploadedFile)
 
     def get_company_name(self, obj):
         return obj.user.first_name
 
-
     def get_location(self, obj):
         return get_location_formatted(obj)
-

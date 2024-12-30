@@ -152,16 +152,13 @@ LIST_CANDIDATE_FEILDS = [
 
 FIND_RECUITER_VIEW_FEILDS = [
     "user",
-    
     "company_profile_image",
     "company_name",
     "organization_type",
     "industry_type",
     "city",
     "country",
-     "created_date",
+    "created_date",
     "updated_date",
     "company_id",
-
-
 ]

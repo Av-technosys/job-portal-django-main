@@ -300,7 +300,7 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
 
 class JobPostedListSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
-    role= serializers.CharField()
+    role = serializers.CharField()
     title = serializers.CharField()
     salary = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
@@ -313,7 +313,7 @@ class JobPostedListSerializer(serializers.ModelSerializer):
         fields = JOB_POSTED_VIEW_FEILDS
 
     def get_company_profile_image(self, obj):
-        return get_user_photo(obj.user, RecruiterUploadedFile)
+        return get_recruiter_profile_image(obj.user, RecruiterUploadedFile)
 
     def get_salary(self, obj):
         return get_salary_formatted(obj)
