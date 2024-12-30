@@ -59,8 +59,7 @@ class JobCombinedSerializer(serializers.Serializer):
     state = serializers.CharField(max_length=100)
     country = serializers.CharField(max_length=100)
     skills = serializers.ListField(
-        child=serializers.CharField(max_length=50),
-        allow_empty=True
+        child=serializers.CharField(max_length=50), allow_empty=True
     )
     description = serializers.CharField()
 
