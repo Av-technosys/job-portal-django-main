@@ -153,7 +153,7 @@ def store_fcm_token(request):
 
 @api_view(["GET"])
 def get_recruiter(request):
-    return filter_search_handler(OrganizationInfo, OrganizationInfoSerializer, request)
+    return filter_search_handler(OrganizationInfo, FindRecruiterListSerializer, request)
 
 
 @api_view(["GET"])

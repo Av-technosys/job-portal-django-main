@@ -180,4 +180,15 @@ JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_2 = [
     "state",
     "postal_code",
     "country",
+FIND_RECUITER_VIEW_FEILDS = [
+    "user",
+    "company_profile_image",
+    "company_name",
+    "organization_type",
+    "industry_type",
+    "city",
+    "country",
+    "created_date",
+    "updated_date",
+    "company_id",
 ]
