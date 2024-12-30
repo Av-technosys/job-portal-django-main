@@ -149,3 +149,16 @@ LIST_CANDIDATE_FEILDS = [
     "experience",
     "job_search_status",
 ]
+
+FIND_RECUITER_VIEW_FEILDS = [
+    "user",
+    "company_profile_image",
+    "company_name",
+    "organization_type",
+    "industry_type",
+    "city",
+    "country",
+    "created_date",
+    "updated_date",
+    "company_id",
+]
