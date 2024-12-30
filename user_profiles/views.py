@@ -1,12 +1,23 @@
 from rest_framework.decorators import api_view, permission_classes
 from functions.common import *
 from user_profiles.models import *
+from accounts.models import User
 from .serializers import *
 from handlers.common import request_handler
 from rest_framework.permissions import IsAuthenticated
 from handlers.permissions import IsRecruiter, IsJobSeeker
 from jobs.models import JobApply
 from jobs.serializers import JobApplySerializer
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def job_seeker_personal_details(request):
+    if request.method == "GET":
+        return get_customize_handler(
+            User, JobSeekerPersonalProfileSerializer, {"email": request.user}
+        )
+    return request_handler(StudentProfile, JobSeekerPersonalProfileSerializer, request)
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])

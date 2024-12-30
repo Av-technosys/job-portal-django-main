@@ -174,7 +174,7 @@ class Projects(models.Model):
 
 
 class Salary(models.Model):
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sy_fk_user"
     )
     current_salary = models.DecimalField(
@@ -212,7 +212,7 @@ class OrganizationInfo(models.Model):
         on_delete=models.CASCADE,
         related_name="organization_info",
     )
-    
+
     company_about_us = models.TextField(max_length=500)
     company_website = models.URLField(blank=True)
     address_line_1 = models.CharField(max_length=100)

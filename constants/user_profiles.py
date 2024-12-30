@@ -150,6 +150,38 @@ LIST_CANDIDATE_FEILDS = [
     "job_search_status",
 ]
 
+JOB_SEEKER_PROFILE_PERSONAL_INFO = [
+    "email",
+    "first_name",
+    "phone_number",
+    "id",
+    "date_of_birth",
+    "gender",
+    "address_line_1",
+    "address_line_2",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+    "student_profile_id",
+]
+
+JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_1 = [
+    "first_name",
+    "phone_number",
+]
+
+JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_2 = [
+    "date_of_birth",
+    "gender",
+    "address_line_1",
+    "address_line_2",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+]
+
 FIND_RECUITER_VIEW_FEILDS = [
     "user",
     "company_profile_image",
