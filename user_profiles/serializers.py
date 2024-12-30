@@ -167,7 +167,7 @@ class FindRecruiterListSerializer(serializers.ModelSerializer):
         fields = FIND_RECUITER_VIEW_FEILDS
 
     def get_company_profile_image(self, obj):
-        return get_recruiter_profile_image(obj.user, RecruiterUploadedFile)
+        return get_recruiter_profile_image(obj.user)
 
     def get_company_name(self, obj):
         return obj.user.first_name
