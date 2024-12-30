@@ -58,7 +58,10 @@ class JobCombinedSerializer(serializers.Serializer):
     city = serializers.CharField(max_length=100)
     state = serializers.CharField(max_length=100)
     country = serializers.CharField(max_length=100)
-    skills = serializers.CharField()
+    skills = serializers.ListField(
+        child=serializers.CharField(max_length=50),
+        allow_empty=True
+    )
     description = serializers.CharField()
 
     def create(self, validated_data):

@@ -7,8 +7,8 @@ from constants.jobs import (
     JOB_ROLE_FIELDS,
     JOB_POST_STATUS_FEILDS,
 )
-from django.db import models
 from accounts.models import User
+from django.contrib.postgres.fields import ArrayField
 
 
 class JobInfo(models.Model):
@@ -50,7 +50,7 @@ class JobDescription(models.Model):
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
-    skills = models.TextField()
+    skills = ArrayField(models.CharField(max_length=200), size=10)
     description = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
