@@ -5,6 +5,7 @@ from constants.errors import RESPONSE_ERROR
 from functions.common import ResponseHandler
 from constants.fcm import FCM_TOKEN_STORED
 from .models import *
+from functions.common import get_recruiter_profile_image, get_location_formatted
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
@@ -12,10 +13,51 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         model = StudentProfile
         fields = "__all__"
 
+
+class JobSeekerPersonalProfileSerializer(serializers.ModelSerializer):
+    date_of_birth = serializers.CharField(source="sp_fk_user.date_of_birth")
+    gender = serializers.IntegerField(source="sp_fk_user.gender")
+    address_line_1 = serializers.CharField(source="sp_fk_user.address_line_1")
+    address_line_2 = serializers.CharField(source="sp_fk_user.address_line_2")
+    city = serializers.CharField(source="sp_fk_user.city")
+    state = serializers.CharField(source="sp_fk_user.state")
+    country = serializers.CharField(source="sp_fk_user.country")
+    postal_code = serializers.IntegerField(source="sp_fk_user.postal_code")
+    student_profile_id = serializers.IntegerField(
+        source="sp_fk_user.id", required=False
+    )
+
+    class Meta:
+        model = User
+        fields = JOB_SEEKER_PROFILE_PERSONAL_INFO
+
     def create(self, validated_data):
-        student = StudentProfile(**validated_data)
-        student.save()
-        return student
+        user = self.context["request"].user
+
+        user_info_data = {}
+        for key in JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_1:
+            if validated_data[key] is not None:
+                user_info_data[key] = validated_data[key]
+
+        User.objects.filter(pk=user.id).update(**user_info_data)
+        user_sp_info_data = {
+            "user": user,
+        }
+        validated_sp_data = validated_data["sp_fk_user"]
+        for key in JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_2:
+            if validated_sp_data[key] is not None:
+                user_sp_info_data[key] = validated_sp_data[key]
+        sp_lookup = {
+            "user": user.id,
+        }
+        if "id" in validated_sp_data and validated_sp_data["id"] is not None:
+            sp_lookup["id"] = validated_sp_data["id"]
+        StudentProfile.objects.update_or_create(
+            **sp_lookup,
+            defaults=user_sp_info_data,
+        )
+
+        return validated_data
 
 
 class AcademicQualificationSerializer(serializers.ModelSerializer):
@@ -23,21 +65,11 @@ class AcademicQualificationSerializer(serializers.ModelSerializer):
         model = AcademicQualification
         fields = "__all__"
 
-    def create(self, validated_data):
-        academic_qualification = AcademicQualification(**validated_data)
-        academic_qualification.save()
-        return academic_qualification
-
 
 class WorkExperienceSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkExperience
         fields = "__all__"
-
-    def create(self, validated_data):
-        work_experience = WorkExperience(**validated_data)
-        work_experience.save()
-        return work_experience
 
 
 class SkillSetSerializer(serializers.ModelSerializer):
@@ -45,21 +77,11 @@ class SkillSetSerializer(serializers.ModelSerializer):
         model = SkillSet
         fields = "__all__"
 
-    def create(self, validated_data):
-        skill_set = SkillSet(**validated_data)
-        skill_set.save()
-        return skill_set
-
 
 class CertificationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certifications
         fields = "__all__"
-
-    def create(self, validated_data):
-        certification = Certifications(**validated_data)
-        certification.save()
-        return certification
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
@@ -67,21 +89,11 @@ class ProjectsSerializer(serializers.ModelSerializer):
         model = Projects
         fields = "__all__"
 
-    def create(self, validated_data):
-        project = Projects(**validated_data)
-        project.save()
-        return project
 
-
-class SocialUrlsSerializer(serializers.ModelSerializer):
+class SalarySerializer(serializers.ModelSerializer):
     class Meta:
-        model = SocialUrls
+        model = Salary
         fields = "__all__"
-
-    def create(self, validated_data):
-        social_url = SocialUrls(**validated_data)
-        social_url.save()
-        return social_url
 
 
 class OrganizationInfoSerializer(serializers.ModelSerializer):
@@ -89,21 +101,11 @@ class OrganizationInfoSerializer(serializers.ModelSerializer):
         model = OrganizationInfo
         fields = "__all__"
 
-    def create(self, validated_data):
-        company_profile = OrganizationInfo(**validated_data)
-        company_profile.save()
-        return company_profile
-
 
 class FoundingInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = FoundingInfo
         fields = "__all__"
-
-    def create(self, validated_data):
-        job_details = FoundingInfo(**validated_data)
-        job_details.save()
-        return job_details
 
 
 class UploadedFileRecruiterSerializer(serializers.ModelSerializer):
@@ -111,13 +113,8 @@ class UploadedFileRecruiterSerializer(serializers.ModelSerializer):
         model = RecruiterUploadedFile
         fields = "__all__"
 
-    def create(self, validated_data):
-        uploaded_file = RecruiterUploadedFile(**validated_data)
-        uploaded_file.save()
-        return uploaded_file
 
-
-class UploadedFileSeekerSerializer(serializers.ModelSerializer):
+class UploadedFileJobSeekerSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobSeekerUploadedFile
         fields = "__all__"
@@ -129,17 +126,25 @@ class UploadedFileSeekerSerializer(serializers.ModelSerializer):
 
 
 class CombineStudentProfileSerializer(serializers.ModelSerializer):
-    academic_qualifications = AcademicQualificationSerializer(many=True, read_only=True)
-    work_experiences = WorkExperienceSerializer(many=True, read_only=True)
-    skill_sets = SkillSetSerializer(many=True, read_only=True)
-    certifications = CertificationsSerializer(many=True, read_only=True)
-    projects = ProjectsSerializer(many=True, read_only=True)
-    social_urls = SocialUrlsSerializer(many=True, read_only=True)
-    uploaded_files = UploadedFileSeekerSerializer(many=True, read_only=True)
+    academic_qualifications = AcademicQualificationSerializer(
+        many=True, read_only=True, source="user.aq_fk_user"
+    )
+    work_experiences = WorkExperienceSerializer(
+        many=True, read_only=True, source="user.we_fk_user"
+    )
+    skill_sets = SkillSetSerializer(many=True, read_only=True, source="user.ss_fk_user")
+    certifications = CertificationsSerializer(
+        many=True, read_only=True, source="user.ces_fk_user"
+    )
+    projects = ProjectsSerializer(many=True, read_only=True, source="user.ps_fk_user")
+    salary = SalarySerializer(many=True, read_only=True, source="user.sy_fk_user")
+    uploaded_files = UploadedFileJobSeekerSerializer(
+        many=True, read_only=True, source="user.social_media_links_job_seeker"
+    )
 
     class Meta:
         model = StudentProfile
-        fields = JOB_DETAILS_FIELDS
+        fields = STUDENT_PROFILE_COMBINED_FIELDS
 
 
 class StoreFCMTokenSerializer(serializers.Serializer):
@@ -182,3 +187,36 @@ class SocialLinksRecruiterSerializer(serializers.ModelSerializer):
     class Meta:
         model = SocialMediaLinkRecruiter
         fields = "__all__"
+
+
+class SocialLinksJobSeekerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SocialMediaLinkJobSeeker
+        fields = "__all__"
+
+
+class FindRecruiterListSerializer(serializers.ModelSerializer):
+    company_profile_image = serializers.SerializerMethodField()
+    company_name = serializers.SerializerMethodField(source="user.first_name")
+    organization_type = serializers.CharField(
+        source="user.founding_info.organization_type"
+    )
+    industry_type = serializers.CharField(source="user.founding_info.industry_type")
+    created_date = serializers.DateTimeField()
+    updated_date = serializers.DateTimeField()
+    company_id = serializers.IntegerField(source="id")
+    user = serializers.IntegerField(source="user.id")
+
+    class Meta:
+        model = OrganizationInfo
+        fields = FIND_RECUITER_VIEW_FEILDS
+
+    def get_company_profile_image(self, obj):
+        return get_recruiter_profile_image(obj.user)
+
+    def get_company_name(self, obj):
+        return obj.user.first_name
+
+    def get_location(self, obj):
+        return get_location_formatted(obj)

@@ -46,9 +46,23 @@ JOB_SEEKER_LIST_VIEW_FIELDS = [
     "role",
     "company_name",
     "salary",
-    "is_applied",
     "is_saved",
     "created_date",
+    "company_profile_image",
+]
+
+SAVED_JOBS_JOB_SEEKER_LIST_VIEW_FIELDS = [
+    "status",
+    "id",
+    "title",
+    "job_type",
+    "location",
+    "role",
+    "company_name",
+    "salary",
+    "is_applied",
+    "created_date",
+    "days_remaining",
     "company_profile_image",
 ]
 
@@ -60,6 +74,8 @@ JOB_APPLIED_VIEW_FIELDS = [
     "applied_date",
     "job_id",
     "application_id",
+    "company_profile_image",
+    "role",
 ]
 
 JOB_DESCRIPTION_SERIALIZER_FEILDS = [
@@ -84,12 +100,14 @@ JOB_INFO_SERIALIZER_FEILDS = [
 
 JOB_POSTED_VIEW_FEILDS = [
     "company_profile_image",
+    "role",
     "title",
     "salary",
     "location",
     "job_type",
     "application_count",
     "job_id",
+    "job_status",
 ]
 
 

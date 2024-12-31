@@ -13,11 +13,19 @@ from constants.errors import (
 )
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from functions.common import generate_otp, generate_password_string, ResponseHandler
+from functions.common import (
+    generate_otp,
+    generate_password_string,
+    get_job_seeker_profile_image,
+    get_recruiter_profile_image,
+    is_job_seeker,
+    ResponseHandler,
+)
 from constants.accounts import (
-    REGISTRATION_META_FIELDS,
     PASSWORD_RESET,
+    REGISTRATION_META_FIELDS,
     SUCCESS_SENDING_OTP,
+    USER_META_FIELDS,
 )
 from django.utils import timezone
 from datetime import timedelta
@@ -78,6 +86,20 @@ class UserSerializer(serializers.ModelSerializer):
         send_email_otp(email, email_otp)
 
         return user
+
+
+class UserMetaSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = USER_META_FIELDS
+
+    def get_profile_picture(self, obj):
+        request = self.context.get("request")
+        if is_job_seeker(request):
+            return get_job_seeker_profile_image(obj)
+        return get_recruiter_profile_image(obj)
 
 
 class SSOUserSerializer(serializers.Serializer):
