@@ -42,7 +42,6 @@ class JobSeekerPersonalProfileSerializer(serializers.ModelSerializer):
             if validated_data[key] is not None:
                 user_info_data[key] = validated_data[key]
 
-        User.objects.filter(pk=user.id).update(**user_info_data)
         user_sp_info_data = {
             "user": user,
         }
@@ -55,11 +54,14 @@ class JobSeekerPersonalProfileSerializer(serializers.ModelSerializer):
         }
         if "id" in validated_sp_data and validated_sp_data["id"] is not None:
             sp_lookup["id"] = validated_sp_data["id"]
-        StudentProfile.objects.update_or_create(
-            **sp_lookup,
-            defaults=user_sp_info_data,
-        )
 
+        with transaction.atomic():
+            User.objects.filter(pk=user.id).update(**user_info_data)
+
+            StudentProfile.objects.update_or_create(
+                **sp_lookup,
+                defaults=user_sp_info_data,
+            )
         return validated_data
 
 
@@ -263,9 +265,13 @@ class JobSeekerGeneralProfileSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField(read_only=True, default=[])
 
     def get_files(self, obj):
-        return get_job_seeker_documents(
-            user=obj.user, response_key_list=JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_4
-        )
+        try:
+            return get_job_seeker_documents(
+                user=obj.user,
+                response_key_list=JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_4,
+            )
+        except Exception as e:
+            return []
 
     def validate(self, data):
         if len(data["user"]["ss_fk_user"]) == 0:
@@ -309,7 +315,7 @@ class JobSeekerGeneralProfileSerializer(serializers.ModelSerializer):
             sy_lookup["id"] = validated_sy_data["id"]
 
         with transaction.atomic():
-            # Create / Update User Info
+            # Create / Update Academic Qualification Info
             AcademicQualification.objects.update_or_create(
                 **aq_lookup,
                 defaults=aq_info_data,
@@ -336,7 +342,7 @@ class JobSeekerGeneralProfileSerializer(serializers.ModelSerializer):
                 )
 
             # Create / Update Salary Info
-            Salary.objects.update_or_create(
+            user.sy_fk_user.update_or_create(
                 **sy_lookup,
                 defaults=sy_info_data,
             )
