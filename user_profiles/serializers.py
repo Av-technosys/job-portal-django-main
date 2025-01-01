@@ -1,11 +1,14 @@
 # profiles/serializers.py
 from rest_framework import serializers
 from accounts.models import User
-from constants.errors import RESPONSE_ERROR
-from functions.common import ResponseHandler
+from constants.errors import ATLEAST_ONE_SKILL_REQUIRED, RESPONSE_ERROR
+from functions.common import get_job_seeker_documents, ResponseHandler
 from constants.fcm import FCM_TOKEN_STORED
+from constants.user_profiles import JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2
+from functions.profile import process_items
 from .models import *
 from functions.common import get_recruiter_profile_image, get_location_formatted
+from django.db import transaction
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
@@ -220,3 +223,126 @@ class FindRecruiterListSerializer(serializers.ModelSerializer):
 
     def get_location(self, obj):
         return get_location_formatted(obj)
+
+
+class SkillSetJobSeekerProfileSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    skill_name = serializers.CharField()
+    proficiency_level = serializers.CharField()
+
+    class Meta:
+        model = SkillSet
+        fields = JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2
+
+
+class JobSeekerGeneralProfileSerializer(serializers.ModelSerializer):
+    aq_id = serializers.IntegerField(source="id", required=False)
+    current_salary = serializers.DecimalField(
+        source="user.sy_fk_user.current_salary",
+        max_digits=10,
+        decimal_places=2,
+        default=None,
+    )
+    expected_salary = serializers.DecimalField(
+        source="user.sy_fk_user.expected_salary",
+        max_digits=10,
+        decimal_places=2,
+        default=None,
+    )
+    job_search_status = serializers.IntegerField(
+        source="user.sy_fk_user.job_search_status",
+        default=None,
+    )
+    notice_period = serializers.IntegerField(
+        source="user.sy_fk_user.notice_period", default=None
+    )
+    sy_id = serializers.IntegerField(source="user.sy_fk_user.id", required=False)
+    skill_sets = SkillSetJobSeekerProfileSerializer(
+        required=True, many=True, source="user.ss_fk_user"
+    )
+    files = serializers.SerializerMethodField(read_only=True, default=[])
+
+    def get_files(self, obj):
+        return get_job_seeker_documents(
+            user=obj.user, response_key_list=JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_4
+        )
+
+    def validate(self, data):
+        if len(data["user"]["ss_fk_user"]) == 0:
+            raise serializers.ValidationError(ATLEAST_ONE_SKILL_REQUIRED)
+        return data
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+
+        # AQ Info
+        aq_info_data = {"user": user}
+        for key in JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_1:
+            if validated_data[key] is not None:
+                aq_info_data[key] = validated_data[key]
+        aq_lookup = {
+            "user": user.id,
+        }
+        if "id" in validated_data and validated_data["id"] is not None:
+            aq_lookup["id"] = validated_data["id"]
+
+        # Create, Update, Delete Skill Sets
+        validated_ss_data = validated_data["user"]["ss_fk_user"]
+        ss_operations = process_items(
+            input_list=validated_ss_data,
+            queryset=user.ss_fk_user.all(),
+            extra_data={"user": user},
+        )
+
+        # SY Info
+        sy_info_data = {
+            "user": user,
+        }
+        validated_sy_data = validated_data["user"]["sy_fk_user"]
+        for key in JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_3:
+            if validated_sy_data[key] is not None:
+                sy_info_data[key] = validated_sy_data[key]
+        sy_lookup = {
+            "user": user.id,
+        }
+        if "id" in validated_sy_data and validated_sy_data["id"] is not None:
+            sy_lookup["id"] = validated_sy_data["id"]
+
+        with transaction.atomic():
+            # Create / Update User Info
+            AcademicQualification.objects.update_or_create(
+                **aq_lookup,
+                defaults=aq_info_data,
+            )
+
+            # Skill Set Operation
+
+            # Bulk delete: Delete items in the database that are not in payload
+            if ss_operations["ids_to_delete"]:
+                user.ss_fk_user.filter(id__in=ss_operations["ids_to_delete"]).delete()
+
+            # Bulk create: Create items in the payload that are not in the database
+            if ss_operations["items_to_create"]:
+                user.ss_fk_user.bulk_create(ss_operations["items_to_create"])
+
+            # Bulk update: Update items in the database that are in payload
+            if ss_operations["items_to_update"]:
+                user.ss_fk_user.bulk_update(
+                    ss_operations["items_to_update"],
+                    [
+                        JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2[1],
+                        JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2[2],
+                    ],
+                )
+
+            # Create / Update Salary Info
+            Salary.objects.update_or_create(
+                **sy_lookup,
+                defaults=sy_info_data,
+            )
+
+        return validated_data
+
+    class Meta:
+        model = AcademicQualification
+        fields = JOB_SEEKER_PROFILE_GENERAL_INFO

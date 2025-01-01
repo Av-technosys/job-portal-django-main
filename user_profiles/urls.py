@@ -3,13 +3,14 @@ from .views import *
 
 urlpatterns = [
     path("job_seeker_personal/", job_seeker_personal_details),
-    path("student_profile/", student_profile),
-    path("qualifications/", academic_qualification),
+    path("job_seeker_general/", job_seeker_general_details),
+    # path("student_profile/", student_profile),
+    # path("qualifications/", academic_qualification),
     path("experience/", work_experience),
-    path("skill_set/", skill_set),
+    # path("skill_set/", skill_set),
     path("certifications/", certifications),
     path("projects/", projects),
-    path("salary/", salary),
+    # path("salary/", salary),
     path("social_urls_recruiter/", social_links_recruiter),
     path("social_urls_job_seeker/", social_links_job_seeker),
     path("company_profile/", company_profile),
