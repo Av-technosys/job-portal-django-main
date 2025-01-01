@@ -23,3 +23,4 @@ ALREADY_SAVED = "You have already saved this job."
 INVALID_JOB_STATUS = "Invalid job status"
 OTP_LIMIT_REACHED_ERROR = "OTP resend limit reached. Try again after 1 hour."
 ERROR_STUDENT_ID_REQUIRED = ("Student ID is required",)
+ATLEAST_ONE_SKILL_REQUIRED = "Skill set must contain at least one item."
