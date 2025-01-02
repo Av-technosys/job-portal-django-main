@@ -227,6 +227,48 @@ class FindRecruiterListSerializer(serializers.ModelSerializer):
         return get_location_formatted(obj)
 
 
+class WorkExperienceJobSeekerProfileSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    organization_name = serializers.CharField()
+    designation = serializers.CharField()
+    experience = serializers.IntegerField()
+    salary = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=None,
+    )
+    start_date = serializers.DateField()
+    end_date = serializers.DateField(required=False)
+
+    class Meta:
+        model = WorkExperience
+        fields = JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_1
+
+
+class CertificationsJobSeekerProfileSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    certification_name = serializers.CharField()
+    institution_name = serializers.CharField()
+    start_date = serializers.DateField()
+    end_date = serializers.DateField(required=False)
+
+    class Meta:
+        model = Certifications
+        fields = JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_2
+
+
+class ProjectsJobSeekerProfileSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    project_name = serializers.CharField()
+    project_organization_name = serializers.CharField()
+    start_date = serializers.DateField()
+    end_date = serializers.DateField(required=False)
+
+    class Meta:
+        model = Projects
+        fields = JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_3
+
+
 class SkillSetJobSeekerProfileSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     skill_name = serializers.CharField()
@@ -342,7 +384,7 @@ class JobSeekerGeneralProfileSerializer(serializers.ModelSerializer):
                 )
 
             # Create / Update Salary Info
-            user.sy_fk_user.update_or_create(
+            Salary.objects.update_or_create(
                 **sy_lookup,
                 defaults=sy_info_data,
             )
@@ -352,3 +394,117 @@ class JobSeekerGeneralProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AcademicQualification
         fields = JOB_SEEKER_PROFILE_GENERAL_INFO
+
+
+class JobSeekerAdditionalProfileSerializer(serializers.ModelSerializer):
+    work_experiences = WorkExperienceJobSeekerProfileSerializer(
+        many=True, source="we_fk_user", default=[]
+    )
+    certifications = CertificationsJobSeekerProfileSerializer(
+        many=True, source="ces_fk_user", default=[]
+    )
+    projects = ProjectsJobSeekerProfileSerializer(
+        many=True, source="ps_fk_user", default=[]
+    )
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+
+        # Create, Update, Delete Work Experiences
+        validated_we_data = validated_data["we_fk_user"]
+        we_operations = process_items(
+            input_list=validated_we_data,
+            queryset=user.we_fk_user.all(),
+            extra_data={"user": user},
+        )
+
+        # Create, Update, Delete Certifications
+        validated_ces_data = validated_data["ces_fk_user"]
+        ces_operations = process_items(
+            input_list=validated_ces_data,
+            queryset=user.ces_fk_user.all(),
+            extra_data={"user": user},
+        )
+
+        # Create, Update, Delete Projects
+        validated_ps_data = validated_data["ps_fk_user"]
+        ps_operations = process_items(
+            input_list=validated_ps_data,
+            queryset=user.ps_fk_user.all(),
+            extra_data={"user": user},
+        )
+
+        with transaction.atomic():
+            # Work Experiences Operation
+
+            # Bulk delete: Delete items in the database that are not in payload
+            if we_operations["ids_to_delete"]:
+                user.we_fk_user.filter(id__in=we_operations["ids_to_delete"]).delete()
+
+            # Bulk create: Create items in the payload that are not in the database
+            if we_operations["items_to_create"]:
+                user.we_fk_user.bulk_create(we_operations["items_to_create"])
+
+            # Bulk update: Update items in the database that are in payload
+            if we_operations["items_to_update"]:
+                user.we_fk_user.bulk_update(
+                    we_operations["items_to_update"],
+                    [
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_1[0],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_1[1],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_1[2],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_1[3],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_1[4],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_1[5],
+                    ],
+                )
+
+            # Certification Operation
+
+            # Bulk delete: Delete items in the database that are not in payload
+            if ces_operations["ids_to_delete"]:
+                user.ces_fk_user.filter(id__in=ces_operations["ids_to_delete"]).delete()
+
+            # Bulk create: Create items in the payload that are not in the database
+            if ces_operations["items_to_create"]:
+                user.ces_fk_user.bulk_create(ces_operations["items_to_create"])
+
+            # Bulk update: Update items in the database that are in payload
+            if ces_operations["items_to_update"]:
+                user.ces_fk_user.bulk_update(
+                    ces_operations["items_to_update"],
+                    [
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_2[0],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_2[1],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_2[2],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_2[3],
+                    ],
+                )
+
+            # Projects Operation
+
+            # Bulk delete: Delete items in the database that are not in payload
+            if ps_operations["ids_to_delete"]:
+                user.ps_fk_user.filter(id__in=ps_operations["ids_to_delete"]).delete()
+
+            # Bulk create: Create items in the payload that are not in the database
+            if ps_operations["items_to_create"]:
+                user.ps_fk_user.bulk_create(ps_operations["items_to_create"])
+
+            # Bulk update: Update items in the database that are in payload
+            if ps_operations["items_to_update"]:
+                user.ps_fk_user.bulk_update(
+                    ps_operations["items_to_update"],
+                    [
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_3[0],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_3[1],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_3[2],
+                        JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_3[3],
+                    ],
+                )
+
+        return validated_data
+
+    class Meta:
+        model = WorkExperience
+        fields = JOB_SEEKER_PROFILE_ADDITIONAL_INFO
