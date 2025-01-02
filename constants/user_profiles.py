@@ -240,3 +240,35 @@ JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_4 = [
     "file_type",
     "file",
 ]
+
+JOB_SEEKER_PROFILE_ADDITIONAL_INFO = [
+    "work_experiences",
+    "certifications",
+    "projects",
+]
+
+JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_1 = [
+    "start_date",
+    "end_date",
+    "organization_name",
+    "designation",
+    "experience",
+    "salary",
+    "id",
+]
+
+JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_2 = [
+    "start_date",
+    "end_date",
+    "certification_name",
+    "institution_name",
+    "id",
+]
+
+JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_3 = [
+    "start_date",
+    "end_date",
+    "project_name",
+    "project_organization_name",
+    "id",
+]

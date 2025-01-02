@@ -33,6 +33,19 @@ def job_seeker_general_details(request):
         )
 
 
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def job_seeker_additional_details(request):
+    if request.method == "GET":
+        return get_customize_handler(
+            User, JobSeekerAdditionalProfileSerializer, {"email": request.user}
+        )
+    else:
+        return request_handler(
+            WorkExperience, JobSeekerAdditionalProfileSerializer, request
+        )
+
+
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def student_profile(request):

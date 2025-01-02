@@ -140,9 +140,16 @@ def update_handle(model_class, serializer_class, request):
 
 
 def get_customize_handler(model, serializer_class, pk):
-    instances = model.objects.filter(**pk)
-    serializer = serializer_class(instances, many=True)
-    return ResponseHandler.success(serializer.data[0], status_code=status.HTTP_200_OK)
+    try:
+        instances = model.objects.filter(**pk)
+        serializer = serializer_class(instances, many=True)
+        return ResponseHandler.success(
+            serializer.data[0], status_code=status.HTTP_200_OK
+        )
+    except model.DoesNotExist:
+        return ResponseHandler.error(
+            ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+        )
 
 
 def get_handle_profile(model, serializer_class, request):
