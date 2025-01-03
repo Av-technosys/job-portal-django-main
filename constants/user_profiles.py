@@ -195,52 +195,6 @@ FIND_RECUITER_VIEW_FEILDS = [
     "company_id",
 ]
 
-JOB_SEEKER_PROFILE_PERSONAL_INFO = [
-    "email",
-    "first_name",
-    "phone_number",
-    "id",
-    "date_of_birth",
-    "gender",
-    "address_line_1",
-    "address_line_2",
-    "city",
-    "state",
-    "postal_code",
-    "country",
-    "student_profile_id",
-]
-
-JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_1 = [
-    "first_name",
-    "phone_number",
-]
-
-JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_2 = [
-    "date_of_birth",
-    "gender",
-    "address_line_1",
-    "address_line_2",
-    "city",
-    "state",
-    "postal_code",
-    "country",
-]
-
-FIND_RECUITER_VIEW_FEILDS = [
-    "user",
-    "company_profile_image",
-    "company_name",
-    "organization_type",
-    "industry_type",
-    "city",
-    "country",
-    "created_date",
-    "updated_date",
-    "company_id",
-]
-
-
 # Industry options
 INDUSTRY_CHOICES = [
     ("information_technology", "Information Technology"),
