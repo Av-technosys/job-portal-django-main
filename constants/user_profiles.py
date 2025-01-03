@@ -299,3 +299,30 @@ COMPANY_SIZE_CHOICES = [
     ("201-500", "201-500"),
     ("501+", "501+"),
 ]
+
+RECRUITER_PROFILE_PERSONAL_INFO = [
+    "first_name",
+    "company_about_us",
+    "address_line_1",
+    "address_line_2",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+    "recruiter_profile_id",
+]
+
+
+RECRUITER_PROFILE_PERSONAL_INFO_SUB_KEYS_1 = [
+    "first_name",
+]
+
+RECRUITER_PROFILE_PERSONAL_INFO_SUB_KEYS_2 = [
+    "company_about_us",
+    "address_line_1",
+    "address_line_2",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+]
