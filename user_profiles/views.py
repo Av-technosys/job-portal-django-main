@@ -98,6 +98,19 @@ def company_profile(request):
         return request_handler(OrganizationInfo, RecruiterProfileSerializer, request)
 
 
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def recruiter_founding_info_details(request):
+    if request.method == "GET":
+        return get_customize_handler(
+            User, RecruiterProfileFoundingInfoSerializer, {"email": request.user}
+        )
+    else:
+        return request_handler(
+            FoundingInfo, RecruiterProfileFoundingInfoSerializer, request
+        )
+
+
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def job_details(request):

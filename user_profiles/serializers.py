@@ -1,8 +1,15 @@
 # profiles/serializers.py
 from rest_framework import serializers
 from accounts.models import User
-from constants.errors import ATLEAST_ONE_SKILL_REQUIRED, RESPONSE_ERROR
-from functions.common import get_job_seeker_documents, ResponseHandler
+from constants.errors import (
+    ATLEAST_ONE_SKILL_REQUIRED,
+    RESPONSE_ERROR,
+)
+from functions.common import (
+    get_job_seeker_documents,
+    get_recruiter_documents,
+    ResponseHandler,
+)
 from constants.fcm import FCM_TOKEN_STORED
 from constants.user_profiles import (
     JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2,
@@ -565,3 +572,54 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
             )
 
         return validated_data
+
+
+class RecruiterProfileFoundingInfoSerializer(serializers.ModelSerializer):
+    organization_type = serializers.CharField(source="fi_fk_user.organization_type")
+    industry_type = serializers.CharField(source="fi_fk_user.industry_type")
+    company_size = serializers.CharField(source="fi_fk_user.company_size")
+    company_website = serializers.CharField(source="fi_fk_user.company_website")
+    mission = serializers.CharField(source="fi_fk_user.mission", required=False)
+    vision = serializers.CharField(source="fi_fk_user.vision", required=False)
+    recruiter_founding_info_id = serializers.IntegerField(
+        source="fi_fk_user.id", required=False
+    )
+    files = serializers.SerializerMethodField(read_only=True, default=[])
+
+    def get_files(self, obj):
+        try:
+            return get_recruiter_documents(
+                user=obj,
+                response_key_list=RECRUITER_PROFILE_FOUNDING_INFO_SUB_KEYS_2,
+            )
+        except Exception as e:
+            return []
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+
+        # Organization Info
+        user_fi_info_data = {
+            "user": user,
+        }
+        validated_fi_data = validated_data["fi_fk_user"]
+        for key in RECRUITER_PROFILE_FOUNDING_INFO_SUB_KEYS_1:
+            if key in validated_fi_data and validated_fi_data[key] is not None:
+                user_fi_info_data[key] = validated_fi_data[key]
+        fi_lookup = {
+            "user": user.id,
+        }
+        if "id" in validated_fi_data and validated_fi_data["id"] is not None:
+            fi_lookup["id"] = validated_fi_data["id"]
+
+        with transaction.atomic():
+            FoundingInfo.objects.update_or_create(
+                **fi_lookup,
+                defaults=user_fi_info_data,
+            )
+
+        return validated_data
+
+    class Meta:
+        model = User
+        fields = RECRUITER_PROFILE_FOUNDING_INFO

@@ -326,3 +326,30 @@ RECRUITER_PROFILE_PERSONAL_INFO_SUB_KEYS_2 = [
     "postal_code",
     "country",
 ]
+
+RECRUITER_PROFILE_FOUNDING_INFO = [
+    "organization_type",
+    "industry_type",
+    "company_size",
+    "company_website",
+    "mission",
+    "vision",
+    "recruiter_founding_info_id",
+    "files",
+]
+
+
+RECRUITER_PROFILE_FOUNDING_INFO_SUB_KEYS_1 = [
+    "organization_type",
+    "industry_type",
+    "company_size",
+    "company_website",
+    "mission",
+    "vision",
+]
+
+RECRUITER_PROFILE_FOUNDING_INFO_SUB_KEYS_2 = [
+    "id",
+    "file_type",
+    "file",
+]
