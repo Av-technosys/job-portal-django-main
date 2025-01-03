@@ -272,3 +272,30 @@ JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_3 = [
     "project_organization_name",
     "id",
 ]
+
+# Industry options
+INDUSTRY_CHOICES = [
+    ("information_technology", "Information Technology"),
+    ("healthcare", "Healthcare"),
+    ("finance", "Finance"),
+    ("education", "Education"),
+    ("manufacturing", "Manufacturing"),
+]
+
+# Organization options
+ORGANIZATION_CHOICES = [
+    ("private", "Private"),
+    ("public", "Public"),
+    ("non_profit", "Non-Profit"),
+    ("government", "Government"),
+    ("start_up", "Start-up"),
+]
+
+# Company size options
+COMPANY_SIZE_CHOICES = [
+    ("1-10", "1-10"),
+    ("11-50", "11-50"),
+    ("51-200", "51-200"),
+    ("201-500", "201-500"),
+    ("501+", "501+"),
+]

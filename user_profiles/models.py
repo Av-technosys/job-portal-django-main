@@ -214,7 +214,6 @@ class OrganizationInfo(models.Model):
     )
 
     company_about_us = models.TextField(max_length=500)
-    company_website = models.URLField(blank=True)
     address_line_1 = models.CharField(max_length=100)
     address_line_2 = models.CharField(max_length=100, blank=True, null=True)
     city = models.CharField(max_length=100)
@@ -239,9 +238,9 @@ class FoundingInfo(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="founding_info"
     )
-    organization_type = models.CharField(max_length=200)
-    industry_type = models.CharField(max_length=200)
-    company_size = models.PositiveSmallIntegerField()
+    organization_type = models.CharField(max_length=200, choices=ORGANIZATION_CHOICES)
+    industry_type = models.CharField(max_length=200,choices=INDUSTRY_CHOICES)
+    company_size = models.CharField(max_length=10,choices=COMPANY_SIZE_CHOICES)
     company_website = models.CharField(max_length=300)
     mission = models.TextField(null=True, blank=True)
     vision = models.TextField(null=True, blank=True)
