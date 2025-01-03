@@ -15,6 +15,7 @@ urlpatterns = [
     path("social_urls_recruiter/", social_links_recruiter),
     path("social_urls_job_seeker/", social_links_job_seeker),
     path("company_profile/", company_profile),
+    path("recruiter_founding/", recruiter_founding_info_details),
     path("upload_recruiter/", upload_recruiters),
     path("job_details/", job_details),
     # path("company_id/", company_id),

@@ -536,6 +536,19 @@ def get_job_seeker_documents(user, response_key_list):
         return []
 
 
+def get_recruiter_documents(user, response_key_list):
+    if user is not None:
+        if hasattr(user, "recruiter_upload_user_id"):
+            # Exclude profile image
+            return user.recruiter_upload_user_id.exclude(
+                file_type=RECRUITER_DOCUMENT_TYPES[2][0]
+            ).values(*response_key_list)
+        else:
+            return []
+    else:
+        return []
+
+
 def get_days_remaining_for_job(jobInfo):
     if jobInfo.status == JOB_POST_STATUS_FEILDS[0][0]:
         now = timezone.now()

@@ -236,7 +236,7 @@ class OrganizationInfo(models.Model):
 
 class FoundingInfo(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="founding_info"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="fi_fk_user"
     )
     organization_type = models.CharField(max_length=200, choices=ORGANIZATION_CHOICES)
     industry_type = models.CharField(max_length=200, choices=INDUSTRY_CHOICES)
