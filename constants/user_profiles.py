@@ -38,6 +38,7 @@ JOB_TYPE_CHOICES = [
 JOB_SEEKER_DOCUMENT_TYPES = [
     ("resume", "Resume"),
     ("video_resume", "Video Resume"),
+    ("profile_image", "Profile Image"),
     ("certificate", "Certificate"),
     ("other", "Other"),
 ]
@@ -193,6 +194,83 @@ FIND_RECUITER_VIEW_FEILDS = [
     "created_date",
     "updated_date",
     "company_id",
+]
+
+JOB_SEEKER_PROFILE_GENERAL_INFO = [
+    "qualification_type",
+    "institution_name",
+    "qualification_status",
+    "score",
+    "start_date",
+    "end_date",
+    "current_salary",
+    "expected_salary",
+    "job_search_status",
+    "notice_period",
+    "aq_id",
+    "sy_id",
+    "skill_sets",
+    "files",
+]
+
+JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_1 = [
+    "qualification_type",
+    "institution_name",
+    "qualification_status",
+    "score",
+    "start_date",
+    "end_date",
+]
+
+JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2 = [
+    "id",
+    "skill_name",
+    "proficiency_level",
+]
+
+JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_3 = [
+    "current_salary",
+    "expected_salary",
+    "job_search_status",
+    "notice_period",
+]
+
+JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_4 = [
+    "id",
+    "file_type",
+    "file",
+]
+
+JOB_SEEKER_PROFILE_ADDITIONAL_INFO = [
+    "work_experiences",
+    "certifications",
+    "projects",
+]
+
+JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_1 = [
+    "start_date",
+    "end_date",
+    "organization_name",
+    "designation",
+    "experience",
+    "salary",
+    "id",
+]
+
+JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_2 = [
+    "start_date",
+    "end_date",
+    "certification_name",
+    "institution_name",
+    "id",
+]
+
+JOB_SEEKER_PROFILE_ADDITIONAL_INFO_SUB_KEYS_3 = [
+    "start_date",
+    "end_date",
+    "project_name",
+    "project_organization_name",
+    "id",
 ]
 
 # Industry options

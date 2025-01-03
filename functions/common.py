@@ -140,9 +140,16 @@ def update_handle(model_class, serializer_class, request):
 
 
 def get_customize_handler(model, serializer_class, pk):
-    instances = model.objects.filter(**pk)
-    serializer = serializer_class(instances, many=True)
-    return ResponseHandler.success(serializer.data[0], status_code=status.HTTP_200_OK)
+    try:
+        instances = model.objects.filter(**pk)
+        serializer = serializer_class(instances, many=True)
+        return ResponseHandler.success(
+            serializer.data[0], status_code=status.HTTP_200_OK
+        )
+    except model.DoesNotExist:
+        return ResponseHandler.error(
+            ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+        )
 
 
 def get_handle_profile(model, serializer_class, request):
@@ -514,6 +521,19 @@ def get_job_seeker_profile_image(user):
         file_type=JOB_SEEKER_DOCUMENT_TYPES[2][0]
     ).first()
     return photo.file.url if photo and photo.file else None
+
+
+def get_job_seeker_documents(user, response_key_list):
+    if user is not None:
+        if hasattr(user, "job_seeker_upload_user_id"):
+            # Exclude profile image
+            return user.job_seeker_upload_user_id.exclude(
+                file_type=JOB_SEEKER_DOCUMENT_TYPES[2][0]
+            ).values(*response_key_list)
+        else:
+            return []
+    else:
+        return []
 
 
 def get_days_remaining_for_job(jobInfo):
