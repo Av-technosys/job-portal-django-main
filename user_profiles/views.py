@@ -87,13 +87,15 @@ def certifications(request):
     return request_handler(Certifications, CertificationsSerializer, request)
 
 
-@api_view(["GET", "POST", "PATCH", "DELETE"])
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def company_profile(request):
     if request.method == "GET":
-        return get_handle_profile(OrganizationInfo, OrganizationInfoSerializer, request)
+        return get_customize_handler(
+            User, RecruiterProfileSerializer, {"email": request.user}
+        )
     else:
-        return request_handler(OrganizationInfo, OrganizationInfoSerializer, request)
+        return request_handler(OrganizationInfo, RecruiterProfileSerializer, request)
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])

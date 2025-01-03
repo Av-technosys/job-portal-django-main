@@ -4,7 +4,10 @@ from accounts.models import User
 from constants.errors import ATLEAST_ONE_SKILL_REQUIRED, RESPONSE_ERROR
 from functions.common import get_job_seeker_documents, ResponseHandler
 from constants.fcm import FCM_TOKEN_STORED
-from constants.user_profiles import JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2
+from constants.user_profiles import (
+    JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2,
+    RECRUITER_PROFILE_PERSONAL_INFO,
+)
 from functions.profile import process_items
 from .models import *
 from functions.common import get_recruiter_profile_image, get_location_formatted
@@ -21,7 +24,9 @@ class JobSeekerPersonalProfileSerializer(serializers.ModelSerializer):
     date_of_birth = serializers.CharField(source="sp_fk_user.date_of_birth")
     gender = serializers.IntegerField(source="sp_fk_user.gender")
     address_line_1 = serializers.CharField(source="sp_fk_user.address_line_1")
-    address_line_2 = serializers.CharField(source="sp_fk_user.address_line_2")
+    address_line_2 = serializers.CharField(
+        source="sp_fk_user.address_line_2", required=False
+    )
     city = serializers.CharField(source="sp_fk_user.city")
     state = serializers.CharField(source="sp_fk_user.state")
     country = serializers.CharField(source="sp_fk_user.country")
@@ -508,3 +513,55 @@ class JobSeekerAdditionalProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkExperience
         fields = JOB_SEEKER_PROFILE_ADDITIONAL_INFO
+
+
+class RecruiterProfileSerializer(serializers.ModelSerializer):
+    company_about_us = serializers.CharField(source="oi_fk_user.company_about_us")
+    address_line_1 = serializers.CharField(source="oi_fk_user.address_line_1")
+    address_line_2 = serializers.CharField(
+        source="oi_fk_user.address_line_2", required=False
+    )
+    city = serializers.CharField(source="oi_fk_user.city")
+    state = serializers.CharField(source="oi_fk_user.state")
+    country = serializers.CharField(source="oi_fk_user.country")
+    postal_code = serializers.IntegerField(source="oi_fk_user.postal_code")
+    recruiter_profile_id = serializers.IntegerField(
+        source="oi_fk_user.id", required=False
+    )
+
+    class Meta:
+        model = User
+        fields = RECRUITER_PROFILE_PERSONAL_INFO
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+
+        # User
+        user_info_data = {}
+        for key in RECRUITER_PROFILE_PERSONAL_INFO_SUB_KEYS_1:
+            if validated_data[key] is not None:
+                user_info_data[key] = validated_data[key]
+
+        # Organization Info
+        user_oi_info_data = {
+            "user": user,
+        }
+        validated_oi_data = validated_data["oi_fk_user"]
+        for key in RECRUITER_PROFILE_PERSONAL_INFO_SUB_KEYS_2:
+            if key in validated_oi_data and validated_oi_data[key] is not None:
+                user_oi_info_data[key] = validated_oi_data[key]
+        oi_lookup = {
+            "user": user.id,
+        }
+        if "id" in validated_oi_data and validated_oi_data["id"] is not None:
+            oi_lookup["id"] = validated_oi_data["id"]
+
+        with transaction.atomic():
+            User.objects.filter(pk=user.id).update(**user_info_data)
+
+            OrganizationInfo.objects.update_or_create(
+                **oi_lookup,
+                defaults=user_oi_info_data,
+            )
+
+        return validated_data
