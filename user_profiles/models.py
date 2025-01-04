@@ -262,7 +262,7 @@ class SocialMediaLinkJobSeeker(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="social_media_links_job_seeker",
+        related_name="sml_js_fk_user",
     )
     platform = models.CharField(max_length=50)
     url = models.URLField(max_length=255)
@@ -287,7 +287,7 @@ class SocialMediaLinkRecruiter(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="social_media_links",
+        related_name="sml_r_fk_user",
     )
     platform = models.CharField(max_length=50)
     url = models.URLField(max_length=255)

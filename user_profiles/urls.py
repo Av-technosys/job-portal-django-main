@@ -17,7 +17,7 @@ urlpatterns = [
     path("company_profile/", company_profile),
     path("recruiter_founding/", recruiter_founding_info_details),
     path("upload_recruiter/", upload_recruiters),
-    path("job_details/", job_details),
+    # path("job_details/", job_details),
     # path("company_id/", company_id),
     path("upload_document_recruiter/", file_upload_recruiter),
     path("upload_document_seeker/", file_upload_job_seeker),

@@ -28,7 +28,7 @@ logger = logging.getLogger("django")
 
 
 def get_flattened_error_message(message):
-    if isinstance(message, list):
+    if isinstance(message, list) and "values" in message:
         return next(iter(message.values()))[0]
     else:
         return message
@@ -88,7 +88,7 @@ def serializer_handle(Serializers, request):
             serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
         )
     except Exception as e:
-        logger.error(f"Error in serializer_handle: {e}")
+        logger.error(f"Error in serializer_handle: {e}", exc_info=True)
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )

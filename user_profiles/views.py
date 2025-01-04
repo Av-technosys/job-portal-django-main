@@ -125,17 +125,25 @@ def upload_recruiters(request):
     )
 
 
-@api_view(["GET", "POST", "PATCH", "DELETE"])
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated, IsRecruiter])
 def social_links_recruiter(request):
+    if request.method == "GET":
+        return request_handler(
+            SocialMediaLinkRecruiter, SocialLinkItemSerializer, request
+        )
     return request_handler(
         SocialMediaLinkRecruiter, SocialLinksRecruiterSerializer, request
     )
 
 
-@api_view(["GET", "POST", "PATCH", "DELETE"])
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def social_links_job_seeker(request):
+    if request.method == "GET":
+        return request_handler(
+            SocialMediaLinkJobSeeker, SocialLinkItemJSSerializer, request
+        )
     return request_handler(
         SocialMediaLinkJobSeeker, SocialLinksJobSeekerSerializer, request
     )
