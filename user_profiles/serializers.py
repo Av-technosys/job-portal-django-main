@@ -156,7 +156,7 @@ class CombineStudentProfileSerializer(serializers.ModelSerializer):
     projects = ProjectsSerializer(many=True, read_only=True, source="user.ps_fk_user")
     salary = SalarySerializer(many=True, read_only=True, source="user.sy_fk_user")
     uploaded_files = UploadedFileJobSeekerSerializer(
-        many=True, read_only=True, source="user.social_media_links_job_seeker"
+        many=True, read_only=True, source="user.sml_js_fk_user"
     )
 
     class Meta:
@@ -199,18 +199,106 @@ class ListCandidateSerializer(serializers.ModelSerializer):
         fields = LIST_CANDIDATE_FEILDS
 
 
-class SocialLinksRecruiterSerializer(serializers.ModelSerializer):
+class SocialLinkItemSerializer(serializers.ModelSerializer):
+    platform = serializers.CharField()
+    url = serializers.URLField()
+    id = serializers.IntegerField(required=False)
 
     class Meta:
         model = SocialMediaLinkRecruiter
-        fields = "__all__"
+        fields = RECRUITER_SOCIAL_LINKS
 
 
-class SocialLinksJobSeekerSerializer(serializers.ModelSerializer):
+class SocialLinksRecruiterSerializer(serializers.Serializer):
+    social_links = SocialLinkItemSerializer(
+        required=True, many=True, source="user.sml_r_fk_user"
+    )
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+
+        # Create, Update, Delete Social Links
+        validated_sl_data = validated_data["user"]["sml_r_fk_user"]
+        sl_operations = process_items(
+            input_list=validated_sl_data,
+            queryset=user.sml_r_fk_user.all(),
+            extra_data={"user": user},
+        )
+
+        with transaction.atomic():
+            # Social Links Operation
+
+            # Bulk delete: Delete items in the database that are not in payload
+            if sl_operations["ids_to_delete"]:
+                user.sml_r_fk_user.filter(
+                    id__in=sl_operations["ids_to_delete"]
+                ).delete()
+
+            # Bulk create: Create items in the payload that are not in the database
+            if sl_operations["items_to_create"]:
+                user.sml_r_fk_user.bulk_create(sl_operations["items_to_create"])
+
+            # Bulk update: Update items in the database that are in payload
+            if sl_operations["items_to_update"]:
+                user.sml_r_fk_user.bulk_update(
+                    sl_operations["items_to_update"],
+                    [
+                        RECRUITER_SOCIAL_LINKS[0],
+                        RECRUITER_SOCIAL_LINKS[1],
+                    ],
+                )
+        return validated_data
+
+
+class SocialLinkItemJSSerializer(serializers.ModelSerializer):
+    platform = serializers.CharField()
+    url = serializers.URLField()
+    id = serializers.IntegerField(required=False)
 
     class Meta:
         model = SocialMediaLinkJobSeeker
-        fields = "__all__"
+        fields = JOB_SEEKER_SOCIAL_LINKS
+
+
+class SocialLinksJobSeekerSerializer(serializers.Serializer):
+    social_links = SocialLinkItemJSSerializer(
+        required=True, many=True, source="user.sml_js_fk_user"
+    )
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+
+        # Create, Update, Delete Social Links
+        validated_sl_data = validated_data["user"]["sml_js_fk_user"]
+        sl_operations = process_items(
+            input_list=validated_sl_data,
+            queryset=user.sml_js_fk_user.all(),
+            extra_data={"user": user},
+        )
+
+        with transaction.atomic():
+            # Social Links Operation
+
+            # Bulk delete: Delete items in the database that are not in payload
+            if sl_operations["ids_to_delete"]:
+                user.sml_js_fk_user.filter(
+                    id__in=sl_operations["ids_to_delete"]
+                ).delete()
+
+            # Bulk create: Create items in the payload that are not in the database
+            if sl_operations["items_to_create"]:
+                user.sml_js_fk_user.bulk_create(sl_operations["items_to_create"])
+
+            # Bulk update: Update items in the database that are in payload
+            if sl_operations["items_to_update"]:
+                user.sml_js_fk_user.bulk_update(
+                    sl_operations["items_to_update"],
+                    [
+                        JOB_SEEKER_SOCIAL_LINKS[0],
+                        JOB_SEEKER_SOCIAL_LINKS[1],
+                    ],
+                )
+        return validated_data
 
 
 class FindRecruiterListSerializer(serializers.ModelSerializer):

@@ -353,3 +353,7 @@ RECRUITER_PROFILE_FOUNDING_INFO_SUB_KEYS_2 = [
     "file_type",
     "file",
 ]
+
+RECRUITER_SOCIAL_LINKS = ["platform", "url", "id"]
+
+JOB_SEEKER_SOCIAL_LINKS = ["platform", "url", "id"]
