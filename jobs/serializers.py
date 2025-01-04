@@ -12,6 +12,7 @@ from functions.common import (
     get_salary_formatted,
     is_job_seeker,
     logger,
+    get_expired_date
 )
 from functions.send_email import (
     send_application_confirmation_to_job_seeker,
@@ -31,7 +32,7 @@ from constants.jobs import (
 
 from functions.common import get_user_photo
 from user_profiles.models import OrganizationInfo, RecruiterUploadedFile
-
+from django.db import transaction
 
 class JobInfoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -62,20 +63,26 @@ class JobCombinedSerializer(serializers.Serializer):
         child=serializers.CharField(max_length=50), allow_empty=True
     )
     description = serializers.CharField()
+    expiration_days = serializers.IntegerField(required=True) 
+    date_of_birth = serializers.DateField(format="%Y-%m-%d");
 
     def create(self, validated_data):
         user = self.context["request"].user
+        expiration_days = validated_data["expiration_days"]
+        expired_at = get_expired_date(expiration_days) 
         job_info_data = {
             field: validated_data[field] for field in JOB_INFO_SERIALIZER_FEILDS
         }
         job_info_data["user"] = user
-        job_info = JobInfo.objects.create(**job_info_data)
+        job_info_data["expired_at"] = expired_at
         job_description_data = {
             field: validated_data[field] for field in JOB_DESCRIPTION_SERIALIZER_FEILDS
         }
-        job_description_data["job"] = job_info  # Link to JobInfo instance
-        job_description_data["user"] = user  # Link the user
-        JobDescription.objects.create(**job_description_data)
+        job_description_data["user"] = user
+        with transaction.atomic():
+            job_info = JobInfo.objects.create(**job_info_data)
+            job_description_data["job"] = job_info
+            JobDescription.objects.create(**job_description_data)
 
         return validated_data
 

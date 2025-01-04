@@ -23,6 +23,7 @@ class JobInfo(models.Model):
     status = models.CharField(
         default=JOB_POST_STATUS_FEILDS[0][0], choices=JOB_POST_STATUS_FEILDS
     )
+    expired_at = models.DateTimeField(null=False, blank=False)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
@@ -46,6 +47,7 @@ class JobDescription(models.Model):
         JobInfo, on_delete=models.CASCADE, related_name="job_descriptions"
     )
     education = models.CharField(max_length=100)
+    date_of_birth = models.DateField();
     experience = models.PositiveIntegerField()
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
