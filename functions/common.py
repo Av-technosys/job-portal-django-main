@@ -615,3 +615,7 @@ def generate_password_string(length=8):
     # Randomly choose characters from the pool to create the string
     random_string = "".join(random.choices(characters, k=length))
     return random_string
+
+
+def get_expired_date(expiration_days):
+    return timezone.now() + timedelta(days=expiration_days)
