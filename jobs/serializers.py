@@ -12,7 +12,7 @@ from functions.common import (
     get_salary_formatted,
     is_job_seeker,
     logger,
-    get_expired_date
+    get_expired_date,
 )
 from functions.send_email import (
     send_application_confirmation_to_job_seeker,
@@ -33,6 +33,7 @@ from constants.jobs import (
 from functions.common import get_user_photo
 from user_profiles.models import OrganizationInfo, RecruiterUploadedFile
 from django.db import transaction
+
 
 class JobInfoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,13 +64,13 @@ class JobCombinedSerializer(serializers.Serializer):
         child=serializers.CharField(max_length=50), allow_empty=True
     )
     description = serializers.CharField()
-    expiration_days = serializers.IntegerField(required=True) 
-    date_of_birth = serializers.DateField(format="%Y-%m-%d");
+    expiration_days = serializers.IntegerField(required=True)
+    date_of_birth = serializers.DateField(format="%Y-%m-%d")
 
     def create(self, validated_data):
         user = self.context["request"].user
         expiration_days = validated_data["expiration_days"]
-        expired_at = get_expired_date(expiration_days) 
+        expired_at = get_expired_date(expiration_days)
         job_info_data = {
             field: validated_data[field] for field in JOB_INFO_SERIALIZER_FEILDS
         }
