@@ -47,7 +47,7 @@ class JobDescription(models.Model):
         JobInfo, on_delete=models.CASCADE, related_name="job_descriptions"
     )
     education = models.CharField(max_length=100)
-    date_of_birth = models.DateField();
+    date_of_birth = models.DateField()
     experience = models.PositiveIntegerField()
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)

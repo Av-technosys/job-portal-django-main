@@ -139,10 +139,12 @@ def update_handle(model_class, serializer_class, request):
     )
 
 
-def get_customize_handler(model, serializer_class, pk):
+def get_customize_handler(model, serializer_class, pk, request):
     try:
         instances = model.objects.filter(**pk)
-        serializer = serializer_class(instances, many=True)
+        serializer = serializer_class(
+            instances, many=True, context={"request": request}
+        )
         return ResponseHandler.success(
             serializer.data[0], status_code=status.HTTP_200_OK
         )
@@ -178,6 +180,48 @@ def delete_handle(model, request):
             {"message": REMOVE_SUCCESS}, status_code=status.HTTP_204_NO_CONTENT
         )
     return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
+
+
+def upload_profile_image_handler(model, serializer_class, request):
+    # Not added profile_image as a constant since this is common for job seeker / recruiter
+    if request.method == "POST":
+        if request.user.id:
+            request.data["user"] = request.user.id
+            request.data["file_type"] = "profile_image"
+
+        try:
+            document = model.objects.get(user=request.user, file_type="profile_image")
+
+            if "file" in request.FILES:
+                old_file = document.file
+                new_file = request.FILES["file"]
+
+                if old_file:
+                    old_file.delete(save=False)
+                document.file = new_file
+
+            serializer = serializer_class(document, data=request.data, partial=True)
+
+        except model.DoesNotExist:
+            serializer = serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == "DELETE":
+        # This will always return one element, since we are restricting creation by 1
+        instance = model.objects.get(user=request.user, file_type="profile_image")
+        if instance.file:
+            instance.file.delete(save=False)
+            instance.delete()
+            return ResponseHandler.success(
+                data={"message": REMOVE_SUCCESS}, status_code=status.HTTP_204_NO_CONTENT
+            )
+        return ResponseHandler.error(
+            ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+        )
 
 
 def upload_handler(model, serializer_class, request):

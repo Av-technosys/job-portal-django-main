@@ -15,7 +15,7 @@ from jobs.serializers import JobApplySerializer
 def job_seeker_personal_details(request):
     if request.method == "GET":
         return get_customize_handler(
-            User, JobSeekerPersonalProfileSerializer, {"email": request.user}
+            User, JobSeekerPersonalProfileSerializer, {"email": request.user}, request
         )
     return request_handler(StudentProfile, JobSeekerPersonalProfileSerializer, request)
 
@@ -38,7 +38,7 @@ def job_seeker_general_details(request):
 def job_seeker_additional_details(request):
     if request.method == "GET":
         return get_customize_handler(
-            User, JobSeekerAdditionalProfileSerializer, {"email": request.user}
+            User, JobSeekerAdditionalProfileSerializer, {"email": request.user}, request
         )
     else:
         return request_handler(
@@ -92,7 +92,7 @@ def certifications(request):
 def company_profile(request):
     if request.method == "GET":
         return get_customize_handler(
-            User, RecruiterProfileSerializer, {"email": request.user}
+            User, RecruiterProfileSerializer, {"email": request.user}, request
         )
     else:
         return request_handler(OrganizationInfo, RecruiterProfileSerializer, request)
@@ -103,7 +103,10 @@ def company_profile(request):
 def recruiter_founding_info_details(request):
     if request.method == "GET":
         return get_customize_handler(
-            User, RecruiterProfileFoundingInfoSerializer, {"email": request.user}
+            User,
+            RecruiterProfileFoundingInfoSerializer,
+            {"email": request.user},
+            request,
         )
     else:
         return request_handler(
@@ -161,6 +164,19 @@ def file_upload_recruiter(request):
     return upload_handler(
         RecruiterUploadedFile, UploadedFileRecruiterSerializer, request
     )
+
+
+@api_view(["POST", "DELETE"])
+@permission_classes([IsAuthenticated])
+def upload_profile_image(request):
+    if is_job_seeker(request):
+        return upload_profile_image_handler(
+            JobSeekerUploadedFile, UploadedFileJobSeekerSerializer, request
+        )
+    else:
+        return upload_profile_image_handler(
+            RecruiterUploadedFile, UploadedFileRecruiterSerializer, request
+        )
 
 
 @api_view(["GET", "POST", "PATCH", "DELETE"])

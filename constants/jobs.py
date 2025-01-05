@@ -86,7 +86,7 @@ JOB_DESCRIPTION_SERIALIZER_FEILDS = [
     "country",
     "skills",
     "description",
-    "date_of_birth"
+    "date_of_birth",
 ]
 
 JOB_INFO_SERIALIZER_FEILDS = [
