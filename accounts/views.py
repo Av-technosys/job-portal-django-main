@@ -85,7 +85,9 @@ def verify_reset_password(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def account_details(request):
-    return get_customize_handler(User, UserMetaSerializer, {"email": request.user})
+    return get_customize_handler(
+        User, UserMetaSerializer, {"email": request.user}, request
+    )
 
 
 @api_view(["GET"])
