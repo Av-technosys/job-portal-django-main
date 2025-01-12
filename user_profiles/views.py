@@ -227,3 +227,18 @@ def get_recruiter_details(request, recruiter_id):
     return get_data_from_id_and_serialize(
         OrganizationInfo, CombinedCompanyDetailSerializer, recruiter_id
     )
+
+
+@api_view(["GET", "POST", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def upload_document(request):
+    if is_job_seeker(request):
+        return upload_document_handler(
+            JobSeekerUploadedFile,
+            UploadedJobSeekerDocumentSerializer,
+            request,
+        )
+    else:
+        return upload_document_handler(
+            RecruiterUploadedFile, UploadedRecruiterDocumentSerializer, request
+        )
