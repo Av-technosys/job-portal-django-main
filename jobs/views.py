@@ -96,3 +96,8 @@ def save_cadidate(request):
 @permission_classes([IsAuthenticated])
 def summary_view(request):
     return summary_counter_handler(JobApply, JobSaved, CandidateSaved, JobInfo, request)
+
+
+@api_view(["GET"])
+def job_details_by_id(request, job_id):
+    return job_details_by_job_id(JobInfo, job_id, JobDetailsCombinedSerializer, request)

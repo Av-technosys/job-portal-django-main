@@ -195,3 +195,15 @@ def candidate_save_handler(
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
+
+
+def job_details_by_job_id(model, job_id, serializer_class, request):
+    try:
+        instances = model.objects.get(pk=job_id)
+        serializer = serializer_class(instances)
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(e)
+        return ResponseHandler.error(
+            RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
+        )

@@ -583,10 +583,13 @@ def get_salary_formatted(JobInfo):
 
 
 def get_location_formatted(JobInfo):
-    description = JobInfo.job_descriptions.first()
-    if description:
-        return f"{description.city}, {description.state}, {description.country}"
-    return None
+    try:
+        description = JobInfo.jd_fk_ji
+        if description:
+            return f"{description.city}, {description.state}, {description.country}"
+        return None
+    except Exception:
+        return None
 
 
 def get_user_photo(user, Model):
