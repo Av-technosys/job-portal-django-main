@@ -18,11 +18,13 @@ from functions.send_email import (
     send_application_confirmation_to_job_seeker,
     send_application_received_to_recruiter,
 )
+from user_profiles.serializers import SocialLinkItemSerializer
 from .models import *
 from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS, ALREADY_SAVED
 from constants.jobs import (
     JOB_APPLIED_VIEW_FIELDS,
     JOB_DESCRIPTION_SERIALIZER_FEILDS,
+    JOB_DETAILS_COMBINED_FIELDS,
     JOB_INFO_SERIALIZER_FEILDS,
     JOB_POSTED_VIEW_FEILDS,
     JOB_SEEKER_LIST_VIEW_FIELDS,
@@ -333,3 +335,50 @@ class JobPostedListSerializer(serializers.ModelSerializer):
 
     def get_job_status(self, obj):
         return get_job_post_status(obj)
+
+
+class JobDetailsCombinedSerializer(serializers.ModelSerializer):
+    company_profile_image = serializers.SerializerMethodField()
+    job_id = serializers.IntegerField(source="id")
+    job_status = serializers.SerializerMethodField()
+    title = serializers.CharField()
+    role = serializers.CharField()
+    salary = serializers.SerializerMethodField()
+    job_type = serializers.CharField()
+    job_level = serializers.CharField()
+    vacancies = serializers.IntegerField()
+    education = serializers.CharField(source="jd_fk_ji.education", default="")
+    experience = serializers.IntegerField(source="jd_fk_ji.experience", default=False)
+    location = serializers.SerializerMethodField(source="jd_fk_ji.location", default="")
+    skills = serializers.ListField(
+        child=serializers.CharField(),
+        allow_empty=True,
+        source="jd_fk_ji.skills",
+        default=[],
+    )
+    description = serializers.CharField(source="jd_fk_ji.description", default="")
+    social_links = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobInfo
+        fields = JOB_DETAILS_COMBINED_FIELDS
+
+    def get_company_profile_image(self, obj):
+        return get_recruiter_profile_image(obj.user)
+
+    def get_salary(self, obj):
+        return get_salary_formatted(obj)
+
+    def get_location(self, obj):
+        return get_location_formatted(obj)
+
+    def get_job_status(self, obj):
+        return get_job_post_status(obj)
+
+    def get_social_links(self, obj):
+        sl = obj.user.sml_r_fk_user.all()
+        if sl:
+            sl_data = SocialLinkItemSerializer(sl, many=True).data
+            if sl_data:
+                return sl_data
+        return []

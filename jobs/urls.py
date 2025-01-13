@@ -21,6 +21,7 @@ urlpatterns = [
     # get application status
     path("application_status/", application_status, name="application_status"),
     # chat
+    path("<int:job_id>", job_details_by_id, name="job_details_by_id"),
     path("chat/<int:application_id>", chat, name="chat"),
     # save,delete and get saved jobs
     path("save_job/", save_job, name="save_job"),

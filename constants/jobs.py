@@ -113,3 +113,22 @@ JOB_POSTED_VIEW_FEILDS = [
 
 
 JOB_POST_STATUS_FEILDS = [("active", "active"), ("expired", "expired")]
+
+
+JOB_DETAILS_COMBINED_FIELDS = [
+    "company_profile_image",
+    "role",
+    "title",
+    "salary",
+    "job_type",
+    "job_level",
+    "vacancies",
+    "education",
+    "experience",
+    "location",
+    "skills",
+    "description",
+    "job_id",
+    "job_status",
+    "social_links",
+]
