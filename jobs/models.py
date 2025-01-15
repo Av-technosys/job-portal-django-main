@@ -12,7 +12,11 @@ from django.contrib.postgres.fields import ArrayField
 
 
 class JobInfo(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ji_fk_user",
+    )
     title = models.CharField(max_length=100)
     role = models.CharField(max_length=100, choices=JOB_ROLE_FIELDS)
     max_salary = models.PositiveIntegerField()
@@ -42,9 +46,14 @@ class JobInfo(models.Model):
 
 
 class JobDescription(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    job = models.ForeignKey(
-        JobInfo, on_delete=models.CASCADE, related_name="job_descriptions"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="jd_fk_user",
+    )
+    job = models.OneToOneField(
+        JobInfo, on_delete=models.CASCADE, related_name="jd_fk_ji"
     )
     education = models.CharField(max_length=100)
     date_of_birth = models.DateField()

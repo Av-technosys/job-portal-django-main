@@ -711,3 +711,15 @@ class RecruiterProfileFoundingInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = RECRUITER_PROFILE_FOUNDING_INFO
+
+
+class UploadedJobSeekerDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobSeekerUploadedFile
+        fields = ["id", "file_type", "file", "user"]
+
+
+class UploadedRecruiterDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecruiterUploadedFile
+        fields = ["id", "file_type", "file", "user"]

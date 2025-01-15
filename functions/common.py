@@ -80,7 +80,7 @@ def serializer_handle(Serializers, request):
     try:
         if request.user.id:
             request.data["user"] = request.user.id
-            serializer = Serializers(data=request.data, context={"request": request})
+        serializer = Serializers(data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return ResponseHandler.success(
@@ -229,6 +229,60 @@ def upload_profile_image_handler(model, serializer_class, request):
 def upload_handler(model, serializer_class, request):
     if request.method == "GET":
         return get_handle(model, serializer_class, request)
+
+    elif request.method == "POST":
+        if request.user.id:
+            request.data["user"] = request.user.id
+        serializer = serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == "PATCH":
+        try:
+            document_id = request.data.get("id")
+            document = model.objects.get(id=document_id, user=request.user)
+        except model.DoesNotExist:
+            return ResponseHandler.error(
+                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        if "file" in request.FILES:
+            old_file = document.file
+            new_file = request.FILES["file"]
+
+            if old_file:
+                old_file.delete(save=False)
+            document.file = new_file
+        if request.user.id:
+            request.data["user"] = request.user.id
+
+        serializer = serializer_class(document, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == "DELETE":
+        instance_id = request.data.get("id")
+        instance = model.objects.get(id=instance_id, user=request.user)
+        if instance.file:
+            instance.file.delete(save=False)
+            instance.delete()
+            return ResponseHandler.success(
+                data={"message": REMOVE_SUCCESS}, status_code=status.HTTP_204_NO_CONTENT
+            )
+        return ResponseHandler.error(
+            ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+        )
+
+
+def upload_document_handler(model, serializer_class, request):
+    if request.method == "GET":
+        instances = model.objects.filter(user=request.user).exclude(
+            file_type=JOB_SEEKER_DOCUMENT_TYPES[2][0]
+        )
+        serializer = serializer_class(instances, many=True)
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
 
     elif request.method == "POST":
         if request.user.id:
@@ -531,10 +585,13 @@ def get_salary_formatted(JobInfo):
 
 
 def get_location_formatted(JobInfo):
-    description = JobInfo.job_descriptions.first()
-    if description:
-        return f"{description.city}, {description.state}, {description.country}"
-    return None
+    try:
+        description = JobInfo.jd_fk_ji
+        if description:
+            return f"{description.city}, {description.state}, {description.country}"
+        return None
+    except Exception:
+        return None
 
 
 def get_user_photo(user, Model):
