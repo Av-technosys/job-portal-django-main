@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from constants.env_data import *
 from firebase_admin import credentials, initialize_app
+import razorpay
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -61,6 +62,7 @@ INSTALLED_APPS = [
     "user_profiles",
     "storages",
     "jobs",
+    "payment",
 ]
 
 MIDDLEWARE = [
@@ -223,3 +225,7 @@ TEMPLATES = [
         },
     },
 ]
+
+razorpay_client = razorpay.Client(
+    auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)
+)
