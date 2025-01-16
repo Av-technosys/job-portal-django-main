@@ -32,17 +32,12 @@ class Order(models.Model):
 
 class Transaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    payment_id = models.CharField(max_length=100)
-    razorpay_order_id = models.CharField(max_length=100)
-    signature = models.CharField(max_length=255)
-    payment_method = models.CharField(max_length=50)
-    amount = models.IntegerField()
-    status = models.CharField(max_length=10, choices=PAYMENT_STATUS, default='PENDING')
+    razorpay_order_id = models.CharField(max_length=100, unique=True)
+    razorpay_payment_id = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Transaction for Order {self.order.transaction_id}"
+        return f"Transaction for Order {self.razorpay_payment_id}"
 
 

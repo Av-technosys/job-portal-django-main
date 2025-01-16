@@ -733,12 +733,11 @@ def get_razorpay_order(options):
         logger.error(f"Razorpay order creation failed: {str(e)}")
         raise ResponseHandler.api_exception_error(f"Failed to create payment order: {str(e)}")
 
-def create_cart_order(serializer_class, request):
+def create_cart_order(model_class, serializer_class, request):
     try:
         user_id = request.user.id
-        amount = request.data.get("amount")
-        print("amount",amount)
-        
+        planId = request.data.get("planId")
+        amount = model_class.objects.get(name=planId).price                
         razorpay_order = get_razorpay_order({
             'amount': amount * 100,  
             'currency': 'INR',
@@ -761,3 +760,7 @@ def create_cart_order(serializer_class, request):
     except Exception as e:
         logger.error(f"Cart order creation failed: {str(e)}")
         return ResponseHandler.error(f"Failed to create cart order: {str(e)}")
+
+
+def capture_transaction_data(serializer_class, request):
+    return serializer_handle(serializer_class, request)
