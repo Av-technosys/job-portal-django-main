@@ -676,6 +676,16 @@ def get_job_post_status(jobInfo):
     return JOB_POST_STATUS_FEILDS[0][0]
 
 
+def get_organization_type_from_models(obj):
+    try:
+        if hasattr(obj, "jd_fk_ji") and obj.jd_fk_ji:
+            return obj.jd_fk_ji.organization_type or "Unknown"
+        return "Unknown"
+    except Exception as e:
+        logger.error(f"Error getting organization type: {str(e)}")
+        return "Unknown"
+
+
 def summary_counter_handler(
     job_applied_model, job_saved_model, profiles_saved_modal, job_posted_modal, request
 ):

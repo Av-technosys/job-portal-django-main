@@ -13,6 +13,7 @@ from functions.common import (
     is_job_seeker,
     logger,
     get_expired_date,
+    get_organization_type_from_models,
 )
 from functions.send_email import (
     send_application_confirmation_to_job_seeker,
@@ -340,6 +341,7 @@ class JobPostedListSerializer(serializers.ModelSerializer):
 class JobDetailsCombinedSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
     job_id = serializers.IntegerField(source="id")
+    organization_type = serializers.SerializerMethodField()
     job_status = serializers.SerializerMethodField()
     title = serializers.CharField()
     role = serializers.CharField()
@@ -382,3 +384,7 @@ class JobDetailsCombinedSerializer(serializers.ModelSerializer):
             if sl_data:
                 return sl_data
         return []
+
+    def get_organization_type(self, obj):
+        # Use the renamed standalone function
+        return get_organization_type_from_models(obj)
