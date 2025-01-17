@@ -6,8 +6,8 @@ from constants.payment import TRANSACTION_STATUS, PAYMENT_STATUS
 class Plan(models.Model):
     name = models.CharField(max_length=100)
     price = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.name} - ${self.price}"
@@ -24,8 +24,8 @@ class Order(models.Model):
     status = models.CharField(max_length=20)
     notes = models.JSONField(default=dict, blank=True)
     offer_id = models.CharField(max_length=100, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Order {self.gateway_order_id}"
@@ -34,8 +34,8 @@ class Transaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     razorpay_order_id = models.CharField(max_length=100, unique=True)
     razorpay_payment_id = models.CharField(max_length=100, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Transaction for Order {self.razorpay_payment_id}"
