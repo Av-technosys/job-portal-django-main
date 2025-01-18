@@ -9,10 +9,10 @@ from handlers.permissions import IsRecruiter, IsJobSeeker
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_order(request):
-    return create_cart_order(Plan, OrderSerializer,request)
+    return create_cart_order(Plan, OrderSerializer, request)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def capture_transaction(request):
-    return capture_transaction_data( TransactionSerializer, request)
+    return capture_transaction_data(TransactionSerializer, request)

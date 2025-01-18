@@ -1,11 +1,11 @@
 PAYMENT_STATUS = (
-        ('PENDING', 'Pending'),
-        ('SUCCESS', 'Success'),
-        ('FAILED', 'Failed'),
-    )
+    ("PENDING", "Pending"),
+    ("SUCCESS", "Success"),
+    ("FAILED", "Failed"),
+)
 
 TRANSACTION_STATUS = (
-        ('PENDING', 'Pending'),
-        ('SUCCESS', 'Success'),
-        ('CANCELLED', 'Cancelled'),
-    )
+    ("PENDING", "Pending"),
+    ("SUCCESS", "Success"),
+    ("CANCELLED", "Cancelled"),
+)
