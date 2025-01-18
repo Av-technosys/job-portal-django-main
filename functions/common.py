@@ -741,32 +741,39 @@ def get_razorpay_order(options):
         return order
     except Exception as e:
         logger.error(f"Razorpay order creation failed: {str(e)}")
-        raise ResponseHandler.api_exception_error(f"Failed to create payment order: {str(e)}")
+        raise ResponseHandler.api_exception_error(
+            f"Failed to create payment order: {str(e)}"
+        )
+
 
 def create_cart_order(model_class, serializer_class, request):
     try:
         user_id = request.user.id
         planId = request.data.get("planId")
-        amount = model_class.objects.get(name=planId).price                
-        razorpay_order = get_razorpay_order({
-            'amount': amount * 100,  
-            'currency': 'INR',
-            'receipt': f'order_{user_id}_{int(time.time())}'
-        })
-        
-        razorpay_order['gateway_order_id'] = razorpay_order['id']
+        amount = model_class.objects.get(name=planId).price
+        razorpay_order = get_razorpay_order(
+            {
+                "amount": amount * 100,
+                "currency": "INR",
+                "receipt": f"order_{user_id}_{int(time.time())}",
+            }
+        )
+
+        razorpay_order["gateway_order_id"] = razorpay_order["id"]
         razorpay_order["user"] = user_id
-        
+
         serializer = serializer_class(data=razorpay_order)
         if serializer.is_valid():
             serializer.save()
             # Only return gateway_order_id in response
             return ResponseHandler.success(
-                {"gateway_order_id": razorpay_order['gateway_order_id']}, 
-                status_code=status.HTTP_201_CREATED
+                {"gateway_order_id": razorpay_order["gateway_order_id"]},
+                status_code=status.HTTP_201_CREATED,
             )
-        return ResponseHandler.error(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
-        
+        return ResponseHandler.error(
+            serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
+        )
+
     except Exception as e:
         logger.error(f"Cart order creation failed: {str(e)}")
         return ResponseHandler.error(f"Failed to create cart order: {str(e)}")

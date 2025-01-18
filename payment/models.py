@@ -11,14 +11,15 @@ class Plan(models.Model):
 
     def __str__(self):
         return f"{self.name} - ${self.price}"
-    
+
+
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     amount = models.IntegerField()
     amount_due = models.IntegerField()
     amount_paid = models.IntegerField()
     attempts = models.IntegerField()
-    currency = models.CharField(max_length=3, default='INR')
+    currency = models.CharField(max_length=3, default="INR")
     gateway_order_id = models.CharField(max_length=100, unique=True)
     receipt = models.CharField(max_length=100)
     status = models.CharField(max_length=20)
@@ -30,6 +31,7 @@ class Order(models.Model):
     def __str__(self):
         return f"Order {self.gateway_order_id}"
 
+
 class Transaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     razorpay_order_id = models.CharField(max_length=100, unique=True)
@@ -39,5 +41,3 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"Transaction for Order {self.razorpay_payment_id}"
-
-
