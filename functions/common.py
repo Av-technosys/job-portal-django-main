@@ -11,6 +11,8 @@ from django.shortcuts import get_object_or_404
 import logging
 from datetime import datetime
 from datetime import timedelta
+import time
+from job_portal_django.settings import razorpay_client
 
 
 def generate_otp():
@@ -730,3 +732,45 @@ def generate_password_string(length=8):
 
 def get_expired_date(expiration_days):
     return timezone.now() + timedelta(days=expiration_days)
+
+
+def get_razorpay_order(options):
+
+    try:
+        order = razorpay_client.order.create(data=options)
+        return order
+    except Exception as e:
+        logger.error(f"Razorpay order creation failed: {str(e)}")
+        raise ResponseHandler.api_exception_error(f"Failed to create payment order: {str(e)}")
+
+def create_cart_order(model_class, serializer_class, request):
+    try:
+        user_id = request.user.id
+        planId = request.data.get("planId")
+        amount = model_class.objects.get(name=planId).price                
+        razorpay_order = get_razorpay_order({
+            'amount': amount * 100,  
+            'currency': 'INR',
+            'receipt': f'order_{user_id}_{int(time.time())}'
+        })
+        
+        razorpay_order['gateway_order_id'] = razorpay_order['id']
+        razorpay_order["user"] = user_id
+        
+        serializer = serializer_class(data=razorpay_order)
+        if serializer.is_valid():
+            serializer.save()
+            # Only return gateway_order_id in response
+            return ResponseHandler.success(
+                {"gateway_order_id": razorpay_order['gateway_order_id']}, 
+                status_code=status.HTTP_201_CREATED
+            )
+        return ResponseHandler.error(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+        
+    except Exception as e:
+        logger.error(f"Cart order creation failed: {str(e)}")
+        return ResponseHandler.error(f"Failed to create cart order: {str(e)}")
+
+
+def capture_transaction_data(serializer_class, request):
+    return serializer_handle(serializer_class, request)
