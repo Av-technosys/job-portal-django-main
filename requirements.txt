@@ -8,7 +8,8 @@ django-cors-headers==4.4.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 six==1.16.0
-boto3
+boto3==1.36.2
 django-storages==1.14.4
 firebase-admin==6.6.0
 razorpay==1.4.2
+setuptools==75.8.0
