@@ -10,5 +10,10 @@
       "src": "/(.*)",
       "dest": "job_portal_django/wsgi.py"
     }
-  ]
+  ],
+  "functions": {
+    "/(.*)": {
+      "maxDuration": 30
+    }
+  }
 }
