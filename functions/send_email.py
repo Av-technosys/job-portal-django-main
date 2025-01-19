@@ -59,7 +59,7 @@ def send_auto_generated_password(email, password):
 
 
 def send_application_confirmation_to_job_seeker(
-    student_details, recruiter_details, job_details
+    student_details, recruiter_details, job_details, recruiter_personal_details
 ):
     from_email = settings.DEFAULT_FROM_EMAIL
     recipient_list = [student_details.email]
@@ -70,9 +70,9 @@ def send_application_confirmation_to_job_seeker(
         {
             "job_seeker_name": student_details.first_name,
             "job_title": job_details.role,
-            "company_name": recruiter_details.company_name,
-            "company_email": recruiter_details.company_email,
-            "website_url": recruiter_details.company_url,
+            "company_name": recruiter_personal_details.first_name,
+            "company_email": recruiter_personal_details.email,
+            "website_url": recruiter_details.company_website,
             "logo_url": JOB_ASSURED_LOGO,
         },
     )
@@ -92,10 +92,10 @@ def send_application_confirmation_to_job_seeker(
 
 
 def send_application_received_to_recruiter(
-    student_details, recruiter_details, job_details
+    student_details, recruiter_details, job_details, recruiter_personal_details
 ):
     from_email = settings.DEFAULT_FROM_EMAIL
-    recipient_list = [recruiter_details.company_email]
+    recipient_list = [recruiter_personal_details.email]
 
     subject = RECRUITER_CONFIRMATION_SUBJECT
     html_message = render_to_string(
@@ -105,9 +105,9 @@ def send_application_received_to_recruiter(
             "job_seeker_email": student_details.email,
             "job_title": job_details.role,
             "application_date": get_todays_date(),
-            "company_name": recruiter_details.company_name,
-            "company_email": recruiter_details.company_email,
-            "website_url": recruiter_details.company_url,
+            "company_name": recruiter_personal_details.first_name,
+            "company_email": recruiter_personal_details.email,
+            "website_url": recruiter_details.company_website,
             "logo_url": JOB_ASSURED_LOGO,
         },
     )

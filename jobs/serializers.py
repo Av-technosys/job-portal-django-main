@@ -33,8 +33,7 @@ from constants.jobs import (
     VALID_STATUS_TRANSITIONS,
 )
 
-from functions.common import get_user_photo
-from user_profiles.models import OrganizationInfo, RecruiterUploadedFile
+from user_profiles.models import FoundingInfo
 from django.db import transaction
 
 
@@ -125,17 +124,22 @@ class JobApplySerializer(serializers.ModelSerializer):
             student_id = self.data.get("student")
 
             student_details = User.objects.filter(pk=student_id).first()
-            recruiter_details = OrganizationInfo.objects.filter(
-                user=recruiter_id
-            ).first()
+            recruiter_personal_details = User.objects.filter(pk=recruiter_id).first()
+            recruiter_details = FoundingInfo.objects.filter(user=recruiter_id).first()
             job_details = JobInfo.objects.filter(pk=job_id).first()
 
             send_application_confirmation_to_job_seeker(
-                student_details, recruiter_details, job_details
+                student_details,
+                recruiter_details,
+                job_details,
+                recruiter_personal_details,
             )
 
             send_application_received_to_recruiter(
-                student_details, recruiter_details, job_details
+                student_details,
+                recruiter_details,
+                job_details,
+                recruiter_personal_details,
             )
 
         except Exception as e:
