@@ -5,7 +5,7 @@ from constants.accounts import (
     EMAIL_OTP_MESSAGE_TEMPLATE,
     EMAIL_OTP_SUBJECT,
 )
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -15,6 +15,9 @@ from constants.job_application import (
 )
 from constants.common import JOB_ASSURED_LOGO
 from functions.common import get_todays_date
+from django.utils.timezone import now
+from constants.payment import MESSAGE, SUBJECT
+from functions.common import generate_pdf
 
 
 def send_email_core_fucntion(
@@ -124,3 +127,44 @@ def send_application_received_to_recruiter(
                 "error": f"Failed to send_application_received_to_recruiter via email: {str(e)}"
             }
         )
+
+def payment_receipt(amount, name, phone_number, email,order_id, transaction_id):
+    try:
+        data = {
+            'receipt_number': phone_number,
+            'date': now().strftime('%Y-%m-%d'),
+            'amount': amount,
+            "order_id" : order_id,
+            "transaction_id" : transaction_id,
+            "transaction_status" :'DONE',
+            'name': name,
+            "logo_url" : JOB_ASSURED_LOGO
+        }
+        recipient_email = email
+        send_payment_receipt(data, recipient_email)
+
+    except Exception as e:
+        raise serializers.ValidationError(
+            {
+                "error": f"An error occurred in `payment_receipt`: {str(e)}"
+            }
+        )
+
+
+
+def send_payment_receipt(data, recipient_email):
+    try:
+        pdf_file = generate_pdf(data)
+        subject = SUBJECT
+        message =  MESSAGE
+        email = EmailMessage(subject, message, to=[recipient_email])
+        email.attach('payment_receipt.pdf', pdf_file.read(), 'application/pdf')
+        email.send()
+
+    except Exception as e:
+           raise serializers.ValidationError(
+            {
+                "error": f"An error occurred in `send_payment_receipt`: {str(e)}"
+            }
+        )
+

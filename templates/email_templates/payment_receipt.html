@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f9f9f9;
+      }
+      .container {
+        height: 100vh;
+        margin: 20px auto;
+        max-width: 600px;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .header img {
+        max-width: 150px;
+      }
+      .header h2 {
+        margin: 10px 0 5px;
+        color: #4caf50;
+      }
+      .details {
+        line-height: 1.6;
+      }
+      .details p {
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img  src="{{ logo_url }}" alt="logo" />
+        <h2>Transaction Details</h2>
+      </div>
+      <div class="details header">
+        <p><strong>Order ID:</strong> {{ order_id }}</p>
+        <p><strong>Transaction ID:</strong> {{ transaction_id }}</p>
+        <p><strong>Transaction Status:</strong> {{ transaction_status }}</p>
+        <p><strong>Amount:</strong> ₹{{ amount }}</p>
+        <p><strong>Billing Name:</strong> {{ name }}</p>
+        <p><strong>Phone No.:</strong> {{ phone }}</p>
+        <p><strong>Transaction Date:</strong> {{ date }}</p>
+      </div>
+    </div>
+  </body>
+</html>

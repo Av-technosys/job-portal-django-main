@@ -9,3 +9,6 @@ TRANSACTION_STATUS = (
     ("SUCCESS", "Success"),
     ("CANCELLED", "Cancelled"),
 )
+
+MESSAGE = "Thank you"
+SUBJECT = "Payment Receipt"
