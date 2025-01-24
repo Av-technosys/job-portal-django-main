@@ -5,3 +5,10 @@ USER_TYPE = [
 
 
 JOB_ASSURED_LOGO = "https://job-portal-next-ten.vercel.app/ja_logo.png"
+
+COMPANY_EMAIL="vishalmali858@gmail.com"
+
+COMPANY_NAME = "Job Assured"
+
+COMPANY_URL = "https://job-portal-next-ten.vercel.app/"
+

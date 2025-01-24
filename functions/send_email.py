@@ -13,10 +13,10 @@ from constants.job_application import (
     JOB_SEEKER_APPLICATION_CONFIRMATION_SUBJECT,
     RECRUITER_CONFIRMATION_SUBJECT,
 )
-from constants.common import JOB_ASSURED_LOGO
+from constants.common import JOB_ASSURED_LOGO, COMPANY_EMAIL, COMPANY_NAME, COMPANY_URL
 from functions.common import get_todays_date
 from django.utils.timezone import now
-from constants.payment import MESSAGE, SUBJECT
+from constants.payment import SUBJECT
 from functions.common import generate_pdf
 
 
@@ -128,43 +128,49 @@ def send_application_received_to_recruiter(
             }
         )
 
-def payment_receipt(amount, name, phone_number, email,order_id, transaction_id):
-    try:
-        data = {
-            'receipt_number': phone_number,
-            'date': now().strftime('%Y-%m-%d'),
-            'amount': amount,
-            "order_id" : order_id,
-            "transaction_id" : transaction_id,
-            "transaction_status" :'DONE',
-            'name': name,
-            "logo_url" : JOB_ASSURED_LOGO
-        }
-        recipient_email = email
-        send_payment_receipt(data, recipient_email)
 
-    except Exception as e:
-        raise serializers.ValidationError(
+def send_payment_receipt(order, name, phone_number, email, order_id, transaction_id):
+    try:
+        print("jjj", order)
+        amount = (order.amount/100)
+        data = render_to_string(
+            "email_templates/payment_receipt.html",
             {
-                "error": f"An error occurred in `payment_receipt`: {str(e)}"
-            }
+                "receipt_number": phone_number,
+                "date": get_todays_date(),
+                "amount": amount,
+                "order_id": order_id,
+                "transaction_id": transaction_id,
+                "transaction_status": "DONE",
+                "name": name,
+                "logo_url": JOB_ASSURED_LOGO,
+            },
         )
-
-
-
-def send_payment_receipt(data, recipient_email):
-    try:
         pdf_file = generate_pdf(data)
+        recipient_email = email
         subject = SUBJECT
-        message =  MESSAGE
-        email = EmailMessage(subject, message, to=[recipient_email])
-        email.attach('payment_receipt.pdf', pdf_file.read(), 'application/pdf')
+        body = render_to_string(
+            "email_templates/payment_success.html",
+            {
+                "receipt_number": phone_number,
+                "date": get_todays_date(),
+                "amount": amount,
+                "order_id": order_id,
+                "transaction_id": transaction_id,
+                "transaction_status": "DONE",
+                "name": name,
+                "logo_url": JOB_ASSURED_LOGO,
+                "company_name": COMPANY_NAME,
+                "company_email": COMPANY_EMAIL,
+                "website_url": COMPANY_URL,
+            },
+        )
+        email = EmailMessage(subject, body, to=[recipient_email])
+        email.content_subtype = "html"
+        email.attach("payment_receipt.pdf", pdf_file.read(), "application/pdf")
         email.send()
 
     except Exception as e:
-           raise serializers.ValidationError(
-            {
-                "error": f"An error occurred in `send_payment_receipt`: {str(e)}"
-            }
+        raise serializers.ValidationError(
+            {"error": f"An error occurred in `payment_receipt`: {str(e)}"}
         )
-

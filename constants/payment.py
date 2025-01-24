@@ -10,5 +10,4 @@ TRANSACTION_STATUS = (
     ("CANCELLED", "Cancelled"),
 )
 
-MESSAGE = "Thank you"
 SUBJECT = "Payment Receipt"

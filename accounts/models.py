@@ -51,14 +51,19 @@ class Notification(models.Model):
     def __str__(self):
         return f"Notification for {self.received_by.username}"
 
+
 class Subscription(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user")
-    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="plan" )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user"
+    )
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="plan")
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
     class Meta:
         indexes = [
             models.Index(fields=["plan"], name="plan_index"),
         ]
+
         def __str__(self):
             return f"{self.user} subscribed {self.plan}"
