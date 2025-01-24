@@ -131,7 +131,7 @@ def send_application_received_to_recruiter(
 
 def send_payment_receipt(order, name, phone_number, email, order_id, transaction_id):
     try:
-        amount = (order.amount/100)
+        amount = order.amount / 100
         data = render_to_string(
             "email_templates/payment_receipt.html",
             {
@@ -146,7 +146,7 @@ def send_payment_receipt(order, name, phone_number, email, order_id, transaction
                 "website_url": COMPANY_URL,
             },
         )
-        pdf_file = generate_pdf(data)
+        # pdf_file = generate_pdf(data)
         recipient_email = email
         subject = SUBJECT
         body = render_to_string(
@@ -167,7 +167,7 @@ def send_payment_receipt(order, name, phone_number, email, order_id, transaction
         )
         email = EmailMessage(subject, body, to=[recipient_email])
         email.content_subtype = "html"
-        email.attach("payment_receipt.pdf", pdf_file.read(), "application/pdf")
+        # email.attach("payment_receipt.pdf", pdf_file.read(), "application/pdf")
         email.send()
 
     except Exception as e:
