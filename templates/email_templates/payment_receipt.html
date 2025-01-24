@@ -21,7 +21,6 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
       .header {
-        background-color: #003366;
         padding: 20px;
         text-align: center;
         color: white;
@@ -33,29 +32,16 @@
       .header h2 {
         margin: 0;
         font-size: 24px;
-      }
-      .content {
-        padding: 20px;
-      }
-      .content h3 {
-        margin-top: 0;
-        color: #333333;
+        color: black;
       }
       .details {
-        margin-top: 20px;
+        padding: 20px;
       }
-      .details table {
-        width: 100%;
-        border-collapse: collapse;
+      .details p {
+        margin: 10px 0;
+        color: #333333;
       }
-      .details th,
-      .details td {
-        text-align: left;
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
-      }
-      .details th {
-        background-color: #f4f4f4;
+      .details p strong {
         font-weight: bold;
       }
       .footer {
@@ -77,48 +63,21 @@
         <img src="{{ logo_url }}" alt="logo" />
         <h2>Transaction Details</h2>
       </div>
-      <div class="content">
-        <h3>Thank you for your payment!</h3>
-        <p>Below are the details of your transaction:</p>
-        <div class="details">
-          <table>
-            <tr>
-              <th>Order ID</th>
-              <td>{{ order_id }}</td>
-            </tr>
-            <tr>
-              <th>Transaction ID</th>
-              <td>{{ transaction_id }}</td>
-            </tr>
-            <tr>
-              <th>Transaction Status</th>
-              <td>{{ transaction_status }}</td>
-            </tr>
-            <tr>
-              <th>Amount</th>
-              <td>₹{{ amount }}</td>
-            </tr>
-            <tr>
-              <th>Billing Name</th>
-              <td>{{ name }}</td>
-            </tr>
-            <tr>
-              <th>Phone No.</th>
-              <td>{{ phone }}</td>
-            </tr>
-            <tr>
-              <th>Transaction Date</th>
-              <td>{{ date }}</td>
-            </tr>
-          </table>
-        </div>
+      <div class="details">
+        <p><strong>Order ID:</strong> {{ order_id }}</p>
+        <p><strong>Transaction ID:</strong> {{ transaction_id }}</p>
+        <p><strong>Transaction Status:</strong> {{ transaction_status }}</p>
+        <p><strong>Amount:</strong> ₹{{ amount }}</p>
+        <p><strong>Billing Name:</strong> {{ name }}</p>
+        <p><strong>Phone No.:</strong> {{ phone }}</p>
+        <p><strong>Transaction Date:</strong> {{ date }}</p>
       </div>
       <div class="footer">
         <p>
-          &copy; 2025 Example Company | <a href="{{ website_url }}"></a>>Visit our
-          website</a>
+           <a href="{{ website_url }}">Visit our website</a>
         </p>
       </div>
     </div>
   </body>
 </html>
+
