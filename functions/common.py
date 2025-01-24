@@ -13,6 +13,9 @@ from datetime import datetime
 from datetime import timedelta
 import time
 from job_portal_django.settings import razorpay_client
+from weasyprint import HTML
+from io import BytesIO
+from django.template.loader import render_to_string
 
 
 def generate_otp():
@@ -781,3 +784,10 @@ def create_cart_order(model_class, serializer_class, request):
 
 def capture_transaction_data(serializer_class, request):
     return serializer_handle(serializer_class, request)
+
+
+def generate_pdf(data):
+    pdf_file = BytesIO()
+    HTML(string=data).write_pdf(pdf_file)
+    pdf_file.seek(0)
+    return pdf_file

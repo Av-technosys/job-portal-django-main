@@ -9,3 +9,5 @@ TRANSACTION_STATUS = (
     ("SUCCESS", "Success"),
     ("CANCELLED", "Cancelled"),
 )
+
+SUBJECT = "Payment Receipt"

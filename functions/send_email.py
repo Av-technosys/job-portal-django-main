@@ -5,7 +5,7 @@ from constants.accounts import (
     EMAIL_OTP_MESSAGE_TEMPLATE,
     EMAIL_OTP_SUBJECT,
 )
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -13,8 +13,11 @@ from constants.job_application import (
     JOB_SEEKER_APPLICATION_CONFIRMATION_SUBJECT,
     RECRUITER_CONFIRMATION_SUBJECT,
 )
-from constants.common import JOB_ASSURED_LOGO
+from constants.common import JOB_ASSURED_LOGO, COMPANY_EMAIL, COMPANY_NAME, COMPANY_URL
 from functions.common import get_todays_date
+from django.utils.timezone import now
+from constants.payment import SUBJECT
+from functions.common import generate_pdf
 
 
 def send_email_core_fucntion(
@@ -123,4 +126,51 @@ def send_application_received_to_recruiter(
             {
                 "error": f"Failed to send_application_received_to_recruiter via email: {str(e)}"
             }
+        )
+
+
+def send_payment_receipt(order, name, phone_number, email, order_id, transaction_id):
+    try:
+        amount = (order.amount/100)
+        data = render_to_string(
+            "email_templates/payment_receipt.html",
+            {
+                "receipt_number": phone_number,
+                "date": get_todays_date(),
+                "amount": amount,
+                "order_id": order_id,
+                "transaction_id": transaction_id,
+                "transaction_status": "DONE",
+                "name": name,
+                "logo_url": JOB_ASSURED_LOGO,
+                "website_url": COMPANY_URL,
+            },
+        )
+        pdf_file = generate_pdf(data)
+        recipient_email = email
+        subject = SUBJECT
+        body = render_to_string(
+            "email_templates/payment_success.html",
+            {
+                "receipt_number": phone_number,
+                "date": get_todays_date(),
+                "amount": amount,
+                "order_id": order_id,
+                "transaction_id": transaction_id,
+                "transaction_status": "DONE",
+                "name": name,
+                "logo_url": JOB_ASSURED_LOGO,
+                "company_name": COMPANY_NAME,
+                "company_email": COMPANY_EMAIL,
+                "website_url": COMPANY_URL,
+            },
+        )
+        email = EmailMessage(subject, body, to=[recipient_email])
+        email.content_subtype = "html"
+        email.attach("payment_receipt.pdf", pdf_file.read(), "application/pdf")
+        email.send()
+
+    except Exception as e:
+        raise serializers.ValidationError(
+            {"error": f"An error occurred in `payment_receipt`: {str(e)}"}
         )
