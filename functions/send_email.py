@@ -131,7 +131,6 @@ def send_application_received_to_recruiter(
 
 def send_payment_receipt(order, name, phone_number, email, order_id, transaction_id):
     try:
-        print("jjj", order)
         amount = (order.amount/100)
         data = render_to_string(
             "email_templates/payment_receipt.html",
@@ -144,6 +143,7 @@ def send_payment_receipt(order, name, phone_number, email, order_id, transaction
                 "transaction_status": "DONE",
                 "name": name,
                 "logo_url": JOB_ASSURED_LOGO,
+                "website_url": COMPANY_URL,
             },
         )
         pdf_file = generate_pdf(data)

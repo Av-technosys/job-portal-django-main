@@ -54,7 +54,7 @@ class Notification(models.Model):
 
 class Subscription(models.Model):
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="s_fk_user"
     )
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="plan")
     created_date = models.DateTimeField(auto_now_add=True)
