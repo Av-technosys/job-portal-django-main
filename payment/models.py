@@ -25,6 +25,7 @@ class Order(models.Model):
     status = models.CharField(max_length=20)
     notes = models.JSONField(default=dict, blank=True)
     offer_id = models.CharField(max_length=100, null=True, blank=True)
+    plan_type = models.CharField(max_length=100)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 

@@ -18,5 +18,5 @@ def create_order(request):
 @permission_classes([IsAuthenticated])
 def capture_transaction(request):
     return capture_transaction_data(
-        TransactionSerializer, Subscription, SubscriptionSerializer, Plan, request
+        TransactionSerializer, Subscription, SubscriptionSerializer, Plan,Order, request
     )
