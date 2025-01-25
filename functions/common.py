@@ -13,7 +13,8 @@ from datetime import datetime
 from datetime import timedelta
 import time
 from job_portal_django.settings import razorpay_client
-from weasyprint import HTML
+
+# from weasyprint import HTML
 from io import BytesIO
 from django.template.loader import render_to_string
 from constants.payment import *
