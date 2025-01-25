@@ -773,6 +773,7 @@ def create_cart_order(model_class, subscription_model, serializer_class, request
 
         razorpay_order["gateway_order_id"] = razorpay_order["id"]
         razorpay_order["user"] = user_id
+        razorpay_order["plan_type"] = planId
 
         serializer = serializer_class(data=razorpay_order)
         if serializer.is_valid():
@@ -796,10 +797,12 @@ def capture_transaction_data(
     subscription_model,
     subscription_serializer_class,
     plan_model,
+    order_model,
     request,
 ):
     try:
-        plan_code = request.data.get("planId")
+        order_id = request.data.get("razorpay_order_id")
+        plan_code = order_model.objects.get(gateway_order_id=order_id).plan_type
         request.data["plan"] = plan_model.objects.get(name=plan_code).id
         user_id = request.user.id
         is_subscribed = check_user_subscription(subscription_model, user_id)
