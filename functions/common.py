@@ -16,6 +16,7 @@ from job_portal_django.settings import razorpay_client
 from weasyprint import HTML
 from io import BytesIO
 from django.template.loader import render_to_string
+from constants.payment import *
 
 
 def generate_otp():
@@ -749,11 +750,18 @@ def get_razorpay_order(options):
         )
 
 
-def create_cart_order(model_class, serializer_class, request):
+def create_cart_order(model_class, subscription_model, serializer_class, request):
     try:
         user_id = request.user.id
         planId = request.data.get("planId")
         amount = model_class.objects.get(name=planId).price
+        is_subscribed = check_user_subscription(subscription_model, user_id)
+        if is_subscribed:
+            return ResponseHandler.error(
+                RESUBSCRIBE_ERROR,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
         razorpay_order = get_razorpay_order(
             {
                 "amount": amount * 100,
@@ -782,8 +790,28 @@ def create_cart_order(model_class, serializer_class, request):
         return ResponseHandler.error(f"Failed to create cart order: {str(e)}")
 
 
-def capture_transaction_data(serializer_class, request):
-    return serializer_handle(serializer_class, request)
+def capture_transaction_data(
+    serializer_class,
+    subscription_model,
+    subscription_serializer_class,
+    plan_model,
+    request,
+):
+    try:
+        plan_code = request.data.get("planId")
+        request.data["plan"] = plan_model.objects.get(name=plan_code).id
+        user_id = request.user.id
+        is_subscribed = check_user_subscription(subscription_model, user_id)
+        if is_subscribed:
+            return ResponseHandler.error(
+                RESUBSCRIBE_ERROR,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer_handle(subscription_serializer_class, request)
+        return serializer_handle(serializer_class, request)
+    except Exception as e:
+        logger.error(f"Transaction data capture failed: {str(e)}")
+        return ResponseHandler.error(f"Failed to capture transaction data: {str(e)}")
 
 
 def generate_pdf(data):
@@ -791,3 +819,17 @@ def generate_pdf(data):
     HTML(string=data).write_pdf(pdf_file)
     pdf_file.seek(0)
     return pdf_file
+
+
+def check_user_subscription(subscription_model, user_id):
+    try:
+        subscription = subscription_model.objects.filter(user=user_id).first()
+        if subscription:
+            now = timezone.now()
+            time_difference = now - subscription.created_date
+            remaining_time = timedelta(days=30) - time_difference
+            if remaining_time > timedelta(days=0):
+                return True
+        return False
+    except Exception as e:
+        logger.error(f"Failed to check subscription: {str(e)}")

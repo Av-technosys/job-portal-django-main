@@ -31,6 +31,7 @@ from django.utils import timezone
 from datetime import timedelta
 from functions.send_email import send_auto_generated_password, send_email_otp
 from functions.send_otp import send_phone_otp
+from accounts.models import Subscription
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -351,4 +352,9 @@ class VerifyOtpAndChangePasswordSerializer(serializers.Serializer):
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
+        fields = "__all__"
+        
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
         fields = "__all__"
