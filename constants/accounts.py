@@ -27,4 +27,5 @@ USER_META_FIELDS = [
     "phone_number",
     "id",
     "profile_picture",
+    "access_type",
 ]
