@@ -803,7 +803,6 @@ def capture_transaction_data(
     try:
         order_id = request.data.get("razorpay_order_id")
         plan_code = order_model.objects.get(gateway_order_id=order_id).plan_type
-        print("plan_type", plan_code)
         request.data["plan"] = plan_model.objects.get(name=plan_code).id
         user_id = request.user.id
         is_subscribed = check_user_subscription(subscription_model, user_id)
