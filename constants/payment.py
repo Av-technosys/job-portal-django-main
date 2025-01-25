@@ -10,4 +10,5 @@ TRANSACTION_STATUS = (
     ("CANCELLED", "Cancelled"),
 )
 
+RESUBSCRIBE_ERROR ="Cannot Resubscribe."
 SUBJECT = "Payment Receipt"
