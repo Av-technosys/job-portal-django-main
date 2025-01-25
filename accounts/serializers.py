@@ -91,6 +91,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserMetaSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
+    access_type = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -101,6 +102,12 @@ class UserMetaSerializer(serializers.ModelSerializer):
         if is_job_seeker(request):
             return get_job_seeker_profile_image(obj)
         return get_recruiter_profile_image(obj)
+
+    def get_access_type(self, obj):
+        subscription_data = obj.s_fk_user.first()
+        if subscription_data is not None:
+            return subscription_data.plan_id
+        return None
 
 
 class SSOUserSerializer(serializers.Serializer):
