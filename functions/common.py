@@ -53,6 +53,8 @@ class ResponseHandler:
 
     @staticmethod
     def error(message=RESPONSE_ERROR, status_code=400):
+        if "message" in message and isinstance(message["message"], list):
+            message = message["message"][0]
         response_data = {
             "success": False,
             "message": get_flattened_error_message(message),
@@ -684,11 +686,11 @@ def get_job_post_status(jobInfo):
 def get_organization_type_from_models(obj):
     try:
         if hasattr(obj, "jd_fk_ji") and obj.jd_fk_ji:
-            return obj.jd_fk_ji.organization_type or "Unknown"
-        return "Unknown"
+            return obj.jd_fk_ji.organization_type or False
+        return False
     except Exception as e:
         logger.error(f"Error getting organization type: {str(e)}")
-        return "Unknown"
+        return False
 
 
 def summary_counter_handler(
@@ -746,9 +748,7 @@ def get_razorpay_order(options):
         return order
     except Exception as e:
         logger.error(f"Razorpay order creation failed: {str(e)}")
-        raise ResponseHandler.api_exception_error(
-            f"Failed to create payment order: {str(e)}"
-        )
+        ResponseHandler.api_exception_error()
 
 
 def create_cart_order(model_class, subscription_model, serializer_class, request):
@@ -789,7 +789,7 @@ def create_cart_order(model_class, subscription_model, serializer_class, request
 
     except Exception as e:
         logger.error(f"Cart order creation failed: {str(e)}")
-        return ResponseHandler.error(f"Failed to create cart order: {str(e)}")
+        return ResponseHandler.error(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def capture_transaction_data(
@@ -815,7 +815,7 @@ def capture_transaction_data(
         return serializer_handle(serializer_class, request)
     except Exception as e:
         logger.error(f"Transaction data capture failed: {str(e)}")
-        return ResponseHandler.error(f"Failed to capture transaction data: {str(e)}")
+        return ResponseHandler.error(status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def generate_pdf(data):
@@ -837,3 +837,4 @@ def check_user_subscription(subscription_model, user_id):
         return False
     except Exception as e:
         logger.error(f"Failed to check subscription: {str(e)}")
+        return ResponseHandler.error(status.HTTP_500_INTERNAL_SERVER_ERROR)
