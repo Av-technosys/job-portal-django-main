@@ -392,3 +392,15 @@ class JobDetailsCombinedSerializer(serializers.ModelSerializer):
     def get_organization_type(self, obj):
         # Use the renamed standalone function
         return get_organization_type_from_models(obj)
+
+
+class JobStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobInfo
+        fields = ["status"]
+
+    def validate_status(self, value):
+        valid_statuses = [status[0] for status in JOB_POST_STATUS_FEILDS]
+        if value not in valid_statuses:
+            raise serializers.ValidationError(INVALID_JOB_STATUS)
+        return value
