@@ -182,7 +182,7 @@ def get_handle(model, serializer_class, request):
 
 def delete_handle(model, request):
     instance_id = request.data.get("id")
-    instances = model.objects.filter(id=instance_id, user=157)
+    instances = model.objects.filter(id=instance_id, user=request.user)
     if instances.exists():
         instances.delete()
         return ResponseHandler.success(
