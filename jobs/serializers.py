@@ -345,6 +345,7 @@ class JobPostedListSerializer(serializers.ModelSerializer):
 class JobDetailsCombinedSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
     job_id = serializers.IntegerField(source="id")
+    company_name = serializers.SerializerMethodField()
     organization_type = serializers.SerializerMethodField()
     job_status = serializers.SerializerMethodField()
     title = serializers.CharField()
@@ -371,6 +372,9 @@ class JobDetailsCombinedSerializer(serializers.ModelSerializer):
 
     def get_company_profile_image(self, obj):
         return get_recruiter_profile_image(obj.user)
+
+    def get_company_name(self, obj):
+        return obj.user.first_name
 
     def get_salary(self, obj):
         return get_salary_formatted(obj)

@@ -118,6 +118,7 @@ JOB_POST_STATUS_FEILDS = [("active", "active"), ("expired", "expired")]
 JOB_DETAILS_COMBINED_FIELDS = [
     "company_profile_image",
     "role",
+    "company_name",
     "organization_type",
     "expired_at",
     "title",
