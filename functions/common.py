@@ -841,7 +841,7 @@ def check_user_subscription(subscription_model, user_id):
 
 
 def job_status_update(model, serializer_class, request):
-    if request.method in "PATCH":
+    if request.method in "POST":
         try:
             job_id = request.data.get("id")
             status_value = request.data.get("status")
@@ -851,6 +851,10 @@ def job_status_update(model, serializer_class, request):
                 )
 
             job = get_object_or_404(model, id=job_id)
+            if job.user != request.user:
+                return ResponseHandler.error(
+                    ACCESS_REQUIRED, status_code=status.HTTP_400_BAD_REQUEST
+                )
             serializer = serializer_class(job, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()

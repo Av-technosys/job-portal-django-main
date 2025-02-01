@@ -25,3 +25,4 @@ OTP_LIMIT_REACHED_ERROR = "OTP resend limit reached. Try again after 1 hour."
 ERROR_STUDENT_ID_REQUIRED = ("Student ID is required",)
 ATLEAST_ONE_SKILL_REQUIRED = "Skill set must contain at least one item."
 JOB_STATUS_MISSING = "Please provide job id and status"
+ACCESS_REQUIRED = "You Don't have access to perform this action"

@@ -102,6 +102,8 @@ def summary_view(request):
 def job_details_by_id(request, job_id):
     return job_details_by_job_id(JobInfo, job_id, JobDetailsCombinedSerializer, request)
 
-@api_view(["PATCH", "DELETE", "POST"])
+
+@api_view(["DELETE", "POST"])
+@permission_classes([IsAuthenticated, IsRecruiter])
 def job_status_by_recruiter(request):
-    return job_status_update(JobInfo,JobStatusUpdateSerializer, request)
+    return job_status_update(JobInfo, JobStatusUpdateSerializer, request)
