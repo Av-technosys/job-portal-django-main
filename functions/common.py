@@ -481,7 +481,7 @@ def application_handler(
             related_profiles = modal_class.objects.filter(student_id=request.user.id)
 
         if user_type == 2:
-            id = request.data.get("id")
+            id = request.GET.get("id")
             if not id:
                 _id = list(
                     modal_class.objects.filter(owner_id=request.user.id).values_list(
@@ -501,6 +501,12 @@ def application_handler(
                 serializer_class,
                 profile,
                 "student",
+            )
+
+        if not related_profiles.exists():
+            return ResponseHandler.error(
+                message=ERROR_NO_APPLICATIONS_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND,
             )
 
         page_obj, count, total_pages = paginator(related_profiles, request)
@@ -528,10 +534,7 @@ def get_application_data(_id, modal_class, serializer_class, profile, lookup):
             )
 
         if not instances.exists():
-            return ResponseHandler.error(
-                message=ERROR_NO_APPLICATIONS_FOUND,
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
+            return instances
 
         applications = serializer_class(instances, many=True)
         related_ids = [application.get(lookup) for application in applications.data]
