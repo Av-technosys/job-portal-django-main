@@ -27,4 +27,5 @@ urlpatterns = [
     path("save_job/", save_job, name="save_job"),
     path("save_candidate/", save_cadidate, name="save_candidate"),
     path("summary/", summary_view, name="summary_view"),
+    path("update_job_status/", job_status_by_recruiter, name="expired_job"),
 ]

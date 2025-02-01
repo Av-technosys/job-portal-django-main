@@ -135,3 +135,5 @@ JOB_DETAILS_COMBINED_FIELDS = [
     "social_links",
     "created_date",
 ]
+
+JOB_STATUS_UPDATED="Job Status Updated"

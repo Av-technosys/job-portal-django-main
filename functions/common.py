@@ -29,7 +29,7 @@ from constants.errors import *
 from rest_framework.response import Response
 from constants.common import USER_TYPE
 from constants.user_profiles import JOB_SEEKER_DOCUMENT_TYPES, RECRUITER_DOCUMENT_TYPES
-from constants.jobs import JOB_POST_STATUS_FEILDS
+from constants.jobs import JOB_POST_STATUS_FEILDS, JOB_STATUS_UPDATED
 
 logger = logging.getLogger("django")
 
@@ -838,3 +838,36 @@ def check_user_subscription(subscription_model, user_id):
     except Exception as e:
         logger.error(f"Failed to check subscription: {str(e)}")
         return ResponseHandler.error(status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def job_status_update(model, serializer_class, request):
+    if request.method in "POST":
+        try:
+            job_id = request.data.get("id")
+            status_value = request.data.get("status")
+            if not job_id or not status_value:
+                return ResponseHandler.error(
+                    JOB_STATUS_MISSING, status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            job = get_object_or_404(model, id=job_id)
+            if job.user != request.user:
+                return ResponseHandler.error(
+                    ACCESS_REQUIRED, status_code=status.HTTP_400_BAD_REQUEST
+                )
+            serializer = serializer_class(job, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return ResponseHandler.success(
+                    {"message": JOB_STATUS_UPDATED},
+                    status_code=status.HTTP_201_CREATED,
+                )
+            return ResponseHandler.error(
+                serializer.errors, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except:
+            return ResponseHandler.error(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    elif request.method == "DELETE":
+        return delete_handle(model, request)
