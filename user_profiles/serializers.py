@@ -182,13 +182,24 @@ class StoreFCMTokenSerializer(serializers.Serializer):
 
 
 class CombinedCompanyDetailSerializer(serializers.ModelSerializer):
-    founding_info = FoundingInfoSerializer(
-        many=False, read_only=True, source="user.founding_info"
-    )
+    organization_type = serializers.CharField(source="user.fi_fk_user.organization_type")
+    industry_type = serializers.CharField(source="user.fi_fk_user.industry_type")
+    company_size = serializers.CharField(source="user.fi_fk_user.company_size")
+    company_website = serializers.CharField(source="user.fi_fk_user.company_website")
+    mission = serializers.CharField(source="user.fi_fk_user.mission", required=False)
+    vision = serializers.CharField(source="user.fi_fk_user.vision", required=False)
+    company_name = serializers.CharField(source='user.first_name')
+    profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = OrganizationInfo
         fields = COMPANY_PROFILE_FIELDS
+
+    def get_profile_image(self, obj):
+        try:
+            return get_recruiter_profile_image(obj.user)
+        except Exception:
+            return None
 
 
 class ListCandidateSerializer(serializers.ModelSerializer):
