@@ -357,3 +357,6 @@ RECRUITER_PROFILE_FOUNDING_INFO_SUB_KEYS_2 = [
 RECRUITER_SOCIAL_LINKS = ["platform", "url", "id"]
 
 JOB_SEEKER_SOCIAL_LINKS = ["platform", "url", "id"]
+
+
+RECRUITER_DETAILS_FIELDS = ['first_name', 'industry_type', 'city', 'state', 'country', 'profile_image', 'user']

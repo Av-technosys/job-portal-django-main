@@ -874,3 +874,31 @@ def job_status_update(model, serializer_class, request):
             )
     elif request.method == "DELETE":
         return delete_handle(model, request)
+
+def get_all_recruiter_details(model, serializer_class, request):
+    try:
+        recruiter_details = model.objects.all()
+        page_obj, count, total_pages = paginator(recruiter_details, request)
+        serializer = serializer_class(page_obj, many=True)
+        response_data = {
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
+        }
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"{e}")
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+        
+        
+def get_recruiter_profile_image(user):
+    photo = user.recruiter_upload_user_id.filter(
+        file_type=RECRUITER_DOCUMENT_TYPES[2][0]
+    ).first()
+    return photo.file.url if photo and photo.file else None
+
+

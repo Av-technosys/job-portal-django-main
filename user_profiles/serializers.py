@@ -17,7 +17,7 @@ from constants.user_profiles import (
 )
 from functions.profile import process_items
 from .models import *
-from functions.common import get_recruiter_profile_image, get_location_formatted
+from functions.common import get_recruiter_profile_image, get_location_formatted    
 from django.db import transaction
 
 
@@ -723,3 +723,26 @@ class UploadedRecruiterDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecruiterUploadedFile
         fields = ["id", "file_type", "file", "user"]
+
+
+class RecruiterDetailsSerializer(serializers.ModelSerializer):
+    industry_type = serializers.SerializerMethodField()
+    first_name = serializers.CharField(source='user.first_name')
+    profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrganizationInfo
+        fields = RECRUITER_DETAILS_FIELDS
+
+    def get_industry_type(self, obj):
+        try:
+            return obj.user.fi_fk_user.get_industry_type_display()  # This will return the display value
+        except Exception:
+            return None
+
+    def get_profile_image(self, obj):
+        try:
+            return get_recruiter_profile_image(obj.user)
+        except Exception:
+            return None
+
