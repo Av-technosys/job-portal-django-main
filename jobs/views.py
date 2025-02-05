@@ -21,6 +21,7 @@ def apply_job(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def list_jobs(request):
     return filter_search_handler(JobInfo, JobSeekerListingViewSerializer, request)
 
@@ -99,6 +100,7 @@ def summary_view(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def job_details_by_id(request, job_id):
     return job_details_by_job_id(JobInfo, job_id, JobDetailsCombinedSerializer, request)
 
