@@ -893,12 +893,5 @@ def get_all_recruiter_details(model, serializer_class, request):
             RESPONSE_ERROR,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-        
-        
-def get_recruiter_profile_image(user):
-    photo = user.recruiter_upload_user_id.filter(
-        file_type=RECRUITER_DOCUMENT_TYPES[2][0]
-    ).first()
-    return photo.file.url if photo and photo.file else None
 
 
