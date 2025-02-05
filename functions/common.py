@@ -895,3 +895,8 @@ def get_all_recruiter_details(model, serializer_class, request):
         )
 
 
+def get_industry_type(obj):
+    try:
+        return obj.user.fi_fk_user.get_industry_type_display()
+    except Exception:
+            return None
