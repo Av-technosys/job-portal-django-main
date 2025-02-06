@@ -103,7 +103,7 @@ COMPANY_PROFILE_FIELDS = [
     "id",
     "user",
     "company_about_us",
-    "company_website",
+    "profile_image",
     "address_line_1",
     "address_line_2",
     "city",
@@ -112,8 +112,13 @@ COMPANY_PROFILE_FIELDS = [
     "country",
     "created_date",
     "updated_date",
-    "company_id",
-    "founding_info",
+    "organization_type",
+    "industry_type",
+    "company_size",
+    "company_website",
+    "mission",
+    "vision",
+    "company_name",
 ]
 
 STUDENT_PROFILE_COMBINED_FIELDS = [
@@ -357,3 +362,6 @@ RECRUITER_PROFILE_FOUNDING_INFO_SUB_KEYS_2 = [
 RECRUITER_SOCIAL_LINKS = ["platform", "url", "id"]
 
 JOB_SEEKER_SOCIAL_LINKS = ["platform", "url", "id"]
+
+
+RECRUITER_DETAILS_FIELDS = ['first_name', 'industry_type', 'city', 'state', 'country', 'profile_image', 'user']

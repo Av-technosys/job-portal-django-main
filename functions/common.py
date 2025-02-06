@@ -874,3 +874,29 @@ def job_status_update(model, serializer_class, request):
             )
     elif request.method == "DELETE":
         return delete_handle(model, request)
+
+def get_all_recruiter_details(model, serializer_class, request):
+    try:
+        recruiter_details = model.objects.all()
+        page_obj, count, total_pages = paginator(recruiter_details, request)
+        serializer = serializer_class(page_obj, many=True)
+        response_data = {
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
+        }
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"{e}")
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+def get_industry_type(obj):
+    try:
+        return obj.user.fi_fk_user.get_industry_type_display()
+    except Exception:
+            return None

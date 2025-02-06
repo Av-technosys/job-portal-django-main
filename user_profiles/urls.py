@@ -33,4 +33,5 @@ urlpatterns = [
         name="get_recruiter_by_id",
     ),
     path("list_recruiters/", get_recruiter, name="list_recruiter"),
+    path("list_all_recruiter/", get_all_recruiter, name="list_all_recruiter"),
 ]

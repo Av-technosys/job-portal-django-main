@@ -222,7 +222,7 @@ def get_recruiter(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsJobSeeker])
 def get_recruiter_details(request, recruiter_id):
     return get_data_from_id_and_serialize(
         OrganizationInfo, CombinedCompanyDetailSerializer, recruiter_id
@@ -242,3 +242,8 @@ def upload_document(request):
         return upload_document_handler(
             RecruiterUploadedFile, UploadedRecruiterDocumentSerializer, request
         )
+        
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def get_all_recruiter(request):
+    return get_all_recruiter_details(OrganizationInfo, RecruiterDetailsSerializer, request)
