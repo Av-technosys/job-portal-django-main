@@ -365,3 +365,5 @@ JOB_SEEKER_SOCIAL_LINKS = ["platform", "url", "id"]
 
 
 RECRUITER_DETAILS_FIELDS = ['first_name', 'industry_type', 'city', 'state', 'country', 'profile_image', 'user']
+
+JOB_SEEKER_DETAILS_FIELDS = ["first_name", "last_name", "profile_image", "city", "country", "id", "application_status", "experience"]

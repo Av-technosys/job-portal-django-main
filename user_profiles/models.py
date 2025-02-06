@@ -20,6 +20,7 @@ class StudentProfile(models.Model):
     address_line_1 = models.CharField(max_length=100)
     address_line_2 = models.CharField(max_length=100, blank=True, null=True)
     city = models.CharField(max_length=100)
+    experience = models.PositiveIntegerField(default=0)
     state = models.CharField(max_length=100)
     postal_code = models.IntegerField(validators=[MaxValueValidator(999999)])
     country = models.CharField(max_length=100)

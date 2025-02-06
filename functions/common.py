@@ -627,6 +627,11 @@ def get_recruiter_profile_image(user):
     ).first()
     return photo.file.url if photo and photo.file else None
 
+def get_student_profile_image(user):
+    photo = user.job_seeker_upload_user_id.filter(
+        file_type=JOB_SEEKER_DOCUMENT_TYPES[2][0]
+    ).first()
+    return photo.file.url if photo and photo.file else None
 
 def get_job_seeker_profile_image(user):
     # Fetching with the foreign key related name
@@ -900,3 +905,20 @@ def get_industry_type(obj):
         return obj.user.fi_fk_user.get_industry_type_display()
     except Exception:
             return None
+        
+def get_all_applied_applicant_details(job_apply_model, student_profile_model, serializer_class, request):
+    try:
+        job_id = request.data.get('job_id')
+        applications = job_apply_model.objects.filter(job_id=job_id)
+        student_ids = applications.values_list('student_id', flat=True)
+        students = student_profile_model.objects.filter(user_id__in=student_ids)
+        serializer = serializer_class(students, many=True, context={'job_id': job_id})
+
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
