@@ -765,6 +765,7 @@ class AppliedApplicantSerializer(serializers.ModelSerializer):
     experience = serializers.IntegerField()
     profile_image = serializers.SerializerMethodField()
     application_status = serializers.SerializerMethodField()
+    application_id = serializers.SerializerMethodField()
 
     class Meta:
         model = StudentProfile
@@ -775,14 +776,21 @@ class AppliedApplicantSerializer(serializers.ModelSerializer):
             return get_job_seeker_profile_image(obj.user)
         except Exception:
             return None
-            
+
+    def get_application_id(self, obj):
+        try:
+            job_id = self.context.get('job_id')
+            application = obj.user.student_id_applied.get(job_id=job_id)
+            return application.id
+        except Exception:
+            return None
 
     def get_application_status(self, obj):
         try:
             job_id = self.context.get('job_id')
-            application = get_object_or_404(JobApply, job_id=job_id, student_id=obj.user.id)
+            application = obj.user.student_id_applied.get(job_id=job_id)
             return application.status
-        except Exception as e:
+        except Exception:
             return None
 
 

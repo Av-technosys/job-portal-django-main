@@ -905,15 +905,15 @@ def get_all_applied_applicant_details(job_apply_model, student_profile_model, se
     try:
         job_id = request.data.get('job_id')
         applications = job_apply_model.objects.filter(job_id=job_id)
-        student_ids = applications.values_list('student_id', flat=True)
+        student_ids = list(applications.values_list('student_id', flat=True))
         students = student_profile_model.objects.filter(user_id__in=student_ids)
         serializer = serializer_class(students, many=True, context={'job_id': job_id})
-
         return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
     except Exception as e:
         return ResponseHandler.error(
             RESPONSE_ERROR,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
 
 
