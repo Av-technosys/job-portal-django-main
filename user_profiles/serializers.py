@@ -17,9 +17,10 @@ from constants.user_profiles import (
 )
 from functions.profile import process_items
 from .models import *
-from functions.common import get_recruiter_profile_image, get_location_formatted, get_industry_type
+from functions.common import get_recruiter_profile_image, get_location_formatted, get_industry_type, get_job_seeker_profile_image
 from django.db import transaction
-
+from jobs.models import JobApply
+from django.shortcuts import get_object_or_404
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -756,4 +757,41 @@ class RecruiterDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganizationInfo
         fields = RECRUITER_DETAILS_FIELDS
+
+class AppliedApplicantSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name')
+    city = serializers.CharField()
+    country = serializers.CharField()
+    experience = serializers.IntegerField()
+    profile_image = serializers.SerializerMethodField()
+    application_status = serializers.SerializerMethodField()
+    application_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StudentProfile
+        fields = JOB_SEEKER_DETAILS_FIELDS
+
+    def get_profile_image(self, obj):
+        try:
+            return get_job_seeker_profile_image(obj.user)
+        except Exception:
+            return None
+
+    def get_application_id(self, obj):
+        try:
+            job_id = self.context.get('job_id')
+            application = obj.user.student_id_applied.get(job_id=job_id)
+            return application.id
+        except Exception:
+            return None
+
+    def get_application_status(self, obj):
+        try:
+            job_id = self.context.get('job_id')
+            application = obj.user.student_id_applied.get(job_id=job_id)
+            return application.status
+        except Exception:
+            return None
+
+
 
