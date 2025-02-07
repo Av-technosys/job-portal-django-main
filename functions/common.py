@@ -908,7 +908,14 @@ def get_all_applied_applicant_details(job_apply_model, student_profile_model, se
         student_ids = list(applications.values_list('student_id', flat=True))
         students = student_profile_model.objects.filter(user_id__in=student_ids)
         serializer = serializer_class(students, many=True, context={'job_id': job_id})
-        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+        page_obj, count, total_pages = paginator(students, request) 
+        response_data = {
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
+        }
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
     except Exception as e:
         return ResponseHandler.error(
             RESPONSE_ERROR,
