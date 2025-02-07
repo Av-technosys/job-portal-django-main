@@ -19,8 +19,6 @@ from functions.profile import process_items
 from .models import *
 from functions.common import get_recruiter_profile_image, get_location_formatted, get_industry_type, get_job_seeker_profile_image
 from django.db import transaction
-from jobs.models import JobApply
-from django.shortcuts import get_object_or_404
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -141,28 +139,6 @@ class UploadedFileJobSeekerSerializer(serializers.ModelSerializer):
         uploaded_file = JobSeekerUploadedFile(**validated_data)
         uploaded_file.save()
         return uploaded_file
-
-
-class CombineStudentProfileSerializer(serializers.ModelSerializer):
-    academic_qualifications = AcademicQualificationSerializer(
-        many=True, read_only=True, source="user.aq_fk_user"
-    )
-    work_experiences = WorkExperienceSerializer(
-        many=True, read_only=True, source="user.we_fk_user"
-    )
-    skill_sets = SkillSetSerializer(many=True, read_only=True, source="user.ss_fk_user")
-    certifications = CertificationsSerializer(
-        many=True, read_only=True, source="user.ces_fk_user"
-    )
-    projects = ProjectsSerializer(many=True, read_only=True, source="user.ps_fk_user")
-    salary = SalarySerializer(many=True, read_only=True, source="user.sy_fk_user")
-    uploaded_files = UploadedFileJobSeekerSerializer(
-        many=True, read_only=True, source="user.sml_js_fk_user"
-    )
-
-    class Meta:
-        model = StudentProfile
-        fields = STUDENT_PROFILE_COMBINED_FIELDS
 
 
 class StoreFCMTokenSerializer(serializers.Serializer):
@@ -793,5 +769,54 @@ class AppliedApplicantSerializer(serializers.ModelSerializer):
         except Exception:
             return None
 
+
+
+class CombineStudentProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True)
+    profile_image = serializers.SerializerMethodField()
+    academic_qualifications = serializers.SerializerMethodField()
+    work_experiences = serializers.SerializerMethodField()
+    skill_sets = serializers.SerializerMethodField()
+    certifications = serializers.SerializerMethodField()
+    projects = serializers.SerializerMethodField()
+    social_links = serializers.SerializerMethodField()
+
+    def get_academic_qualifications(self, obj):
+        aq = obj.user.aq_fk_user.first() 
+        return AcademicQualificationSerializer(aq).data if aq else {}
+
+    def get_work_experiences(self, obj):
+        we = obj.user.we_fk_user.first()
+        return WorkExperienceSerializer(we).data if we else {}
+
+    def get_skill_sets(self, obj):
+        ss = obj.user.ss_fk_user.first()
+        return SkillSetSerializer(ss).data if ss else {}
+
+    def get_certifications(self, obj):
+        ces = obj.user.ces_fk_user.first()
+        return CertificationsSerializer(ces).data if ces else {}
+
+    def get_projects(self, obj):
+        ps = obj.user.ps_fk_user.first()
+        return ProjectsSerializer(ps).data if ps else {}
+
+    def get_social_links(self, obj):
+        sml = obj.user.sml_js_fk_user.first()
+        return SocialLinkItemSerializer(sml).data if sml else {}
+    
+    def get_profile_image(self, obj):
+        try:
+            return get_job_seeker_profile_image(obj.user)
+        except Exception:
+            return None
+
+
+    class Meta:
+        model = StudentProfile
+
+        fields = COMBINE_STUDENT_PROFILE_FIELDS
 
 
