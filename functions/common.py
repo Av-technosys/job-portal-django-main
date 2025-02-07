@@ -627,11 +627,6 @@ def get_recruiter_profile_image(user):
     ).first()
     return photo.file.url if photo and photo.file else None
 
-def get_student_profile_image(user):
-    photo = user.job_seeker_upload_user_id.filter(
-        file_type=JOB_SEEKER_DOCUMENT_TYPES[2][0]
-    ).first()
-    return photo.file.url if photo and photo.file else None
 
 def get_job_seeker_profile_image(user):
     # Fetching with the foreign key related name

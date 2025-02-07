@@ -248,7 +248,7 @@ def upload_document(request):
 def get_all_recruiter(request):
     return get_all_recruiter_details(OrganizationInfo, RecruiterDetailsSerializer, request)
 
-@api_view(["POST"])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsRecruiter])
 def get_all_applied_applicant(request):
     return get_all_applied_applicant_details(JobApply, StudentProfile, AppliedApplicantSerializer, request)

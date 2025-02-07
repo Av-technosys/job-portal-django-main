@@ -17,7 +17,7 @@ from constants.user_profiles import (
 )
 from functions.profile import process_items
 from .models import *
-from functions.common import get_recruiter_profile_image, get_location_formatted, get_industry_type, get_student_profile_image
+from functions.common import get_recruiter_profile_image, get_location_formatted, get_industry_type, get_job_seeker_profile_image
 from django.db import transaction
 from jobs.models import JobApply
 from django.shortcuts import get_object_or_404
@@ -760,7 +760,6 @@ class RecruiterDetailsSerializer(serializers.ModelSerializer):
 
 class AppliedApplicantSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name')
-    last_name = serializers.CharField(source='user.last_name')
     city = serializers.CharField()
     country = serializers.CharField()
     experience = serializers.IntegerField()
@@ -773,7 +772,7 @@ class AppliedApplicantSerializer(serializers.ModelSerializer):
 
     def get_profile_image(self, obj):
         try:
-            return get_student_profile_image(obj.user)
+            return get_job_seeker_profile_image(obj.user)
         except Exception:
             return None
             
