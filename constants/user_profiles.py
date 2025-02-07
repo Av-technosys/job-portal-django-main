@@ -121,11 +121,27 @@ COMPANY_PROFILE_FIELDS = [
     "company_name",
 ]
 
-COMBINE_STUDENT_PROFILE_FIELDS = [
-            "first_name", "email", "phone_number", "profile_image",
-            "academic_qualifications", "work_experiences", "skill_sets",
-            "certifications", "projects",  "social_links"
-        ]
+STUDENT_PROFILE_COMBINED_FIELDS = [
+    "id",
+    "user",
+    "date_of_birth",
+    "gender",
+    "address_line_1",
+    "address_line_2",
+    "city",
+    "state",
+    "postal_code",
+    "country",
+    "created_date",
+    "updated_date",
+    "academic_qualifications",
+    "work_experiences",
+    "skill_sets",
+    "certifications",
+    "projects",
+    "salary",
+    "uploaded_files",
+]
 
 
 LIST_CANDIDATE_FEILDS = [

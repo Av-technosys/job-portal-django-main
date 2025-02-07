@@ -351,7 +351,7 @@ def get_data_from_id_and_serialize(model, serializer_class, obj_id):
         return ResponseHandler.success(serializer.data)
     except model.DoesNotExist:
         return ResponseHandler.error(
-            f"{model.__name__} {ERROR_NOT_FOUND}"
+            {"error": f"{model.__name__} not found"}, status=status.HTTP_404_NOT_FOUND
         )
 
 

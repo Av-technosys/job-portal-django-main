@@ -252,9 +252,3 @@ def get_all_recruiter(request):
 @permission_classes([IsAuthenticated, IsRecruiter])
 def get_all_applied_applicant(request):
     return get_all_applied_applicant_details(JobApply, StudentProfile, AppliedApplicantSerializer, request)
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated, IsRecruiter])
-def get_applicant_details(request, applicant_id):
-    return get_data_from_id_and_serialize(StudentProfile, CombineStudentProfileSerializer, applicant_id)
-
