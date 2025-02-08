@@ -35,4 +35,5 @@ urlpatterns = [
     path("list_recruiters/", get_recruiter, name="list_recruiter"),
     path("list_all_recruiter/", get_all_recruiter, name="list_all_recruiter"),
     path("list_all_applied_applicant/", get_all_applied_applicant, name="list_all_applied_applicant"),
+    path("applicant_details/<int:applicant_id>/", get_applicant_details, name="get_applicant_details"),
 ]
