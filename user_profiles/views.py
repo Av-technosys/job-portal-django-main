@@ -224,7 +224,7 @@ def get_recruiter(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
 def get_recruiter_details(request, recruiter_id):
-    return get_data_from_id_and_serialize(
+    return get_data_from_user_id_and_serialize(
         OrganizationInfo, CombinedCompanyDetailSerializer, recruiter_id
     )
 
