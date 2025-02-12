@@ -351,9 +351,18 @@ def get_data_from_id_and_serialize(model, serializer_class, obj_id):
         return ResponseHandler.success(serializer.data)
     except model.DoesNotExist:
         return ResponseHandler.error(
-            {"error": f"{model.__name__} not found"}, status=status.HTTP_404_NOT_FOUND
+            {"error": f"{model.__name__} not found"}
         )
 
+def get_data_from_user_id_and_serialize(model, serializer_class, obj_id):
+    try:
+        obj = model.objects.get(user_id=obj_id)
+        serializer = serializer_class(obj)
+        return ResponseHandler.success(serializer.data)
+    except model.DoesNotExist:
+        return ResponseHandler.error(
+            {"error": f"{model.__name__} not found"}
+        )
 
 def filters(request):
     q_filters = Q()
