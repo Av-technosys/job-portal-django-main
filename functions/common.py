@@ -13,6 +13,7 @@ from datetime import datetime
 from datetime import timedelta
 import time
 from job_portal_django.settings import razorpay_client
+from django.db.models import F
 
 # from weasyprint import HTML
 from io import BytesIO
@@ -886,9 +887,17 @@ def job_status_update(model, serializer_class, request):
 
 def get_all_recruiter_details(model, serializer_class, request):
     try:
-        recruiter_details = model.objects.all()
+        recruiter_details = model.objects.select_related('user').all()
+        sort_fields = request.GET.getlist("sort[]", ["created_date"])
+
+        recruiter_details = recruiter_details.annotate(
+            first_name=F('user__first_name')
+        )
+
+        recruiter_details = recruiter_details.order_by(*sort_fields)
+
         page_obj, count, total_pages = paginator(recruiter_details, request)
-        serializer = serializer_class(page_obj, many=True)
+        serializer = serializer_class(recruiter_details, many=True)
         response_data = {
             "total_count": count,
             "total_pages": total_pages,
