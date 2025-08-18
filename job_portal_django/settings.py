@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "storages",
     "jobs",
     "payment",
+    "assessment",
 ]
 
 MIDDLEWARE = [

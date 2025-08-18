@@ -249,7 +249,14 @@ def get_all_recruiter(request):
     return get_all_recruiter_details(OrganizationInfo, RecruiterDetailsSerializer, request)
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsRecruiter])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def get_all_job_seeker(request):
+    return get_all_job_seeker_details(StudentProfile, JobSeekerDetailsSerializer, request)
+    # return get_all_recruiter_details(StudentProfile, StudentProfileSerializer, request)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_all_applied_applicant(request):
     return get_all_applied_applicant_details(JobApply, StudentProfile, AppliedApplicantSerializer, request)
 

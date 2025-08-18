@@ -183,7 +183,7 @@ def get_handle(model, serializer_class, request):
 
 def delete_handle(model, request):
     instance_id = request.data.get("id")
-    instances = model.objects.filter(id=instance_id, user=request.user)
+    instances = model.objects.filter(id=instance_id)
     if instances.exists():
         instances.delete()
         return ResponseHandler.success(
@@ -912,6 +912,34 @@ def get_all_recruiter_details(model, serializer_class, request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+def get_all_job_seeker_details(model, serializer_class, request):
+    try:
+        job_seeker_details = model.objects.select_related('user').all()
+        sort_fields = request.GET.getlist("sort[]", ["created_date"])
+
+        # job_seeker_details = job_seeker_details.annotate(
+        #     first_name=F('user__first_name')
+        # )
+
+        job_seeker_details = job_seeker_details.order_by(*sort_fields)
+
+        page_obj, count, total_pages = paginator(job_seeker_details, request)
+        serializer = serializer_class(job_seeker_details, many=True)
+        print("job_seeker_details: ",serializer)
+
+        response_data = {
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
+        }
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"{e}")
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 def get_industry_type(obj):
     try:
@@ -942,3 +970,89 @@ def get_all_applied_applicant_details(job_apply_model, student_profile_model, se
 
 
 
+
+
+def create_new_handler(serializer_class, request):
+    try: 
+        serializer = serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return ResponseHandler.success(serializer.data, status_code=status.HTTP_201_CREATED)
+        return ResponseHandler.error(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    
+
+def list_all_items_handler(model, serializer_class, request):
+    try: 
+        items = model.objects.all() 
+        serializer = serializer_class(items, many=True) 
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+def get_item_by_id_handler(model,subject_id, serializer_class, request):
+    try: 
+        instance = model.objects.get(id=subject_id)
+        if not instance:
+            return ResponseHandler.error(
+                RESPONSE_ERROR,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = serializer_class(instance)
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+def delete_item_by_id_handler(model, request):
+    try:
+        id = request.data.get("id")
+        instance = model.objects.get(id=id)
+        instance.delete()
+        return ResponseHandler.success([], status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+def update_item_by_id_handler(model, serializer_class, request):
+    try:
+        id = request.data.get("id") 
+        instance = model.objects.filter(id=id).first() 
+        serializer = serializer_class(instance, data=request.data, partial=True) 
+        if serializer.is_valid():
+            serializer.save()
+            return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+        
+        return ResponseHandler.error(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+def get_question_by_subject_id_handler(QuestionModel, QuestionsSerializer, subject_id, request):
+    try:
+        questions = QuestionModel.objects.filter(subject_id=subject_id)
+        serializer = QuestionsSerializer(questions, many=True)
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+# def get_test_by_subject_id_handler():
+#     pass

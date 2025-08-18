@@ -23,6 +23,7 @@ from functions.common import (
     serializer_handle_customize_response,
     serializer_handle_customize_response_only_validate,
     get_customize_handler,
+    delete_handle
 )
 
 
@@ -35,6 +36,10 @@ def register_user(request):
 def sso_user(request):
     return serializer_handle_customize_response(SSOUserSerializer, request)
 
+
+@api_view(["POST"])
+def remove_user(request):
+    return delete_handle(User, request)
 
 @api_view(["POST"])
 def user_login(request):

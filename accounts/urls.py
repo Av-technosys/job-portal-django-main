@@ -10,6 +10,7 @@ from .views import (
     verify_otp,
     verify_reset_password,
     sso_user,
+    remove_user,
 )
 
 urlpatterns = [
@@ -35,4 +36,5 @@ urlpatterns = [
     path("details/", account_details, name="account_details"),
     path("notifications/", list_notifications, name="list_notification"),
     path("sso/", sso_user, name="sso"),
+    path("remove_user/", remove_user, name="remove_user")
 ]

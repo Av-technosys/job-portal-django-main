@@ -717,6 +717,8 @@ class RecruiterDetailsSerializer(serializers.ModelSerializer):
     industry_type = serializers.SerializerMethodField()
     first_name = serializers.CharField(source='user.first_name')
     profile_image = serializers.SerializerMethodField()
+    user = RecruiterProfileSerializer(read_only=True)
+
 
     def get_industry_type(self, obj):
         try:
@@ -733,6 +735,25 @@ class RecruiterDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganizationInfo
         fields = RECRUITER_DETAILS_FIELDS
+
+class JobSeekerDetailsSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name')
+    profile_image = serializers.SerializerMethodField()
+    email = serializers.EmailField(source='user.email', read_only=True)
+    is_active = serializers.BooleanField(source='user.is_active', read_only=True)
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True)
+    country_code = serializers.CharField(source='user.country_code', read_only=True)
+    # gender = serializers.CharField(source='user.gender')
+
+    def get_profile_image(self, obj):
+        try:
+            return get_job_seeker_profile_image(obj.user)
+        except Exception:
+            return None
+
+    class Meta:
+        model = StudentProfile
+        fields = JOB_SEEKER_DETAILS_FIELDS
 
 class AppliedApplicantSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name')
