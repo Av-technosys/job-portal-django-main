@@ -1056,3 +1056,114 @@ def get_question_by_subject_id_handler(QuestionModel, QuestionsSerializer, subje
     
 # def get_test_by_subject_id_handler():
 #     pass
+
+
+def upload_question_image_handler(model, serializer_class, request):
+    # Handler for uploading question images
+    if request.method == "POST":
+        # Ensure we're using multipart parser for file uploads
+        if request.content_type and 'multipart/form-data' not in request.content_type:
+            return Response(
+                {"error": "Content type must be multipart/form-data"}, 
+                status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+            )
+        
+        # Debug the request data
+        print("Request data:", request.data)
+        print("Request FILES:", request.FILES)
+            
+        try:
+            # Get question_id from form data, query params, or check if any key in request.data is a valid question_id
+            question_id = request.data.get("question_id") or request.query_params.get("question_id")
+            
+            # If question_id is not found in the standard places, check if any key in request.data is a valid question_id
+            if not question_id and request.data:
+                for key in request.data.keys():
+                    if key.isdigit():
+                        question_id = key
+                        break
+            
+            if not question_id:
+                return Response(
+                    {"error": "question_id is required in form data, query parameters, or as a key"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            question = model.objects.get(id=question_id)
+
+            # Check if there are any files in the request
+            if request.FILES:
+                # Get the first file regardless of the key name
+                file_key = list(request.FILES.keys())[0]
+                new_file = request.FILES[file_key]
+                
+                old_file = question.question_image
+                if old_file:
+                    old_file.delete(save=False)
+                    
+                question.question_image = new_file
+                question.save(update_fields=['question_image'])
+                
+                return Response(
+                    {"message": "Image uploaded successfully", "question_id": question_id},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {"error": "No file provided in the request"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except model.DoesNotExist:
+            return ResponseHandler.error(
+                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            print("Error:", str(e))
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    elif request.method == "DELETE":
+        try:
+            # Get question_id from form data, query params, or check if any key in request.data is a valid question_id
+            question_id = request.data.get("question_id") or request.query_params.get("question_id")
+            
+            # If question_id is not found in the standard places, check if any key in request.data is a valid question_id
+            if not question_id and request.data:
+                for key in request.data.keys():
+                    if key.isdigit():
+                        question_id = key
+                        break
+                        
+            if not question_id:
+                return Response(
+                    {"error": "question_id is required in form data, query parameters, or as a key"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            question = model.objects.get(id=question_id)
+            
+            if question.question_image:
+                question.question_image.delete(save=False)
+                question.question_image = None
+                question.save(update_fields=['question_image'])
+                return Response(
+                    {"message": "Image removed successfully", "question_id": question_id},
+                    status=status.HTTP_200_OK
+                )
+            return Response(
+                {"error": "No image found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except model.DoesNotExist:
+            return ResponseHandler.error(
+                ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            print("Error:", str(e))
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )

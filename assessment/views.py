@@ -1,8 +1,9 @@
 from django.shortcuts import render
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import *
-from functions.common import create_new_handler, list_all_items_handler, delete_item_by_id_handler, get_item_by_id_handler, update_item_by_id_handler,get_question_by_subject_id_handler
+from functions.common import create_new_handler, list_all_items_handler, delete_item_by_id_handler, get_item_by_id_handler, update_item_by_id_handler, get_question_by_subject_id_handler, upload_question_image_handler
 # , get_test_by_subject_id_handler
 
 # Create your views here.
@@ -74,3 +75,9 @@ def delete_question(request):
 @permission_classes([IsAuthenticated])
 def update_question(request):
     return update_item_by_id_handler(Question, QuestionsSerializer, request)
+
+@api_view(["POST", "DELETE"])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
+def upload_question_image(request):
+    return upload_question_image_handler(Question, QuestionsSerializer, request)

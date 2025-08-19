@@ -18,6 +18,7 @@ urlpatterns = [
 
         path("get_question_by_id/<int:item_id>/",get_question_by_id, name="get_question_by_id"),
         path("create_question/", create_question, name="create_question"),
+        path("upload_question_image/", upload_question_image, name="upload_question_image"),
         path("list_all_questions/", list_all_questions, name="list_all_questions"), 
         path("get_question_by_subject_id/<int:subject_id>/", get_question_by_subject_id, name="get_question_by_subject_id"), 
         # path("get_test_by_subject_id/<int:subject_id>/", get_test_by_subject_id, name="get_test_by_subject_id"), 
