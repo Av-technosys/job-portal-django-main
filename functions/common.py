@@ -997,9 +997,9 @@ def list_all_items_handler(model, serializer_class, request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-def get_item_by_id_handler(model,subject_id, serializer_class, request):
+def get_item_by_id_handler(model,item_id, serializer_class, request):
     try: 
-        instance = model.objects.get(id=subject_id)
+        instance = model.objects.get(id=item_id)
         if not instance:
             return ResponseHandler.error(
                 RESPONSE_ERROR,
@@ -1054,5 +1054,190 @@ def get_question_by_subject_id_handler(QuestionModel, QuestionsSerializer, subje
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-# def get_test_by_subject_id_handler():
-#     pass
+
+def create_question_handler(questions_serializer, request):
+    try:
+        data = request.data
+        is_many = isinstance(data, list)
+
+        serializer = questions_serializer(data=data, many=is_many)
+
+        if serializer.is_valid():
+            serializer.save()
+            return ResponseHandler.success(
+                serializer.data, 
+                status_code=status.HTTP_201_CREATED
+            )
+
+        return ResponseHandler.error(
+            serializer.errors, 
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    except Exception as e: 
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+def get_test_by_subject_id_handler(QuestionModel, SubjectModel, QuestionsSerializer, subject_id, request):
+    try:
+        # 1. Fetch subject
+        subject = get_object_or_404(SubjectModel, id=subject_id) 
+
+        # 2. Prepare base response (metadata)
+        test_data = {
+            "exam_name": subject.exam_name,
+            "section_name": subject.section_name,
+            "duration_minutes": subject.duration_minutes,
+            "easy_question_count": subject.easy_question_count,
+            "medium_question_count": subject.medium_question_count,
+            "difficult_question_count": subject.difficult_question_count,
+            "marks_correct": float(subject.marks_correct),
+            "marks_incorrect": float(subject.marks_incorrect),
+            "marks_unattempted": float(subject.marks_unattempted),
+        }
+
+        # 3. Collect random questions by difficulty_level
+        def sample_questions(level: int, count: int):
+            qs = QuestionModel.objects.filter(subject_id=subject_id, difficulty_level=level)
+            qs_ids = list(qs.values_list("id", flat=True))
+
+            if not qs_ids:
+                return QuestionModel.objects.none()
+
+            if count > len(qs_ids):
+                count = len(qs_ids)
+
+            selected_ids = random.sample(qs_ids, count)
+            return QuestionModel.objects.filter(id__in=selected_ids)
+
+        easy_qs = sample_questions(1, subject.easy_question_count)
+        medium_qs = sample_questions(2, subject.medium_question_count)
+        difficult_qs = sample_questions(3, subject.difficult_question_count)
+
+        # 4. Serialize
+        all_questions = easy_qs | medium_qs | difficult_qs
+        serialized_questions = QuestionsSerializer(all_questions, many=True).data
+
+        # 5. Add to response
+        test_data["questions"] = serialized_questions
+
+        return ResponseHandler.success(test_data, status_code=status.HTTP_200_OK)
+
+    except Exception as e:
+        print("Error in get_test_by_subject_id_handler:", str(e))
+        return ResponseHandler.error(RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+def create_assesment_session(payment_id, user_id, assesment_session_serializer):
+    try:
+        data = {"payment_id": payment_id, "user": user_id, "overall_score": 0, "complete_percentage": 0.00, "status": "IN_PROGRESS", "is_test_end": False}
+
+        print("Data: ", data)
+
+        serializer = assesment_session_serializer(data=data)
+
+        if serializer.is_valid():
+            serializer.save() 
+            return {
+                "success": True,
+                "data": serializer.data
+            }
+ 
+        return {
+            "success": False,
+            "data": serializer.errors
+        }
+
+    except Exception as e: 
+        return {
+            "success": False,
+            "data": RESPONSE_ERROR
+        }
+
+
+def create_payment_handler(payment_serializer, assesment_session_serializer, request):
+    try:
+        data = request.data
+        serializer = payment_serializer(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            if serializer.data["status"] == "SUCCESS":
+                create_assesment_session(serializer.data["id"], request.user.id, assesment_session_serializer)
+    
+            return ResponseHandler.success(
+                serializer.data, 
+                status_code=status.HTTP_201_CREATED
+            )
+
+        return ResponseHandler.error(
+            serializer.errors, 
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    except Exception as e: 
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+def update_payment_by_id_handler(model, serializer_class, assesment_session_serializer, request):
+    try:
+        id = request.data.get("id") 
+        instance = model.objects.filter(id=id).first() 
+        serializer = serializer_class(instance, data=request.data, partial=True)
+
+        print("Status: ", request.data.get("status"))
+        if(request.data.get("status") == "SUCCESS"):
+            print("Request got inside success")
+            create_assesment_session(instance.id, request.user.id, assesment_session_serializer)
+
+        if serializer.is_valid():
+            serializer.save()
+            return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+        
+        return ResponseHandler.error(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+def get_payment_by_userid_handler(PaymentModel, PaymentSerializer, user_id, request):
+    try:
+        payments = PaymentModel.objects.filter(user_id=user_id)
+        serializer = PaymentSerializer(payments, many=True)
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+def get_payment_by_id_handler(PaymentModel, PaymentSerializer, item_id, request):
+    try:
+        instance = PaymentModel.objects.get(id=item_id)
+        if not instance:
+            return ResponseHandler.error(
+                RESPONSE_ERROR,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = PaymentSerializer(instance)
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+
+
+def get_assesment_by_id_handler():
+    pass

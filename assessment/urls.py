@@ -5,8 +5,7 @@ from .views import *
 
 urlpatterns = [
     
-        # path related to subjects
-
+        # Subjects
         path("create_Subject/", create_Subject, name="create_Subject"),
         path("list_all_subjects/", list_all_subjects, name="list_all_subjects"),
         path("get_subject_by_id/<int:item_id>/",get_subject_by_id, name="get_subject_by_id"),
@@ -14,13 +13,23 @@ urlpatterns = [
         path("delete_subject/", delete_subject, name="delete_subject"),
 
 
-        # path related to questions
-
+        # Questions
         path("get_question_by_id/<int:item_id>/",get_question_by_id, name="get_question_by_id"),
         path("create_question/", create_question, name="create_question"),
         path("list_all_questions/", list_all_questions, name="list_all_questions"), 
         path("get_question_by_subject_id/<int:subject_id>/", get_question_by_subject_id, name="get_question_by_subject_id"), 
-        # path("get_test_by_subject_id/<int:subject_id>/", get_test_by_subject_id, name="get_test_by_subject_id"), 
+        path("get_test_by_subject_id/<int:subject_id>/", get_test_by_subject_id, name="get_test_by_subject_id"),
         path("update_question/", update_question, name="update_question"),
         path("delete_question/", delete_question, name="delete_question"),
+
+        # Payments
+        path("create_payment/", create_payment, name="create_payment"),
+        path("get_payment_by_userid/<int:user_id>/", get_payment_by_userid, name="get_payment_by_userid"),
+        path("get_payment_by_id/<int:item_id>/", get_payment_by_id, name="get_payment_by_userid"),
+        path("update_payment_by_id/", update_payment_by_id, name="get_payment_by_userid"),
+
+
+        # Assesment Section
+        path("get_assesment_by_id/<int:item_id>/", get_assesment_by_id, name="get_assesment_by_id"),
+        path("update_assesment_by_id/", update_assesment_by_id, name="update_assesment_by_id"),
 ]
