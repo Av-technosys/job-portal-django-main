@@ -33,10 +33,12 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     "aws-0-ap-southeast-1.pooler.supabase.com",
+    "job-portal-django-main.onrender.com"
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "job-portal-django-main.onrender.com",
     "https://job-portal-next-ten.vercel.app",
     "https://job-portal-django.vercel.app",
 ]
