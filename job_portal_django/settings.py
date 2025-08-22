@@ -41,6 +41,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://job-portal-django-main.onrender.com",
     "https://job-portal-next-ten.vercel.app",
     "https://job-portal-django.vercel.app",
+    "https://job-portal-nextjs.vercel.app"
 ]
 
 cred = credentials.Certificate("./job_portal_django/account-key.json")

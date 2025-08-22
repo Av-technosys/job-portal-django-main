@@ -380,9 +380,13 @@ def filters(request):
         elif "list_jobs" in request.path:
             q_filters = Q(title__icontains=filter_result)
         elif "list_recruiters" in request.path:
-            q_filters = Q(company_name__icontains=filter_result) | Q(
+            q_filters = Q(first_name=filter_result) | Q(
                 company_description__icontains=filter_result
             )
+        elif "list_all_recruiter" in request.path:
+            q_filters = Q(user__first_name=filter_result)
+        elif "list_all_job_seeker" in request.path:
+            q_filters = Q(user__first_name=filter_result)
 
     filter_mappings = {
         "education": "user__academicqualification__specialization__in",
@@ -416,7 +420,6 @@ def exlcude(request, instances):
 
 def filter_search_handler(model_class, serializer_class, request):
     q_filters, filter_kwargs = filters(request)
-
     owner_filters = {}
     if request.data.get("owner"):
         owner_filters["user_id__in"] = request.data.get("owner")
@@ -887,17 +890,30 @@ def job_status_update(model, serializer_class, request):
 
 def get_all_recruiter_details(model, serializer_class, request):
     try:
-        recruiter_details = model.objects.select_related('user').all()
+        # 🔹 Apply filters and search
+        q_filters, filter_kwargs = filters(request) 
+
+        recruiter_details = model.objects.select_related("user")
+
+        if q_filters or filter_kwargs:
+            recruiter_details = recruiter_details.filter(q_filters, **filter_kwargs) 
+
+        if not recruiter_details.exists():
+            return ResponseHandler.error(  # ✅ added return
+                message=ERROR_NOT_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        # 🔹 Sorting
         sort_fields = request.GET.getlist("sort[]", ["created_date"])
-
         recruiter_details = recruiter_details.annotate(
-            first_name=F('user__first_name')
-        )
+            first_name=F("user__first_name")
+        ).order_by(*sort_fields)
 
-        recruiter_details = recruiter_details.order_by(*sort_fields)
-
+        # 🔹 Pagination
         page_obj, count, total_pages = paginator(recruiter_details, request)
         serializer = serializer_class(page_obj, many=True)
+
         response_data = {
             "total_count": count,
             "total_pages": total_pages,
@@ -905,8 +921,9 @@ def get_all_recruiter_details(model, serializer_class, request):
             "data": serializer.data,
         }
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+
     except Exception as e:
-        logger.error(f"{e}")
+        logger.error(f"Error in get_all_recruiter_details: {e}")
         return ResponseHandler.error(
             RESPONSE_ERROR,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -914,7 +931,20 @@ def get_all_recruiter_details(model, serializer_class, request):
 
 def get_all_job_seeker_details(model, serializer_class, request):
     try:
-        job_seeker_details = model.objects.select_related('user').all()
+        # 🔹 Apply filters and search
+        q_filters, filter_kwargs = filters(request) 
+
+        job_seeker_details = model.objects.select_related('user')
+
+        if q_filters or filter_kwargs:
+            job_seeker_details = job_seeker_details.filter(q_filters, **filter_kwargs) 
+
+        if not job_seeker_details.exists():
+            return ResponseHandler.error(  # ✅ added return
+                message=ERROR_NOT_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
         sort_fields = request.GET.getlist("sort[]", ["created_date"])
 
         # job_seeker_details = job_seeker_details.annotate(
@@ -1158,7 +1188,6 @@ def create_assesment_session(payment_id, user_id, assesment_session_serializer):
     try:
         data = {"payment_id": payment_id, "user": user_id, "overall_score": 0, "complete_percentage": 0.00, "status": "IN_PROGRESS", "is_test_end": False}
 
-        print("Data: ", data)
 
         serializer = assesment_session_serializer(data=data)
 
