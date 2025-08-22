@@ -897,7 +897,7 @@ def get_all_recruiter_details(model, serializer_class, request):
         recruiter_details = recruiter_details.order_by(*sort_fields)
 
         page_obj, count, total_pages = paginator(recruiter_details, request)
-        serializer = serializer_class(recruiter_details, many=True)
+        serializer = serializer_class(page_obj, many=True)
         response_data = {
             "total_count": count,
             "total_pages": total_pages,
@@ -924,8 +924,7 @@ def get_all_job_seeker_details(model, serializer_class, request):
         job_seeker_details = job_seeker_details.order_by(*sort_fields)
 
         page_obj, count, total_pages = paginator(job_seeker_details, request)
-        serializer = serializer_class(job_seeker_details, many=True)
-        print("job_seeker_details: ",serializer)
+        serializer = serializer_class(page_obj, many=True) 
 
         response_data = {
             "total_count": count,
@@ -1046,12 +1045,35 @@ def update_item_by_id_handler(model, serializer_class, request):
 def get_question_by_subject_id_handler(QuestionModel, QuestionsSerializer, subject_id, request):
     try:
         questions = QuestionModel.objects.filter(subject_id=subject_id)
-        serializer = QuestionsSerializer(questions, many=True)
-        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+        sort_fields = request.GET.getlist("sort[]", ["created_date"])
+
+        mapped_sort_fields = []
+        for field in sort_fields:
+            if field.lstrip("-") == "created_date":  # check without leading '-'
+                # preserve the '-' if present
+                mapped_sort_fields.append(field.replace("created_date", "created_at"))
+            else:
+                mapped_sort_fields.append(field)
+
+
+        questions = questions.order_by(*mapped_sort_fields)
+
+        page_obj, count, total_pages = paginator(questions, request)
+        serializer = QuestionsSerializer(page_obj, many=True)
+
+        response_data = {
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
+        }
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+    
     except Exception as e:
+        logger.error(f"{e}")
         return ResponseHandler.error(
             RESPONSE_ERROR,
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
     
 
@@ -1239,5 +1261,3 @@ def get_payment_by_id_handler(PaymentModel, PaymentSerializer, item_id, request)
     
 
 
-def get_assesment_by_id_handler():
-    pass

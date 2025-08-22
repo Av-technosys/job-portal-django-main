@@ -35,6 +35,8 @@ urlpatterns = [
     path("list_recruiters/", get_recruiter, name="list_recruiter"),
     path("list_all_recruiter/", get_all_recruiter, name="list_all_recruiter"),
     path("list_all_job_seeker/", get_all_job_seeker, name="list_all_job_seeker"),
+    path("remove_job_seeker/", remove_job_seeker, name="remove_job_seeker"),
+    path("remove_recruiter/", remove_recruiter, name="remove_recruiter"),
     path("list_all_applied_applicant/", get_all_applied_applicant, name="list_all_applied_applicant"),
     path("applicant_details/<int:applicant_id>/", get_applicant_details, name="get_applicant_details"),
 ]

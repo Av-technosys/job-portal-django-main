@@ -10,6 +10,8 @@ class Subject(models.Model):
     medium_question_count = models.PositiveIntegerField(default=0)
     difficult_question_count = models.PositiveIntegerField(default=0)
 
+    is_paid = models.BooleanField(default=True)
+
     marks_correct = models.DecimalField(max_digits=5, decimal_places=2, default=1.0)
     marks_incorrect = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     marks_unattempted = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)

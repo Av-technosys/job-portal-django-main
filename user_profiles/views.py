@@ -255,6 +255,17 @@ def get_all_job_seeker(request):
     # return get_all_recruiter_details(StudentProfile, StudentProfileSerializer, request)
 
 
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def remove_job_seeker(request):
+    return delete_handle(StudentProfile, request)
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def remove_recruiter(request):
+    return delete_handle(OrganizationInfo, request)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_applied_applicant(request):
