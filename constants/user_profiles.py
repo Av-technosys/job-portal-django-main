@@ -349,7 +349,7 @@ RECRUITER_SOCIAL_LINKS = ["platform", "url", "id"]
 JOB_SEEKER_SOCIAL_LINKS = ["platform", "url", "id"]
 
 
-RECRUITER_DETAILS_FIELDS = ['first_name', 'industry_type', 'city', 'state', 'country', 'profile_image', 'user']
+RECRUITER_DETAILS_FIELDS = ['id','first_name', 'industry_type', 'city', 'state', 'country', 'profile_image', 'user']
 
 # JOB_SEEKER_DETAILS_FIELDS = ["first_name", "profile_image", "city", "country", "id", "application_status", "experience", "application_id", 'user']
 JOB_SEEKER_DETAILS_FIELDS = ["id","first_name", "email", 'gender', "date_of_birth","profile_image", "city", "country",  "experience", 'user', 'is_active', 'phone_number', 'country_code']
