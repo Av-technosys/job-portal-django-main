@@ -163,6 +163,13 @@ def get_customize_handler(model, serializer_class, pk, request):
             ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
         )
 
+def get_admin_meta_details_handler(organizationInfoModel, studentProfileModle, assessmentModel, request):
+    data = {
+        "recruiter_count": organizationInfoModel.objects.count(),
+        "job_seeker_count": studentProfileModle.objects.count(),
+        "assessment_count": assessmentModel.objects.count(),
+    }
+    return ResponseHandler.success(data, status_code=status.HTTP_200_OK)
 
 def get_handle_profile(model, serializer_class, request):
     try:
@@ -947,9 +954,9 @@ def get_all_job_seeker_details(model, serializer_class, request):
 
         sort_fields = request.GET.getlist("sort[]", ["created_date"])
 
-        # job_seeker_details = job_seeker_details.annotate(
-        #     first_name=F('user__first_name')
-        # )
+        job_seeker_details = job_seeker_details.annotate(
+            first_name=F('user__first_name')
+        )
 
         job_seeker_details = job_seeker_details.order_by(*sort_fields)
 

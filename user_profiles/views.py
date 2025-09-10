@@ -7,7 +7,14 @@ from handlers.common import request_handler
 from rest_framework.permissions import IsAuthenticated
 from handlers.permissions import IsRecruiter, IsJobSeeker
 from jobs.models import JobApply
-from jobs.serializers import JobApplySerializer
+from jobs.serializers import JobApplySerializer 
+from assessment.models import AssessmentSession 
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_admin_meta_details(request): 
+    return get_admin_meta_details_handler(OrganizationInfo, StudentProfile, AssessmentSession, request)
 
 
 @api_view(["GET", "POST"])
