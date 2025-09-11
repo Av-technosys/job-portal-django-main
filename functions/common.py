@@ -391,9 +391,9 @@ def filters(request):
                 company_description__icontains=filter_result
             )
         elif "list_all_recruiter" in request.path:
-            q_filters = Q(user__first_name=filter_result)
+            q_filters = Q(user__first_name__icontains=filter_result)
         elif "list_all_job_seeker" in request.path:
-            q_filters = Q(user__first_name=filter_result)
+            q_filters = Q(user__first_name__icontains=filter_result)
 
     filter_mappings = {
         "education": "user__academicqualification__specialization__in",
@@ -899,7 +899,7 @@ def get_all_recruiter_details(model, serializer_class, request):
     try:
         # 🔹 Apply filters and search
         q_filters, filter_kwargs = filters(request) 
-
+        print("q_filters, filter_kwargs: ",q_filters, filter_kwargs)
         recruiter_details = model.objects.select_related("user")
 
         if q_filters or filter_kwargs:
