@@ -21,13 +21,13 @@ def get_admin_meta_details(request):
 @permission_classes([IsAuthenticated])
 def job_seeker_details(request, job_seeker_id): 
     return job_seeker_details_handler(
-        User, JobSeekerDetailsSerializer , request, job_seeker_id
+        User, JobSeekerDetailsAdminSerializer , request, job_seeker_id
     ) 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def recruiter_details(request, recruiter_id): 
     return job_seeker_details_handler(
-        User, RecruiterDetailsSerializer , request, recruiter_id
+        User, RecruiterDetailsAdminSerializer , request, recruiter_id
     ) 
 
 @api_view(["GET", "POST"])

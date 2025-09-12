@@ -846,7 +846,7 @@ class CombineStudentProfileSerializer(serializers.ModelSerializer):
 
 
 
-class JobSeekerDetailsSerializer(serializers.ModelSerializer):
+class JobSeekerDetailsAdminSerializer(serializers.ModelSerializer):
     personal_profile = StudentProfileSerializer(source="sp_fk_user", read_only=True)
     social_profile = SocialLinkItemJSSerializer(source='sml_js_fk_user', many=True, read_only=True)
     academic_profile = AcademicQualificationSerializer(source="aq_fk_user",read_only=True, many=True)
@@ -886,7 +886,7 @@ class JobSeekerDetailsSerializer(serializers.ModelSerializer):
 
 
 
-class RecruiterDetailsSerializer(serializers.ModelSerializer):
+class RecruiterDetailsAdminSerializer(serializers.ModelSerializer):
     organization_info = OrganizationInfoSerializer(source='oi_fk_user', read_only=True)
     social_profile = SocialLinkItemSerializer(source='sml_r_fk_user', many=True, read_only=True)
     founding_info = FoundingInfoSerializer(source="fi_fk_user",read_only=True) 
