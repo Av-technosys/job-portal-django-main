@@ -5,6 +5,7 @@ from constants.errors import (
     ERROR_INVALID_CREDENTIALS,
     ERROR_OTP_VERIFICATION_FAILED,
     ERROR_USER_NOT_FOUND,
+    ERROR_USER_INACTIVE,
     ERROR_USER_EXIST,
     ERROR_OTP_EXPIRED,
     ERROR_NEW_PASSWORD_NOT_FOUND,
@@ -168,7 +169,7 @@ class LoginSerializer(serializers.Serializer):
 
         # Check if the user is active
         if not user.is_active:
-            raise serializers.ValidationError({"message": ERROR_USER_NOT_FOUND})
+            raise serializers.ValidationError({"message": ERROR_USER_INACTIVE})
 
         return data
 

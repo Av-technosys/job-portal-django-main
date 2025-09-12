@@ -23,7 +23,8 @@ from functions.common import (
     serializer_handle_customize_response,
     serializer_handle_customize_response_only_validate,
     get_customize_handler,
-    delete_handle
+    delete_handle,
+    user_status_handle
 )
 
 
@@ -40,6 +41,16 @@ def sso_user(request):
 @api_view(["POST"])
 def remove_user(request):
     return delete_handle(User, request)
+
+
+@api_view(["POST"])
+def set_user_activate(request): 
+    return user_status_handle(User, request, True)
+
+
+@api_view(["POST"])
+def set_user_deactivate(request):
+    return user_status_handle(User, request, False)
 
 @api_view(["POST"])
 def user_login(request):

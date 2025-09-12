@@ -11,11 +11,15 @@ from .views import (
     verify_reset_password,
     sso_user,
     remove_user,
+    set_user_activate,
+    set_user_deactivate
 )
 
 urlpatterns = [
     path("register/", register_user, name="register"),
     path("login/", user_login, name="login"),
+    path("activate/", set_user_activate, name="set_user_activate"),
+    path("deactivate/", set_user_deactivate, name="set_user_deactivate"),
     path("logout/", user_logout, name="logout"),
     path("verify_otp/", verify_otp, name="verify_otp"),
     path(

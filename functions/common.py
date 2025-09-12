@@ -211,6 +211,16 @@ def delete_handle(model, request):
         )
     return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
 
+def user_status_handle(model, request, active_status):
+    user_id = request.data.get("id") 
+    instances = model.objects.filter(id=user_id)
+    if instances.exists():
+        instances.update(is_active=active_status)
+        return ResponseHandler.success(
+            {"message": "Status updated to " + ("active" if active_status else "inactive")}, status_code=status.HTTP_204_NO_CONTENT
+        )
+    return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
+
 
 def upload_profile_image_handler(model, serializer_class, request):
     # Not added profile_image as a constant since this is common for job seeker / recruiter

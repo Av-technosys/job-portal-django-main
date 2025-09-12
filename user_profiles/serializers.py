@@ -720,8 +720,7 @@ class UploadedRecruiterDocumentSerializer(serializers.ModelSerializer):
 class RecruiterDetailsSerializer(serializers.ModelSerializer):
     industry_type = serializers.SerializerMethodField()
     first_name = serializers.CharField(source='user.first_name')
-    profile_image = serializers.SerializerMethodField()
-    user = RecruiterProfileSerializer(read_only=True)
+    profile_image = serializers.SerializerMethodField() 
 
 
     def get_industry_type(self, obj):
