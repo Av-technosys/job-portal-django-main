@@ -12,7 +12,8 @@ from .views import (
     sso_user,
     remove_user,
     set_user_activate,
-    set_user_deactivate
+    set_user_deactivate,
+    create_contact_us
 )
 
 urlpatterns = [
@@ -20,6 +21,7 @@ urlpatterns = [
     path("login/", user_login, name="login"),
     path("activate/", set_user_activate, name="set_user_activate"),
     path("deactivate/", set_user_deactivate, name="set_user_deactivate"),
+    path("contacts/", create_contact_us, name="create_contact"),
     path("logout/", user_logout, name="logout"),
     path("verify_otp/", verify_otp, name="verify_otp"),
     path(

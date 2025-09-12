@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Notification, User
+from .models import Notification, User, ContactUs
 from constants.common import USER_TYPE
 from constants.errors import (
     ERROR_INVALID_CREDENTIALS,
@@ -365,4 +365,9 @@ class NotificationSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
+        fields = "__all__"
+
+class ContactUSSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactUs
         fields = "__all__"

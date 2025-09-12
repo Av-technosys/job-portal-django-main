@@ -1039,6 +1039,7 @@ def create_new_handler(serializer_class, request):
             return ResponseHandler.success(serializer.data, status_code=status.HTTP_201_CREATED)
         return ResponseHandler.error(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
+        print(e)
         return ResponseHandler.error(
             RESPONSE_ERROR,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

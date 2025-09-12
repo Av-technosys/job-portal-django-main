@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from accounts.models import User
+from accounts.models import User 
 from functions.fcm import list_notification
 from user_profiles.models import FCMToken
 from .serializers import (
@@ -14,6 +14,7 @@ from .serializers import (
     UserSerializer,
     VerifyOtpAndChangePasswordSerializer,
     VerifyOtpSerializer,
+    ContactUSSerializer
 )
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
@@ -24,7 +25,8 @@ from functions.common import (
     serializer_handle_customize_response_only_validate,
     get_customize_handler,
     delete_handle,
-    user_status_handle
+    user_status_handle,
+    create_new_handler
 )
 
 
@@ -51,6 +53,10 @@ def set_user_activate(request):
 @api_view(["POST"])
 def set_user_deactivate(request):
     return user_status_handle(User, request, False)
+
+@api_view(["POST"])
+def create_contact_us(request):
+    return create_new_handler(ContactUSSerializer, request)
 
 @api_view(["POST"])
 def user_login(request):
