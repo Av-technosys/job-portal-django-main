@@ -17,6 +17,19 @@ def get_admin_meta_details(request):
     return get_admin_meta_details_handler(OrganizationInfo, StudentProfile, AssessmentSession, request)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def job_seeker_details(request, job_seeker_id): 
+    return job_seeker_details_handler(
+        User, JobSeekerDetailsSerializer , request, job_seeker_id
+    ) 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def recruiter_details(request, recruiter_id): 
+    return job_seeker_details_handler(
+        User, RecruiterDetailsSerializer , request, recruiter_id
+    ) 
+
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def job_seeker_personal_details(request):

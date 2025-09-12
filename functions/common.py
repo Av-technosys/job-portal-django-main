@@ -148,6 +148,19 @@ def update_handle(model_class, serializer_class, request):
         serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
     )
 
+def job_seeker_details_handler(user_model,   serializer_class, request, job_seeker_id):
+    try:
+        user_instance = user_model.objects.get(id=job_seeker_id)
+    except user_model.DoesNotExist:
+        return ResponseHandler.error(
+            "User not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    print("user_instance", user_instance)
+    serializer = serializer_class(user_instance) 
+    return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+
+
 
 def get_customize_handler(model, serializer_class, pk, request):
     try:

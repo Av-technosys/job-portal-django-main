@@ -366,6 +366,10 @@ class SkillSetJobSeekerProfileSerializer(serializers.ModelSerializer):
         model = SkillSet
         fields = JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2
 
+class JobSeekerGeneralProfileDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganizationInfo
+        fields = "__all__"
 
 class JobSeekerGeneralProfileSerializer(serializers.ModelSerializer):
     aq_id = serializers.IntegerField(source="id", required=False)
@@ -841,3 +845,69 @@ class CombineStudentProfileSerializer(serializers.ModelSerializer):
         fields = COMBINE_STUDENT_PROFILE_FIELDS
 
 
+
+class JobSeekerDetailsSerializer(serializers.ModelSerializer):
+    personal_profile = StudentProfileSerializer(source="sp_fk_user", read_only=True)
+    social_profile = SocialLinkItemJSSerializer(source='sml_js_fk_user', many=True, read_only=True)
+    academic_profile = AcademicQualificationSerializer(source="aq_fk_user",read_only=True, many=True)
+    work_experiences = WorkExperienceJobSeekerProfileSerializer(
+        many=True, source="we_fk_user", default=[]
+    )
+    certifications = CertificationsJobSeekerProfileSerializer(
+        many=True, source="ces_fk_user", default=[]
+    )
+    projects = ProjectsJobSeekerProfileSerializer(
+        many=True, source="ps_fk_user", default=[]
+    )
+
+
+    class Meta:
+        model = User 
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "email", 
+            "is_active",
+            "date_joined",
+            "phone_number",
+            "country_code",  
+            "created_date",
+            "updated_date",
+            "groups" ,
+            "user_permissions",
+            "personal_profile",
+            "social_profile",
+            "academic_profile",
+            "work_experiences",
+            "certifications",
+            "projects",
+        ]
+
+
+
+class RecruiterDetailsSerializer(serializers.ModelSerializer):
+    organization_info = OrganizationInfoSerializer(source='oi_fk_user', read_only=True)
+    social_profile = SocialLinkItemSerializer(source='sml_r_fk_user', many=True, read_only=True)
+    founding_info = FoundingInfoSerializer(source="fi_fk_user",read_only=True) 
+
+    class Meta:
+        model = User
+        # depth = 1 
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "email", 
+            "is_active",
+            "date_joined",
+            "phone_number",
+            "country_code",  
+            "created_date",
+            "updated_date",
+            "groups" ,
+            "user_permissions",
+            "organization_info",
+            "social_profile",
+            "founding_info", 
+        ]

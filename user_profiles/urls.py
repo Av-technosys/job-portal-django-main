@@ -3,7 +3,8 @@ from .views import *
 
 urlpatterns = [
     path("get_admin_meta_details/", get_admin_meta_details, name="get_admin_meta_details"),
-
+    path("job_seeker_details/<int:job_seeker_id>/", job_seeker_details, name="job_seeker_details"),
+    path("recruiter_details/<int:recruiter_id>/", recruiter_details, name="recruiter_details"),
     path("job_seeker_personal/", job_seeker_personal_details),
     path("job_seeker_general/", job_seeker_general_details),
     path("job_seeker_additional/", job_seeker_additional_details),
