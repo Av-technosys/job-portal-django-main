@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from accounts.models import User 
+from accounts.models import User , ContactUs
 from functions.fcm import list_notification
 from user_profiles.models import FCMToken
 from .serializers import (
@@ -26,7 +26,8 @@ from functions.common import (
     get_customize_handler,
     delete_handle,
     user_status_handle,
-    create_new_handler
+    create_new_handler,
+    list_all_items_handler
 )
 
 
@@ -57,6 +58,11 @@ def set_user_deactivate(request):
 @api_view(["POST"])
 def create_contact_us(request):
     return create_new_handler(ContactUSSerializer, request)
+
+
+@api_view(["GET"])
+def get_contact(request):
+    return list_all_items_handler(ContactUs, ContactUSSerializer, request)
 
 @api_view(["POST"])
 def user_login(request):

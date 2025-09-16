@@ -13,7 +13,8 @@ from .views import (
     remove_user,
     set_user_activate,
     set_user_deactivate,
-    create_contact_us
+    create_contact_us,
+    get_contact
 )
 
 urlpatterns = [
@@ -22,6 +23,7 @@ urlpatterns = [
     path("activate/", set_user_activate, name="set_user_activate"),
     path("deactivate/", set_user_deactivate, name="set_user_deactivate"),
     path("contacts/", create_contact_us, name="create_contact"),
+    path("get_contacts/", get_contact, name="get_contact"),
     path("logout/", user_logout, name="logout"),
     path("verify_otp/", verify_otp, name="verify_otp"),
     path(

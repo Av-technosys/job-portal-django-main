@@ -922,7 +922,6 @@ def get_all_recruiter_details(model, serializer_class, request):
     try:
         # 🔹 Apply filters and search
         q_filters, filter_kwargs = filters(request) 
-        print("q_filters, filter_kwargs: ",q_filters, filter_kwargs)
         recruiter_details = model.objects.select_related("user")
 
         if q_filters or filter_kwargs:
@@ -1105,9 +1104,20 @@ def update_item_by_id_handler(model, serializer_class, request):
 
 def get_question_by_subject_id_handler(QuestionModel, QuestionsSerializer, subject_id, request):
     try:
+        # Base queryset: filter by subject ID
         questions = QuestionModel.objects.filter(subject_id=subject_id)
-        sort_fields = request.GET.getlist("sort[]", ["created_date"])
 
+        # Apply search filter if provided
+        search_query = request.GET.get("search")
+        if search_query:
+            if search_query.isdigit():
+                questions = questions.filter(id=int(search_query))
+            else:
+                # Optionally, handle non-numeric search queries (e.g., if you want to search by text later)
+                pass
+
+        # Handle sorting
+        sort_fields = request.GET.getlist("sort[]", ["created_date"])
         mapped_sort_fields = []
         for field in sort_fields:
             if field.lstrip("-") == "created_date":  # check without leading '-'
@@ -1116,12 +1126,13 @@ def get_question_by_subject_id_handler(QuestionModel, QuestionsSerializer, subje
             else:
                 mapped_sort_fields.append(field)
 
-
         questions = questions.order_by(*mapped_sort_fields)
 
+        # Apply pagination
         page_obj, count, total_pages = paginator(questions, request)
         serializer = QuestionsSerializer(page_obj, many=True)
 
+        # Prepare response
         response_data = {
             "total_count": count,
             "total_pages": total_pages,
@@ -1129,6 +1140,10 @@ def get_question_by_subject_id_handler(QuestionModel, QuestionsSerializer, subje
             "data": serializer.data,
         }
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+
+    except Exception as e:
+        return ResponseHandler.error(str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     
     except Exception as e:
         logger.error(f"{e}")
