@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Subject, Question, Payment, AssessmentSession
+from .models import Subject, Question, Payment, AssessmentSession ,Attempt, AttemptAnswer
 
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,3 +54,26 @@ class AssessmentSessionSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+class AttemptSerializer(serializers.ModelSerializer): 
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    subject = serializers.StringRelatedField() 
+    assessment_session = serializers.PrimaryKeyRelatedField(read_only=True)
+     
+    status = serializers.ChoiceField(choices=Attempt.STATUS_CHOICES)
+
+    class Meta:
+        model = Attempt
+        fields = "__all__"
+
+
+class AttemptAnswerSerializer(serializers.ModelSerializer): 
+    # user = serializers.PrimaryKeyRelatedField(read_only=True)
+    # subject = serializers.StringRelatedField() 
+    # assessment_session = serializers.PrimaryKeyRelatedField(read_only=True)
+     
+    # status = serializers.ChoiceField(choices=Attempt.STATUS_CHOICES)
+
+    class Meta:
+        model = AttemptAnswer
+        fields = "__all__"

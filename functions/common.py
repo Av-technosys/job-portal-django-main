@@ -1307,6 +1307,127 @@ def update_payment_by_id_handler(model, serializer_class, assesment_session_seri
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+def get_user_assesment_session_handler(user_model, assesment_session_model, serializer_class, pk, request): 
+    try: 
+        user_instance = user_model.objects.get(**pk)
+        assesment_sessions = assesment_session_model.objects.filter(user_id=user_instance.id)
+ 
+        assesment_data = serializer_class(assesment_sessions, many=True).data
+        return ResponseHandler.success(assesment_data, status_code=status.HTTP_200_OK)
+
+    except user_model.DoesNotExist:
+        return ResponseHandler.error(
+            "User not found",
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        print("Error: ", e)
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+def get_all_assesment_attempts_handler(user_model, assesment_session_model, serializer_class, pk, assesment_session_id, request): 
+    try: 
+        user_instance = user_model.objects.get(**pk)
+ 
+        assesment_sessions = assesment_session_model.objects.filter(user_id=user_instance.id, assessment_session=assesment_session_id)
+ 
+        assesment_data = serializer_class(assesment_sessions, many=True).data
+        return ResponseHandler.success(assesment_data, status_code=status.HTTP_200_OK)
+
+    except user_model.DoesNotExist:
+        return ResponseHandler.error(
+            "User not found",
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+    
+    except Exception as e:
+        print("Error: ", e)
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# def get_resluts_handler(attempt_model, attempt_answer_model, attempt_answer_serializer, attempt_id, request): 
+#     try:
+#         attempt = attempt_model.objects.get(id=attempt_id)
+#         print("Attempt: " , attempt.subject)
+#         attempt_answers = attempt_answer_model.objects.filter(attempt=attempt_id)
+
+#         serializer = attempt_answer_serializer(attempt_answers, many=True)
+#         print("Answers: ", serializer.data)
+#         # Count answers
+#         total_answers = attempt_answers.count()
+#         print("Total answers: ", total_answers)
+#         # Sum score field
+#         total_score = sum(ans.score for ans in attempt_answers)
+#         print("Total score: ", total_score)
+#         response_data = {
+#             "attempt": {
+#                 "id": attempt.id,
+#                 "subject": attempt.subject,
+#                 "status": attempt.status,
+#             },
+#             "answers": serializer.data,
+#             "total_answers": total_answers,
+#             "total_score": total_score
+#         }
+
+#         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+
+#     except Exception as e:
+#         print("Error in get_resluts_handler:", e)
+#         return ResponseHandler.error(
+#             RESPONSE_ERROR,
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+#         )
+
+
+
+def get_resluts_handler(attempt_model, attempt_answer_model, attempt_id, request): 
+    try:
+        attempt = attempt_model.objects.get(id=attempt_id) 
+
+        attempt_answers = attempt_answer_model.objects.filter(attempt=attempt_id) 
+ 
+        total_answers = attempt_answers.count()
+ 
+        total_score = sum(ans.score for ans in attempt_answers)
+ 
+        TE = getattr(attempt.subject, "easy_question_count", 0)
+        TM = getattr(attempt.subject, "medium_question_count", 0)
+        TD = getattr(attempt.subject, "difficult_question_count", 0)
+        NA = getattr(attempt.subject, "marks_unattempted", 0)
+        CA = getattr(attempt.subject, "marks_correct", 0)
+
+        not_answered_calc = (TE + TM + TD - total_answers) * NA
+
+        total_questions = TE + TM + TD
+
+        assesment_total = total_questions * CA
+
+        total_answer_sum = total_answers * CA
+
+        total_marks_scored = not_answered_calc + total_answer_sum
+
+        response_data = {
+            "assesment_total ": assesment_total,
+            "total_marks_scored": total_marks_scored,
+            "total_questions_attempted": total_answers
+        }
+
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+
+    except Exception as e:
+        print("Error in get_resluts_handler:", e)
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        ) 
+
 def get_payment_by_userid_handler(PaymentModel, PaymentSerializer, user_id, request):
     try:
         payments = PaymentModel.objects.filter(user_id=user_id)

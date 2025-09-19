@@ -2,7 +2,10 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .serializers import *
-from functions.common import create_new_handler, list_all_items_handler, delete_item_by_id_handler, get_item_by_id_handler, update_item_by_id_handler,get_question_by_subject_id_handler, get_test_by_subject_id_handler, create_question_handler, create_payment_handler, get_payment_by_userid_handler, get_payment_by_id_handler, update_payment_by_id_handler
+from .models import *
+from accounts.models import User
+from accounts.serializers import UserMetaSerializer
+from functions.common import create_new_handler, list_all_items_handler, delete_item_by_id_handler, get_item_by_id_handler, update_item_by_id_handler,get_question_by_subject_id_handler, get_test_by_subject_id_handler, create_question_handler, create_payment_handler, get_payment_by_userid_handler, get_payment_by_id_handler, update_payment_by_id_handler, get_user_assesment_session_handler, get_all_assesment_attempts_handler, get_resluts_handler
 
 # Create your views here.
 
@@ -113,3 +116,21 @@ def get_assesment_by_id(request, item_id):
 @permission_classes([IsAuthenticated])
 def update_assesment_by_id(request): 
     return update_item_by_id_handler(AssessmentSession ,AssessmentSessionSerializer, request)
+
+# Assesment
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user_assesment_session(request): 
+    return get_user_assesment_session_handler(User ,AssessmentSession ,AssessmentSessionSerializer, { "email": request.user}, request)
+
+# Assesment
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_all_assesment_attempts(request, session_id): 
+    return get_all_assesment_attempts_handler(User , Attempt ,AttemptSerializer, { "email": request.user}, session_id, request)
+
+# Assesment
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_resluts(request, attempt_id): 
+    return get_resluts_handler(Attempt, AttemptAnswer, attempt_id, request)

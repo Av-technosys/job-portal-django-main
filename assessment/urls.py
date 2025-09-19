@@ -32,4 +32,9 @@ urlpatterns = [
         # Assesment Section
         path("get_assesment_by_id/<int:item_id>/", get_assesment_by_id, name="get_assesment_by_id"),
         path("update_assesment_by_id/", update_assesment_by_id, name="update_assesment_by_id"),
+
+        path("get_user_assesment_session/", get_user_assesment_session, name="get_user_assesment_session"),
+        path("get_all_assesment_attempts/<int:session_id>/", get_all_assesment_attempts, name="get_all_assesment_attempts"),
+        path("get_resluts/<int:attempt_id>/", get_resluts, name="get_resluts"),
+        # path("update_user_assesment_session/", update_user_assesment_session, name="update_user_assesment_session"),
 ]

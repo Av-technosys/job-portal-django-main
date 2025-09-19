@@ -20,7 +20,7 @@ class Subject(models.Model):
     updated_at = models.DateTimeField(auto_now=True)      # When subject updated
 
     def __str__(self):
-        return f"{self.exam_name} - {self.section_name}"
+        return f"Total:{self.easy_question_count+self.medium_question_count+self.difficult_question_count} ,CA:{self.marks_correct} ,NA:{self.marks_unattempted}"
 
 
 class Question(models.Model):
@@ -102,7 +102,7 @@ class AssessmentSession(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Session {self.id} - {self.user.username} ({self.status})"
+        return f"{self.id} - {self.user.username} ({self.status})"
 
 
 class Attempt(models.Model):
@@ -149,4 +149,4 @@ class AttemptAnswer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True) 
 
     def __str__(self):
-        return f"Answer for Q{self.question.id} in Attempt {self.attempt.id}"
+        return f"Total questions:{self.attempt.subject.total_questions} ,Attempted questions:{self.attempt.subject.easy_question_count}"
