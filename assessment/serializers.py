@@ -59,6 +59,7 @@ class AssessmentSessionSerializer(serializers.ModelSerializer):
 class AttemptSerializer(serializers.ModelSerializer): 
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     subject = serializers.StringRelatedField() 
+    subject_id = serializers.PrimaryKeyRelatedField(read_only=True)
     assessment_session = serializers.PrimaryKeyRelatedField(read_only=True)
      
     status = serializers.ChoiceField(choices=Attempt.STATUS_CHOICES)
