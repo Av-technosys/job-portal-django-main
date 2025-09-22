@@ -45,6 +45,7 @@ class AssessmentSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AssessmentSession
         fields = [
+            "id",
             "payment",
             "user",
             "overall_score",
