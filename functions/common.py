@@ -1402,6 +1402,7 @@ def get_resluts_handler(attempt_model, attempt_answer_model, attempt_id, request
         TD = getattr(attempt.subject, "difficult_question_count", 0)
         NA = getattr(attempt.subject, "marks_unattempted", 0)
         CA = getattr(attempt.subject, "marks_correct", 0)
+        subject_id =  getattr(attempt.assessment_session, "id", 0)
 
         total_questions = TE + TM + TD
         not_answered_calc = (total_questions - total_answers) * NA
@@ -1416,7 +1417,8 @@ def get_resluts_handler(attempt_model, attempt_answer_model, attempt_id, request
             "assesment_total ": assesment_total,
             "total_marks_scored": total_marks_scored,
             "total_questions": total_questions,
-            "total_questions_attempted": total_answers
+            "total_questions_attempted": total_answers,
+            "assesment_session_id" : subject_id
         }
 
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
