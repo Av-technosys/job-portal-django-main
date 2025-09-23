@@ -18,7 +18,6 @@ urlpatterns = [
         path("create_question/", create_question, name="create_question"),
         path("list_all_questions/", list_all_questions, name="list_all_questions"), 
         path("get_question_by_subject_id/<int:subject_id>/", get_question_by_subject_id, name="get_question_by_subject_id"), 
-        path("get_test_by_subject_id/<int:subject_id>/", get_test_by_subject_id, name="get_test_by_subject_id"),
         path("update_question/", update_question, name="update_question"),
         path("delete_question/", delete_question, name="delete_question"),
 
@@ -37,4 +36,9 @@ urlpatterns = [
         path("get_all_assesment_attempts/<int:session_id>/", get_all_assesment_attempts, name="get_all_assesment_attempts"),
         path("get_resluts/<int:attempt_id>/", get_resluts, name="get_resluts"),
         # path("update_user_assesment_session/", update_user_assesment_session, name="update_user_assesment_session"),
+
+        # Test
+        # Assesment_session and subject_id 
+        path("get_test_question/", get_test_question, name="get_test_question"),
+        
 ]

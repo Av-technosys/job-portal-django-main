@@ -69,6 +69,12 @@ class AttemptSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AttemptSerializerSave(serializers.ModelSerializer): 
+    class Meta:
+        model = Attempt
+        fields = "__all__"
+
+
 class AttemptAnswerSerializer(serializers.ModelSerializer): 
     # user = serializers.PrimaryKeyRelatedField(read_only=True)
     # subject = serializers.StringRelatedField() 

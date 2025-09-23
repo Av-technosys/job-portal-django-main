@@ -1179,8 +1179,53 @@ def create_question_handler(questions_serializer, request):
         )
 
 
-def get_test_by_subject_id_handler(QuestionModel, SubjectModel, QuestionsSerializer, subject_id, request):
+def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionModel, AttemptModel, AttemptSerializer,QuestionsSerializer, request):
     try:
+
+        # Save payment details
+        assesment_session_id = request.GET.get("assesment_session_id")
+        subject_id = request.GET.get("subject_id")
+        user_id = request.user.id
+
+        if not assesment_session_id or not subject_id:
+            return ResponseHandler.error(
+                RESPONSE_ERROR,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            ) 
+        
+        assesment_details = AssessmentSessionModel.objects.get(id=assesment_session_id)
+
+        if not assesment_details or not assesment_details.user_id == user_id:
+            return ResponseHandler.error(
+                RESPONSE_ERROR,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        prev_attempt = AttemptModel.objects.filter(assessment_session=assesment_session_id, user=user_id) 
+
+        if prev_attempt:
+            return ResponseHandler.error(
+                ASSESMENT_TAKEN,
+                status_code=status.HTTP_208_ALREADY_REPORTED,
+            )
+        
+        # Now the user is valid to start test
+
+        # Create new attpemt
+
+        # data = {"assessment_session": assesment_session_id, "user": user_id, "status": "IN_PROGRESS", "subject": subject_id, "score": 0}
+
+        # serializer = AttemptSerializer(data=data)
+
+        # if serializer.is_valid():
+        #     serializer.save()
+        # else:
+        #     return ResponseHandler.error(
+        #         serializer.errors,
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #     )
+        
+        # Share questions
         # 1. Fetch subject
         subject = get_object_or_404(SubjectModel, id=subject_id) 
 
