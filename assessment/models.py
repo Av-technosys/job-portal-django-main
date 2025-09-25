@@ -118,7 +118,7 @@ class Attempt(models.Model):
 
     submit_time = models.DateTimeField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IN_PROGRESS')
-    score = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
+    score = models.DecimalField(max_digits=6, decimal_places=2, default=None, null=True)
 
     start_time = models.DateTimeField(auto_now_add=True)
 
@@ -149,4 +149,4 @@ class AttemptAnswer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True) 
 
     def __str__(self):
-        return f"Total questions:{self.attempt.subject.total_questions} ,Attempted questions:{self.attempt.subject.easy_question_count}"
+        return f"Attempted questions:{self.attempt.subject.easy_question_count}"

@@ -1201,7 +1201,7 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         
-        prev_attempt = AttemptModel.objects.filter(assessment_session=assesment_session_id, user=user_id) 
+        prev_attempt = AttemptModel.objects.filter(subject=subject_id, user=user_id)
 
         if prev_attempt:
             return ResponseHandler.error(
@@ -1274,6 +1274,85 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
         return ResponseHandler.error(RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+def submit_test_handler(AttemptModel, AttemptAnswerModel, Question, attempt_id, request):
+    try:
+        is_completed = request.data.get("is_completed")
+
+        # Check if test is compelted already then no change
+        if is_completed == True:
+            return ResponseHandler.error(
+                RESPONSE_ERROR,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user_id = request.user.id
+        attempt_details = AttemptModel.objects.get(id=attempt_id)
+
+        # check authentication for the user
+        if not attempt_details.user_id == user_id:
+            return ResponseHandler.error(
+                RESPONSE_ERROR,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+
+        # questionId_currentQIndex: answer_status
+        answers = request.data.get("answers")
+        result = {}
+ 
+        for question, answer in answers.items():
+ 
+            question_key, question_value = question.split("_") 
+            answer_key, answer_value = answer.split("_") 
+            result[int(question_key)] = int(answer_value)
+ 
+
+        option_mapping = {
+            0: "OPTION_1",
+            1: "OPTION_2",
+            2: "OPTION_3",
+            3: "OPTION_4"
+        }
+
+
+        #  change value according to subject 
+        correct_answer_score = 1
+        incorrect_answer_score = 0
+
+        # Prepare the list of QuestionAnswer instances to insert
+        question_answers = []
+        for question_id, option_value in result.items():
+            score = incorrect_answer_score
+            question_obj = Question.objects.get(id=question_id)
+            selected_option = option_mapping.get(option_value, "OPTION_1")
+            is_correct = (selected_option == question_obj.correct_option)
+
+            if is_correct:
+                score = correct_answer_score
+
+            question_answer = AttemptAnswerModel(
+                attempt=attempt_details,
+                question=question_obj,
+                selected_option=option_mapping.get(option_value, "OPTION_1"),  # Default to OPTION_1 if not found
+                is_correct=is_correct,
+                score=score,
+            )
+            question_answers.append(question_answer)
+
+        AttemptAnswerModel.objects.bulk_create(question_answers)
+
+        return ResponseHandler.success(
+            {
+                "success": "submited sucessfully",
+            }, 
+            status_code=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        return ResponseHandler.error(
+            RESPONSE_ERROR, 
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 def create_assesment_session(payment_id, user_id, assesment_session_serializer):
     try:
@@ -1432,16 +1511,24 @@ def get_all_assesment_attempts_handler(user_model, assesment_session_model, seri
 
 
 
-def get_resluts_handler(attempt_model, attempt_answer_model, attempt_id, request): 
+def get_results_handler(attempt_model, attempt_answer_model, attempt_id, request): 
     try:
-        attempt = attempt_model.objects.get(id=attempt_id) 
 
-        attempt_answers = attempt_answer_model.objects.filter(attempt=attempt_id) 
- 
+        # Get attempt id
+        attempt = attempt_model.objects.get(id=attempt_id)
+        if attempt.score is not None :  # Assuming there's a 'score' field on the attempt model
+            return ResponseHandler.success(
+                {
+                    "score": attempt.score,  # Return existing score
+                    "assesment_session_id": getattr(attempt.assessment_session, "id", 0)
+                },
+                status_code=status.HTTP_200_OK
+            )
+
+        attempt_answers = attempt_answer_model.objects.filter(attempt=attempt_id)
+
+        # get the score
         total_answers = attempt_answers.count()
- 
-        total_score = sum(ans.score for ans in attempt_answers)
- 
         TE = getattr(attempt.subject, "easy_question_count", 0)
         TM = getattr(attempt.subject, "medium_question_count", 0)
         TD = getattr(attempt.subject, "difficult_question_count", 0)
@@ -1458,11 +1545,13 @@ def get_resluts_handler(attempt_model, attempt_answer_model, attempt_id, request
 
         total_marks_scored = not_answered_calc + total_answer_sum
 
+        # store the score in database
+        attempt.score = total_marks_scored
+        attempt.save()
+
         response_data = {
             "assesment_total ": assesment_total,
             "total_marks_scored": total_marks_scored,
-            "total_questions": total_questions,
-            "total_questions_attempted": total_answers,
             "assesment_session_id" : subject_id
         }
 

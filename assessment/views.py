@@ -5,7 +5,7 @@ from .serializers import *
 from .models import *
 from accounts.models import User
 from accounts.serializers import UserMetaSerializer
-from functions.common import create_new_handler, list_all_items_handler, delete_item_by_id_handler, get_item_by_id_handler, update_item_by_id_handler,get_question_by_subject_id_handler, get_test_question_handler, create_question_handler, create_payment_handler, get_payment_by_userid_handler, get_payment_by_id_handler, update_payment_by_id_handler, get_user_assesment_session_handler, get_all_assesment_attempts_handler, get_resluts_handler
+from functions.common import create_new_handler, list_all_items_handler, delete_item_by_id_handler, get_item_by_id_handler, update_item_by_id_handler,get_question_by_subject_id_handler, get_test_question_handler, create_question_handler, create_payment_handler, get_payment_by_userid_handler, get_payment_by_id_handler, update_payment_by_id_handler, get_user_assesment_session_handler, get_all_assesment_attempts_handler, get_results_handler, submit_test_handler
 
 # Create your views here.
 
@@ -132,5 +132,11 @@ def get_all_assesment_attempts(request, session_id):
 # Assesment
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def get_resluts(request, attempt_id): 
-    return get_resluts_handler(Attempt, AttemptAnswer, attempt_id, request)
+def get_results(request, attempt_id): 
+    return get_results_handler(Attempt, AttemptAnswer, attempt_id, request)
+
+# Assesment
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def submit_test(request, attempt_id): 
+    return submit_test_handler(Attempt, AttemptAnswer, Question, attempt_id, request)
