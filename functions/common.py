@@ -1213,17 +1213,18 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
 
         # Create new attpemt
 
-        # data = {"assessment_session": assesment_session_id, "user": user_id, "status": "IN_PROGRESS", "subject": subject_id, "score": 0}
+        data = {"assessment_session": assesment_session_id, "user": user_id, "status": "IN_PROGRESS", "subject": subject_id, "score": 0}
 
-        # serializer = AttemptSerializer(data=data)
+        serializer = AttemptSerializer(data=data)
 
-        # if serializer.is_valid():
-        #     serializer.save()
-        # else:
-        #     return ResponseHandler.error(
-        #         serializer.errors,
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #     )
+        if serializer.is_valid():
+            attempt_response = serializer.save()
+            attempt_id = attempt_response.id
+        else:
+            return ResponseHandler.error(
+                serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
         
         # Share questions
         # 1. Fetch subject
@@ -1240,6 +1241,7 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
             "marks_correct": float(subject.marks_correct),
             "marks_incorrect": float(subject.marks_incorrect),
             "marks_unattempted": float(subject.marks_unattempted),
+            "attempt_id": attempt_id
         }
 
         # 3. Collect random questions by difficulty_level
