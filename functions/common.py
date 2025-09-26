@@ -598,7 +598,7 @@ def handle_application_status(model, serializer_class, request):
         try:
             job_id = request.data.get("job_id")
             student_id = request.data.get("student_id")
-
+            print(job_id, student_id)
             if not job_id or not student_id:
                 return ResponseHandler.error(
                     RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
@@ -1213,7 +1213,7 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
 
         # Create new attpemt
 
-        data = {"assessment_session": assesment_session_id, "user": user_id, "status": "IN_PROGRESS", "subject": subject_id, "score": 0}
+        data = {"assessment_session": assesment_session_id, "user": user_id, "status": "IN_PROGRESS", "subject": subject_id}
 
         serializer = AttemptSerializer(data=data)
 
@@ -1518,10 +1518,11 @@ def get_results_handler(attempt_model, attempt_answer_model, attempt_id, request
 
         # Get attempt id
         attempt = attempt_model.objects.get(id=attempt_id)
-        if attempt.score is not None :  # Assuming there's a 'score' field on the attempt model
+        if attempt.score is not None :
             return ResponseHandler.success(
                 {
-                    "score": attempt.score,  # Return existing score
+                    "assesment_total": attempt.maximum_possible_score,
+                    "total_marks_scored": attempt.score,
                     "assesment_session_id": getattr(attempt.assessment_session, "id", 0)
                 },
                 status_code=status.HTTP_200_OK
@@ -1549,6 +1550,7 @@ def get_results_handler(attempt_model, attempt_answer_model, attempt_id, request
 
         # store the score in database
         attempt.score = total_marks_scored
+        attempt.maximum_possible_score = assesment_total
         attempt.save()
 
         response_data = {

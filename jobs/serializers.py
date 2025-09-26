@@ -94,7 +94,15 @@ class JobApplySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobApply
-        fields = "__all__"
+        fields = [
+            'id',
+            'student',
+            'job',
+            'owner',
+            'status',
+            'created_date',
+            'updated_date', 
+        ]
 
     def validate(self, data):
         job_apply_instance = self.instance

@@ -5,6 +5,7 @@ from constants.errors import (
     ATLEAST_ONE_SKILL_REQUIRED,
     RESPONSE_ERROR,
 )
+from accounts.serializers import UserSerializer
 from functions.common import (
     get_job_seeker_documents,
     get_recruiter_documents,
@@ -21,9 +22,25 @@ from functions.common import get_recruiter_profile_image, get_location_formatted
 from django.db import transaction
 
 class StudentProfileSerializer(serializers.ModelSerializer):
+    user =  UserSerializer(read_only=True)
     class Meta:
         model = StudentProfile
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "date_of_birth",
+            "gender",
+            "address_line_1",
+            "address_line_2",
+            "city",
+            "experience",
+            "state",
+            "postal_code",
+            "country",
+            "created_date",
+            "updated_date"
+        ]
+
 
 
 class JobSeekerPersonalProfileSerializer(serializers.ModelSerializer):
