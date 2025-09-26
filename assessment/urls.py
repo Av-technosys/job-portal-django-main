@@ -41,5 +41,6 @@ urlpatterns = [
         # Test
         # Assesment_session and subject_id 
         path("get_test_question/", get_test_question, name="get_test_question"),
+        path("get_free_test_question/", get_free_test_question, name="get_free_test_question"),
         
 ]

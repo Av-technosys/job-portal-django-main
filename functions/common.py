@@ -1179,6 +1179,59 @@ def create_question_handler(questions_serializer, request):
         )
 
 
+def get_free_test_question_handler(QuestionModel, SubjectModel, AttemptSerializer,QuestionsSerializer, request):
+    try:
+
+        # Save payment details 
+        subject_id = request.GET.get("subject_id")
+        user_id = request.user.id
+
+        # Create new attpemt
+        data = {"user": user_id, "status": "IN_PROGRESS", "subject": subject_id}
+
+        serializer = AttemptSerializer(data=data)
+
+        if serializer.is_valid():
+            attempt_response = serializer.save()
+            attempt_id = attempt_response.id
+        else:
+            return ResponseHandler.error(
+                serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        # Share questions
+        # 1. Fetch subject
+        subject = get_object_or_404(SubjectModel, id=subject_id) 
+
+        # 2. Prepare base response (metadata)
+        test_data = {
+            "exam_name": subject.exam_name,
+            "section_name": subject.section_name,
+            "duration_minutes": subject.duration_minutes,
+            "easy_question_count": subject.easy_question_count,
+            "medium_question_count": subject.medium_question_count,
+            "difficult_question_count": subject.difficult_question_count,
+            "marks_correct": float(subject.marks_correct),
+            "marks_incorrect": float(subject.marks_incorrect),
+            "marks_unattempted": float(subject.marks_unattempted),
+            "attempt_id": attempt_id
+        }
+
+        # 3. Collect random questions by difficulty_level
+        all_questions = QuestionModel.objects.filter(subject_id=subject_id)
+        serialized_questions = QuestionsSerializer(all_questions, many=True).data
+
+        # 5. Add to response
+        test_data["questions"] = serialized_questions
+
+        return ResponseHandler.success(test_data, status_code=status.HTTP_200_OK)
+
+    except Exception as e:
+        print("Error in get_test_by_subject_id_handler:", str(e))
+        return ResponseHandler.error(RESPONSE_ERROR, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionModel, AttemptModel, AttemptSerializer,QuestionsSerializer, request):
     try:
 
@@ -1278,14 +1331,14 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
 
 def submit_test_handler(AttemptModel, AttemptAnswerModel, Question, attempt_id, request):
     try:
-        is_completed = request.data.get("is_completed")
+        # is_completed = request.data.get("is_completed")
 
-        # Check if test is compelted already then no change
-        if is_completed == True:
-            return ResponseHandler.error(
-                RESPONSE_ERROR,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+        # # Check if test is compelted already then no change
+        # if is_completed == True:
+        #     return ResponseHandler.error(
+        #         RESPONSE_ERROR,
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #     )
 
         user_id = request.user.id
         attempt_details = AttemptModel.objects.get(id=attempt_id)
@@ -1296,7 +1349,9 @@ def submit_test_handler(AttemptModel, AttemptAnswerModel, Question, attempt_id, 
                 RESPONSE_ERROR,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
- 
+
+        subject_correct_score = attempt_details.subject.marks_correct
+        subject_incorrect_score = attempt_details.subject.marks_incorrect
 
         # questionId_currentQIndex: answer_status
         answers = request.data.get("answers")
