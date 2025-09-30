@@ -1,5 +1,13 @@
 from django.db import models
 from django.conf import settings
+from functions.common import question_file_rename
+from storages.backends.s3boto3 import S3Boto3Storage
+
+
+class S3FileStorage(S3Boto3Storage):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 
 class Subject(models.Model):
     exam_name = models.CharField(max_length=255)
@@ -41,7 +49,7 @@ class Question(models.Model):
 
     question_text = models.TextField(blank=True, null=True)
     question_paragraph = models.TextField(blank=True, null=True)
-    question_image = models.ImageField(upload_to='questions/', blank=True, null=True)
+    question_image = models.FileField(upload_to=question_file_rename, storage=S3FileStorage(),blank=True,null=True)
 
     option_1 = models.CharField(max_length=500)
     option_2 = models.CharField(max_length=500)

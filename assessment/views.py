@@ -5,7 +5,7 @@ from .serializers import *
 from .models import *
 from accounts.models import User
 from accounts.serializers import UserMetaSerializer
-from functions.common import create_new_handler, list_all_items_handler, delete_item_by_id_handler, get_item_by_id_handler, update_item_by_id_handler,get_question_by_subject_id_handler, get_test_question_handler, create_question_handler, create_payment_handler, get_payment_by_userid_handler, get_payment_by_id_handler, update_payment_by_id_handler, get_user_assesment_session_handler, get_all_assesment_attempts_handler, get_results_handler, submit_test_handler, get_free_test_question_handler
+from functions.common import create_new_handler, list_all_items_handler, delete_item_by_id_handler, get_item_by_id_handler, update_item_by_id_handler,get_question_by_subject_id_handler, get_test_question_handler, create_question_handler, create_payment_handler, get_payment_by_userid_handler, get_payment_by_id_handler, update_payment_by_id_handler, get_user_assesment_session_handler, get_all_assesment_attempts_handler, get_results_handler, submit_test_handler, get_free_test_question_handler, upload_question_image_handler
 
 # Create your views here.
 
@@ -76,6 +76,12 @@ def get_question_by_id(request, item_id):
 @permission_classes([IsAuthenticated])
 def delete_question(request):
     return delete_item_by_id_handler(Question , request)
+
+
+@api_view(["DELETE", "POST", "PATCH"])
+@permission_classes([IsAuthenticated])
+def upload_question_image(request):
+    return upload_question_image_handler(Question, QuestionsSerializer , request)
 
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])

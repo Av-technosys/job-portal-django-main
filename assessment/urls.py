@@ -20,6 +20,7 @@ urlpatterns = [
         path("get_question_by_subject_id/<int:subject_id>/", get_question_by_subject_id, name="get_question_by_subject_id"), 
         path("update_question/", update_question, name="update_question"),
         path("delete_question/", delete_question, name="delete_question"),
+        path("upload_question_image/", upload_question_image, name="upload_question_image"),
 
         # Payments
         path("create_payment/", create_payment, name="create_payment"),

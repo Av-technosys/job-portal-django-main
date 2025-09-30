@@ -368,6 +368,20 @@ def upload_document_handler(model, serializer_class, request):
         )
 
 
+def question_file_rename(instance, filename):
+    """
+    Rename uploaded question image file uniquely for each question.
+    Path: documents/assessment/<subject_id>/<timestamp>.<ext>
+    """
+    ext = filename.split(".")[-1]
+    timestamp = int(timezone.now().timestamp())
+    new_filename = f"{timestamp}.{ext}"
+
+    # Use subject ID if available, otherwise fallback to 'general'
+    subject_part = f"subject_{instance.subject.id}" if instance.subject_id else "general"
+
+    return os.path.join(f"documents/assessment/{subject_part}/", new_filename)
+
 def file_rename(instance, filename):
     ext = filename.split(".")[-1]
     timestamp = timezone.now().timestamp()
@@ -1083,6 +1097,46 @@ def delete_item_by_id_handler(model, request):
             RESPONSE_ERROR,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+    
+def upload_question_image_handler(questionModel, questionsSerializer , request):
+    if request.method == "POST":
+        question_id = request.data.get("question_id")
+        if not question_id:
+            return Response({"error": "question_id is required"}, status=400)
+
+        try:
+            question = questionModel.objects.get(id=question_id)
+        except questionModel.DoesNotExist:
+            return Response({"error": "Question not found"}, status=404)
+
+        # Replace old image if exists
+        if "question_image" in request.FILES:
+            if question.question_image:
+                print("Got here:if2 ", question.question_image)
+                question.question_image.delete(save=False)
+            question.question_image = request.FILES["question_image"]
+
+        question.save()
+        serializer = questionsSerializer(question)
+        return Response(serializer.data, status=200)
+
+    elif request.method == "PATCH":
+        question_id = request.data.get("question_id")
+        if not question_id:
+            return Response({"error": "question_id is required"}, status=400)
+
+        try:
+            question = questionModel.objects.get(id=question_id)
+        except questionModel.DoesNotExist:
+            return Response({"error": "Question not found"}, status=404)
+
+        if question.question_image:
+            question.question_image.delete(save=False)
+            question.question_image = None
+            question.save()
+
+        return Response({"message": "Image removed"}, status=204)
+
 
 def update_item_by_id_handler(model, serializer_class, request):
     try:
