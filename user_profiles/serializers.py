@@ -58,9 +58,16 @@ class JobSeekerPersonalProfileSerializer(serializers.ModelSerializer):
         source="sp_fk_user.id", required=False
     )
 
+    profile_picture = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = JOB_SEEKER_PROFILE_PERSONAL_INFO
+
+    def get_profile_picture(self, obj):
+        file = JobSeekerUploadedFile.objects.filter(user=obj, file_type="profile_image").first()
+        return file.file.url if file else None
+
 
     def create(self, validated_data):
         user = self.context["request"].user
@@ -633,9 +640,19 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
         source="oi_fk_user.id", required=False
     )
 
+    profile_image = serializers.SerializerMethodField()
+
+
     class Meta:
         model = User
         fields = RECRUITER_PROFILE_PERSONAL_INFO
+
+
+    def get_profile_picture(self, obj):
+        file = RecruiterUploadedFile.objects.filter(user=obj, file_type="profile_image").first()
+        return file.file.url if file else None
+
+
 
     def create(self, validated_data):
         user = self.context["request"].user

@@ -165,8 +165,25 @@ def job_seeker_details_handler(user_model,   serializer_class, request, job_seek
 def get_customize_handler(model, serializer_class, pk, request):
     try:
         instances = model.objects.filter(**pk)
+        # print("instances: ", instances)
         serializer = serializer_class(
             instances, many=True, context={"request": request}
+        )
+        return ResponseHandler.success(
+            serializer.data[0], status_code=status.HTTP_200_OK
+        )
+    except model.DoesNotExist:
+        return ResponseHandler.error(
+            ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+        )
+
+
+def get_customize_handlerAdmin(model, serializer_class,job_seeker_id):
+    try:
+        instances = model.objects.filter(id= job_seeker_id)
+        # print("instances: ", instances)
+        serializer = serializer_class(
+            instances, many=True
         )
         return ResponseHandler.success(
             serializer.data[0], status_code=status.HTTP_200_OK
@@ -193,10 +210,31 @@ def get_handle_profile(model, serializer_class, request):
         return ResponseHandler.error(
             ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
         )
+    
+
+def get_handle_profile_admin(model, serializer_class, request, job_seeker_id):
+    print("job_seeker_id: ", job_seeker_id)
+    try:
+        instance = model.objects.get(user=job_seeker_id)
+        print("instance: ", instance)
+        serializer = serializer_class(instance)
+        print("serializer: ", serializer)
+        return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+    except model.DoesNotExist:
+        return ResponseHandler.error(
+            ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
+        )
 
 
 def get_handle(model, serializer_class, request):
     instances = model.objects.filter(user=request.user)
+    serializer = serializer_class(instances, many=True)
+    return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
+
+
+
+def get_handle_by_userid(model, serializer_class, userid):
+    instances = model.objects.filter(user=userid)
     serializer = serializer_class(instances, many=True)
     return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
 
@@ -578,6 +616,7 @@ def application_handler(
 
     except Exception as err:
         logger.error(f"Error in application_handler: {err}")
+        print(err)
         return ResponseHandler.error(
             message=RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )

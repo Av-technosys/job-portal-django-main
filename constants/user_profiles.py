@@ -155,6 +155,7 @@ JOB_SEEKER_PROFILE_PERSONAL_INFO = [
     "postal_code",
     "country",
     "student_profile_id",
+    "profile_picture"
 ]
 
 JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_1 = [
@@ -201,6 +202,7 @@ JOB_SEEKER_PROFILE_GENERAL_INFO = [
     "sy_id",
     "skill_sets",
     "files",
+    "cover_letter"
 ]
 
 JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_1 = [
@@ -210,6 +212,7 @@ JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_1 = [
     "score",
     "start_date",
     "end_date",
+    "cover_letter"
 ]
 
 JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_2 = [
@@ -300,6 +303,7 @@ RECRUITER_PROFILE_PERSONAL_INFO = [
     "postal_code",
     "country",
     "recruiter_profile_id",
+    # "profile_image"
 ]
 
 

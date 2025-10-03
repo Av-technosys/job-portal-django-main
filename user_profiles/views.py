@@ -40,6 +40,13 @@ def job_seeker_personal_details(request):
     return request_handler(StudentProfile, JobSeekerPersonalProfileSerializer, request)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def job_seeker_personal_detailsAdmin(request, job_seeker_id):
+    return get_customize_handlerAdmin(
+        User, JobSeekerPersonalProfileSerializer, job_seeker_id
+    )
+
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def job_seeker_general_details(request):
@@ -50,6 +57,13 @@ def job_seeker_general_details(request):
     else:
         return request_handler(
             AcademicQualification, JobSeekerGeneralProfileSerializer, request
+        )
+    
+@api_view(["GET"])
+def job_seeker_general_detailsAdmin(request, job_seeker_id):
+    if request.method == "GET":
+        return get_handle_profile_admin(
+            AcademicQualification, JobSeekerGeneralProfileSerializer, request, job_seeker_id
         )
 
 
@@ -118,6 +132,14 @@ def company_profile(request):
         return request_handler(OrganizationInfo, RecruiterProfileSerializer, request)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def company_profile_admin(request, company_id):
+    return get_customize_handlerAdmin(
+        User, RecruiterProfileSerializer, company_id
+    )
+
+
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def recruiter_founding_info_details(request):
@@ -169,6 +191,14 @@ def social_links_job_seeker(request):
         )
     return request_handler(
         SocialMediaLinkJobSeeker, SocialLinksJobSeekerSerializer, request
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsJobSeeker])
+def social_links_job_seekerAdmin(request, job_seeker_id):
+    return get_handle_by_userid(
+        SocialMediaLinkJobSeeker, SocialLinkItemJSSerializer, job_seeker_id
     )
 
 

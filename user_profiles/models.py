@@ -55,6 +55,7 @@ class AcademicQualification(models.Model):
     end_date = models.DateField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+    cover_letter = models.TextField(null=True, blank=True)
 
     class Meta:
         indexes = [

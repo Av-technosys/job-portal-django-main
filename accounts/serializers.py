@@ -33,13 +33,19 @@ from datetime import timedelta
 from functions.send_email import send_auto_generated_password, send_email_otp
 from functions.send_otp import send_phone_otp
 from accounts.models import Subscription
+from user_profiles.models import JobSeekerUploadedFile
 
 
 class UserSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.SerializerMethodField()
     class Meta:
         model = User
         fields = REGISTRATION_META_FIELDS
         extra_kwargs = {"password": {"write_only": True}}
+
+    def get_profile_picture(self, obj):
+        file = JobSeekerUploadedFile.objects.filter(user=obj, file_type="profile_image").first()
+        return file.file.url if file else None
 
     def create(self, validated_data):
         email = validated_data["email"]

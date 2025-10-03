@@ -17,6 +17,7 @@ REGISTRATION_META_FIELDS = [
     "first_name",
     "user_type",
     "phone_number",
+    "profile_picture",
     "id",
 ]
 

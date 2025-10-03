@@ -162,8 +162,8 @@ class JobApplySerializer(serializers.ModelSerializer):
             # Save notification to the database
             save_notification(
                 {
-                    "type": NOTIFICATION_TYPE_CHOICES_ID[0],
-                    "body": NOTIFICATION_TYPE_CHOICES_TITLE[0]["notification_title"],
+                    "type": NOTIFICATION_TYPE_CHOICES_ID[1],
+                    "body": NOTIFICATION_TYPE_CHOICES_TITLE[1]["notification_title"],
                     "metadata": {"job_id": job_id},
                 },
                 recruiter_id,
@@ -171,7 +171,7 @@ class JobApplySerializer(serializers.ModelSerializer):
             )
 
             send_notification(
-                recruiter_id, f"bell_{recruiter_id}", NOTIFICATION_TYPE_CHOICES_ID[0]
+                student_id, f"bell_{student_id}", NOTIFICATION_TYPE_CHOICES_ID[1]
             )
 
         except Exception as e:

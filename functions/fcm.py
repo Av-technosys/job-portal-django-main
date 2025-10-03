@@ -111,8 +111,8 @@ def save_notification(data, sent_from_id, received_by_id):
         mock_request.user = SimpleNamespace(id=user_details[0].id)
         mock_request.data = {
             **data,
-            "sent_from": user_details[0].id,
-            "received_by": user_details[1].id,
+            "sent_from": sent_from_id,
+            "received_by": received_by_id,
         }
         serializer_handle(NotificationSerializer, mock_request)
 
