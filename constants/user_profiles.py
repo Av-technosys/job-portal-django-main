@@ -63,11 +63,11 @@ NOTIFICATION_TYPE_CHOICES = [
 NOTIFICATION_TYPE_CHOICES_TITLE = {
     NOTIFICATION_TYPE_CHOICES_ID[0]: {
         "notification_title": "New Job Application Received",
-        "notification_body": "A new submission is received from a student.",
+        "notification_body": "A new submission is received from  {sender_name}",
     },
     NOTIFICATION_TYPE_CHOICES_ID[1]: {
         "notification_title": "Job Application Update",
-        "notification_body": "A new message received",
+        "notification_body": "A new message received from {sender_name}",
     },
 }
 

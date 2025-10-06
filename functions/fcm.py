@@ -109,6 +109,9 @@ def save_notification(data, sent_from_id, received_by_id):
         user_details = User.objects.filter(id__in=[sent_from_id, received_by_id])
         mock_request = SimpleNamespace()
         mock_request.user = SimpleNamespace(id=user_details[0].id)
+        print("sender_id in notification: ", sent_from_id)
+        print("received_by_id in notification: ", received_by_id)
+        print("mock_request in notification: ", mock_request.user.id)
         mock_request.data = {
             **data,
             "sent_from": sent_from_id,

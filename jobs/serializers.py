@@ -122,7 +122,7 @@ class JobApplySerializer(serializers.ModelSerializer):
     def save(self):
         job = super().save()
         self.send_apply_notification()
-        self.send_email_confirmation_for_the_application()
+        # self.send_email_confirmation_for_the_application()
         return job
 
     def send_email_confirmation_for_the_application(self):
@@ -158,16 +158,47 @@ class JobApplySerializer(serializers.ModelSerializer):
             job_id = self.data.get("job")
             recruiter_id = self.data.get("owner")
             student_id = self.data.get("student")
+            status = self.data.get("status")
 
+            
+
+            message_type = ""
+            message_body = ""
+            sender_id = recruiter_id
+            reciver_id = student_id
+
+            print("status: ", status)
+
+            if status != 0:
+                job_seeker_name = User.objects.filter(id=recruiter_id).first().first_name
+                message_type = NOTIFICATION_TYPE_CHOICES_ID[1]
+                message_body = NOTIFICATION_TYPE_CHOICES_TITLE[1]["notification_body"].format(sender_name=job_seeker_name)
+                print("inside not zero")
+
+            else:
+                recruiter_name = User.objects.filter(id=student_id).first().first_name
+                message_type = NOTIFICATION_TYPE_CHOICES_ID[0]
+                message_body = NOTIFICATION_TYPE_CHOICES_TITLE[0]["notification_body"].format(sender_name=recruiter_name)
+                sender_id = student_id
+                reciver_id = recruiter_id
+                print("inside zero")
+
+                
             # Save notification to the database
+            print("Saving notification...")
+            print("type: ", message_type)
+            print("body: ", message_body)
+
+            print("sender_id: ", sender_id)
+            print("reciver_id: ", reciver_id)
             save_notification(
                 {
-                    "type": NOTIFICATION_TYPE_CHOICES_ID[1],
-                    "body": NOTIFICATION_TYPE_CHOICES_TITLE[1]["notification_title"],
-                    "metadata": {"job_id": job_id},
+                    "type": message_type,
+                    "body": message_body,
+                    "meta_data": {"job_id": job_id},
                 },
-                recruiter_id,
-                student_id,
+                sender_id,
+                reciver_id,
             )
 
             send_notification(

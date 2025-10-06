@@ -559,6 +559,7 @@ def job_apply_handler(serializer_class, JobInfo, request):
         job_owner_id = get_object_or_404(JobInfo, id=job_id).user_id
         request.data["student"] = student_id
         request.data["owner"] = job_owner_id
+        request.data["job"] = job_id
         return serializer_handle(serializer_class, request)
     except Exception as e:
         logger.error(f"Error in job_apply_handler: {e}")
