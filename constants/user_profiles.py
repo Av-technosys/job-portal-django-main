@@ -303,7 +303,7 @@ RECRUITER_PROFILE_PERSONAL_INFO = [
     "postal_code",
     "country",
     "recruiter_profile_id",
-    # "profile_image"
+    "profile_picture"
 ]
 
 

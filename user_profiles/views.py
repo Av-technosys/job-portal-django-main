@@ -156,6 +156,15 @@ def recruiter_founding_info_details(request):
         )
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def recruiter_founding_info_detailsAdmin(request, recruiter_id):
+    return get_customize_handlerAdmin(
+        User,
+        RecruiterProfileFoundingInfoSerializer,recruiter_id
+    )
+
+
 @api_view(["GET", "POST", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def job_details(request):
@@ -179,6 +188,13 @@ def social_links_recruiter(request):
         )
     return request_handler(
         SocialMediaLinkRecruiter, SocialLinksRecruiterSerializer, request
+    )
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def social_links_recruiterAdmin(request, recruiter_id):
+    return get_handle_by_userid(
+        SocialMediaLinkRecruiter, SocialLinkItemSerializer, recruiter_id
     )
 
 

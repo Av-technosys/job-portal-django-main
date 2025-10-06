@@ -640,7 +640,7 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
         source="oi_fk_user.id", required=False
     )
 
-    profile_image = serializers.SerializerMethodField()
+    profile_picture = serializers.SerializerMethodField()
 
 
     class Meta:
