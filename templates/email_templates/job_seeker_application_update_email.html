@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Application Status Update</title>
+    <style>
+      /* Basic mobile-friendly resets */
+      body,
+      table,
+      td,
+      a {
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      table {
+        border-collapse: collapse !important;
+      }
+      img {
+        border: 0;
+        height: auto;
+        line-height: 100%;
+        outline: none;
+        text-decoration: none;
+        display: block;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      /* Container */
+      .email-wrapper {
+        width: 100%;
+        background-color: #f4f6f8;
+        padding: 24px 12px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+      }
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .header {
+        background: #0f1724;
+        padding: 22px;
+        text-align: center;
+      }
+      .header img {
+        max-width: 180px;
+        height: auto;
+      }
+      .content {
+        padding: 24px;
+        color: #1f2937;
+        line-height: 1.5;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 20px;
+        color: #111827;
+      }
+      p {
+        margin: 0 0 14px;
+        font-size: 15px;
+      }
+      .status-pill {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 13px;
+        margin-top: 6px;
+      }
+      .status-under-review {
+        background: #f3f4f6;
+        color: #111827;
+      }
+      .status-shortlisted {
+        background: #ecfdf5;
+        color: #065f46;
+      }
+      .status-interview {
+        background: #eef2ff;
+        color: #3730a3;
+      }
+      .status-rejected {
+        background: #fff1f2;
+        color: #981b1b;
+      }
+      .status-offer {
+        background: #fffbeb;
+        color: #92400e;
+      }
+
+      .button {
+        display: inline-block;
+        padding: 12px 18px;
+        border-radius: 8px;
+        background: #0f1724;
+        color: #ffffff;
+        font-weight: 600;
+        margin-top: 14px;
+        text-decoration: none;
+      }
+
+      .footer {
+        padding: 18px 24px;
+        background: #f8fafc;
+        color: #6b7280;
+        font-size: 13px;
+      }
+      .muted {
+        color: #6b7280;
+        font-size: 13px;
+      }
+
+      /* Responsive */
+      @media (max-width: 420px) {
+        .content {
+          padding: 18px;
+        }
+        .header {
+          padding: 16px;
+        }
+        .footer {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-wrapper">
+      <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+          <img src="{{ logo_url }}" alt="{{ company_name }} Logo" />
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+          <h2>Dear {{ job_seeker_name }},</h2>
+
+          <!-- Short summary -->
+          <p>
+            We wanted to let you know that the status of your application for
+            the <strong>{{ job_title }}</strong> position at
+            <strong>{{ company_name }}</strong> has changed to {{ status }}
+          </p>
+
+          <div>
+            <span class="status-pill {{ status_class }}">{{ status }}</span>
+          </div>
+
+          <!-- Detailed message -->
+          <p style="margin-top: 16px">{{ status_message }}</p>
+
+          {% if action_url %}
+          <a
+            href="{{ action_url }}"
+            class="button"
+            target="_blank"
+            rel="noopener"
+          >
+            {{ action_text }}
+          </a>
+          {% endif %}
+
+          <!-- Additional note for interview/offer -->
+          {% if interview_details %}
+          <div style="margin-top: 14px">
+            <strong>Interview Details:</strong>
+            <p style="margin: 6px 0 0">{{ interview_details }}</p>
+          </div>
+          {% endif %} {% if offer_details %}
+          <div style="margin-top: 14px">
+            <strong>Offer Summary:</strong>
+            <p style="margin: 6px 0 0">{{ offer_details }}</p>
+          </div>
+          {% endif %}
+
+          <!-- Support -->
+          <p style="margin-top: 20px">
+            If you have any questions, feel free to reply to this email or
+            contact our support team at
+            <a href="mailto:{{ company_email }}">{{ company_email }}</a>.
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <p style="margin: 0 0 8px">
+            Best Regards,<br />
+            The {{ company_name }} Team
+          </p>
+          <p style="margin: 0 0 6px">
+            For inquiries:
+            <a href="mailto:{{ company_email }}">{{ company_email }}</a>
+          </p>
+          <p style="margin: 0">
+            <a href="{{ website_url }}" target="_blank" rel="noopener"
+              >Visit our website</a
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

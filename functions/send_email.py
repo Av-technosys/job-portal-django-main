@@ -12,6 +12,7 @@ from django.utils.html import strip_tags
 from constants.job_application import (
     JOB_SEEKER_APPLICATION_CONFIRMATION_SUBJECT,
     RECRUITER_CONFIRMATION_SUBJECT,
+    JOB_SEEKER_APPLICATION_STATUS_UPDATE,
 )
 from constants.common import JOB_ASSURED_LOGO, COMPANY_EMAIL, COMPANY_NAME, COMPANY_URL
 from functions.common import get_todays_date
@@ -90,6 +91,40 @@ def send_application_confirmation_to_job_seeker(
         raise serializers.ValidationError(
             {
                 "error": f"Failed to send_application_confirmation_to_job_seeker via email: {str(e)}"
+            }
+        )
+
+
+def send_application_status_update_to_job_seeker(
+    student_details, recruiter_details, job_details, recruiter_personal_details, status
+):
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [student_details.email]
+
+    subject = JOB_SEEKER_APPLICATION_STATUS_UPDATE
+    html_message = render_to_string(
+        "email_templates/job_seeker_application_update_email.html",
+        {
+            "job_seeker_name": student_details.first_name,
+            "job_title": job_details.role,
+            "company_name": recruiter_personal_details.first_name,
+            "company_email": recruiter_personal_details.email,
+            "website_url": recruiter_details.company_website,
+            "logo_url": JOB_ASSURED_LOGO,
+            "status": status,
+        },
+    )
+
+    plain_message = strip_tags(html_message)
+
+    try:
+        send_email_core_fucntion(
+            subject, plain_message, from_email, recipient_list, html_message
+        )
+    except Exception as e:
+        raise serializers.ValidationError(
+            {
+                "error": f"Failed to send_application_update_to_job_seeker via email: {str(e)}"
             }
         )
 

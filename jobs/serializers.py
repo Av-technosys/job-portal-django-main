@@ -18,6 +18,7 @@ from functions.common import (
 from functions.send_email import (
     send_application_confirmation_to_job_seeker,
     send_application_received_to_recruiter,
+    send_application_status_update_to_job_seeker,
 )
 from user_profiles.serializers import SocialLinkItemSerializer
 from .models import *
@@ -95,13 +96,13 @@ class JobApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = JobApply
         fields = [
-            'id',
-            'student',
-            'job',
-            'owner',
-            'status',
-            'created_date',
-            'updated_date', 
+            "id",
+            "student",
+            "job",
+            "owner",
+            "status",
+            "created_date",
+            "updated_date",
         ]
 
     def validate(self, data):
@@ -122,7 +123,7 @@ class JobApplySerializer(serializers.ModelSerializer):
     def save(self):
         job = super().save()
         self.send_apply_notification()
-        # self.send_email_confirmation_for_the_application()
+        self.send_email_confirmation_for_the_application()
         return job
 
     def send_email_confirmation_for_the_application(self):
@@ -135,13 +136,24 @@ class JobApplySerializer(serializers.ModelSerializer):
             recruiter_personal_details = User.objects.filter(pk=recruiter_id).first()
             recruiter_details = FoundingInfo.objects.filter(user=recruiter_id).first()
             job_details = JobInfo.objects.filter(pk=job_id).first()
+            status = self.data.get("status")
 
-            send_application_confirmation_to_job_seeker(
-                student_details,
-                recruiter_details,
-                job_details,
-                recruiter_personal_details,
-            )
+            if status == 0:
+                send_application_confirmation_to_job_seeker(
+                    student_details,
+                    recruiter_details,
+                    job_details,
+                    recruiter_personal_details,
+                )
+            else:
+                status_text = JOB_STATUS_FIELDS[status][1]
+                send_application_status_update_to_job_seeker(
+                    student_details,
+                    recruiter_details,
+                    job_details,
+                    recruiter_personal_details,
+                    status_text,
+                )
 
             send_application_received_to_recruiter(
                 student_details,
@@ -160,37 +172,31 @@ class JobApplySerializer(serializers.ModelSerializer):
             student_id = self.data.get("student")
             status = self.data.get("status")
 
-            
-
             message_type = ""
             message_body = ""
             sender_id = recruiter_id
             reciver_id = student_id
 
-            print("status: ", status)
-
             if status != 0:
-                job_seeker_name = User.objects.filter(id=recruiter_id).first().first_name
+                job_seeker_name = (
+                    User.objects.filter(id=recruiter_id).first().first_name
+                )
                 message_type = NOTIFICATION_TYPE_CHOICES_ID[1]
-                message_body = NOTIFICATION_TYPE_CHOICES_TITLE[1]["notification_body"].format(sender_name=job_seeker_name)
+                message_body = NOTIFICATION_TYPE_CHOICES_TITLE[1][
+                    "notification_body"
+                ].format(sender_name=job_seeker_name)
                 print("inside not zero")
 
             else:
                 recruiter_name = User.objects.filter(id=student_id).first().first_name
                 message_type = NOTIFICATION_TYPE_CHOICES_ID[0]
-                message_body = NOTIFICATION_TYPE_CHOICES_TITLE[0]["notification_body"].format(sender_name=recruiter_name)
+                message_body = NOTIFICATION_TYPE_CHOICES_TITLE[0][
+                    "notification_body"
+                ].format(sender_name=recruiter_name)
                 sender_id = student_id
                 reciver_id = recruiter_id
                 print("inside zero")
 
-                
-            # Save notification to the database
-            print("Saving notification...")
-            print("type: ", message_type)
-            print("body: ", message_body)
-
-            print("sender_id: ", sender_id)
-            print("reciver_id: ", reciver_id)
             save_notification(
                 {
                     "type": message_type,
