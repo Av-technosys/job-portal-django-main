@@ -214,7 +214,7 @@ def social_links_job_seeker(request):
 @permission_classes([IsAuthenticated])
 def social_links_job_seekerAdmin(request, job_seeker_id):
     return get_handle_by_userid(
-        SocialMediaLinkJobSeeker, SocialLinkItemJSSerializer, job_seeker_id
+        SocialMediaLinkRecruiter, SocialLinkItemJSSerializer, job_seeker_id
     )
 
 
