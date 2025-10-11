@@ -551,12 +551,16 @@ def get_job_listing(model_class, serializer_class, request):
         job_types = request.GET.getlist("jobType")
         experience_levels = request.GET.getlist("experience")
         date_posted_filters = request.GET.getlist("datePosted")
+        search_filters = request.GET.getlist("search")
 
         if categories:
             q_filters &= Q(role__in=categories)
 
         if job_types:
             q_filters &= Q(job_type__in=job_types)
+
+        if search_filters: 
+            q_filters &= Q(title__icontains=search_filters[0])
 
         if experience_levels:
             q_filters &= Q(jd_fk_ji__experience__in=experience_levels)
@@ -577,8 +581,8 @@ def get_job_listing(model_class, serializer_class, request):
         instances = model_class.objects.filter(q_filters).distinct()
 
         if not instances.exists():
-            return ResponseHandler.error(
-                message="No jobs found", status_code=status.HTTP_404_NOT_FOUND
+            return ResponseHandler.success(
+                [], status_code=status.HTTP_200_OK
             )
 
         sort_fields = request.GET.getlist("sort") or ["-created_date"]
@@ -600,6 +604,7 @@ def get_job_listing(model_class, serializer_class, request):
 
     except Exception as e:
         logger.error(f"Error in get_job_listing: {e}")
+        print(e)
         return ResponseHandler.error(
             "Something went wrong", status_code=status.HTTP_400_BAD_REQUEST
         )
