@@ -242,7 +242,7 @@ class JobSeekerListingViewSerializer(serializers.ModelSerializer):
     location = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
     company_profile_image = serializers.SerializerMethodField()
-
+    experience = serializers.SerializerMethodField()
     class Meta:
         model = JobInfo
         fields = JOB_SEEKER_LIST_VIEW_FIELDS
@@ -253,6 +253,22 @@ class JobSeekerListingViewSerializer(serializers.ModelSerializer):
 
     def get_logged_in_job_seeker_id(self):
         return self.context.get("request").user.id
+    
+    def get_experience(self, obj):
+        description = obj.jd_fk_ji
+        if description:
+            return f"{description.experience}"
+        return None
+    
+
+    # def get_location_formatted(JobInfo):
+    #     try:
+    #         description = JobInfo.jd_fk_ji
+    #         if description:
+    #             return f"{description.city}, {description.state}, {description.country}"
+    #         return None
+    #     except Exception:
+    #         return None
 
     def get_company_name(self, obj):
         return obj.user.first_name

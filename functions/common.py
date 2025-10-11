@@ -502,6 +502,7 @@ def exlcude(request, instances):
 
 def filter_search_handler(model_class, serializer_class, request):
     q_filters, filter_kwargs = filters(request)
+    # print(q_filters, filter_kwargs)
     owner_filters = {}
     if request.data.get("owner"):
         owner_filters["user_id__in"] = request.data.get("owner")
@@ -511,6 +512,7 @@ def filter_search_handler(model_class, serializer_class, request):
             instances = model_class.objects.all()
 
         else:
+            print( "print details: " , q_filters, filter_kwargs, owner_filters)
             instances = model_class.objects.filter(
                 q_filters, **filter_kwargs, **owner_filters
             )
@@ -539,6 +541,69 @@ def filter_search_handler(model_class, serializer_class, request):
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
         )
+    
+
+def get_job_listing(model_class, serializer_class, request):
+    try:
+        q_filters = Q()
+
+        categories = request.GET.getlist("category")
+        job_types = request.GET.getlist("jobType")
+        experience_levels = request.GET.getlist("experience")
+        date_posted_filters = request.GET.getlist("datePosted")
+
+        if categories:
+            q_filters &= Q(role__in=categories)
+
+        if job_types:
+            q_filters &= Q(job_type__in=job_types)
+
+        if experience_levels:
+            q_filters &= Q(jd_fk_ji__experience__in=experience_levels)
+
+        if date_posted_filters:
+            now = timezone.now()
+            if "Last_Hour" in date_posted_filters:
+                q_filters &= Q(created_date__gte=now - timedelta(hours=1))
+            elif "Last_24_Hours" in date_posted_filters:
+                q_filters &= Q(created_date__gte=now - timedelta(days=1))
+            elif "Last_7_Days" in date_posted_filters:
+                q_filters &= Q(created_date__gte=now - timedelta(days=7))
+            elif "Last_30_Days" in date_posted_filters:
+                q_filters &= Q(created_date__gte=now - timedelta(days=30))
+            elif "All" in date_posted_filters:
+                pass
+
+        instances = model_class.objects.filter(q_filters).distinct()
+
+        if not instances.exists():
+            return ResponseHandler.error(
+                message="No jobs found", status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        sort_fields = request.GET.getlist("sort") or ["-created_date"]
+        instances = instances.order_by(*sort_fields)
+
+        instances = exlcude(request=request, instances=instances)
+        page_obj, count, total_pages = paginator(instances, request)
+
+        serializer = serializer_class(page_obj, many=True, context={"request": request})
+
+        response_data = {
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
+        }
+
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in get_job_listing: {e}")
+        return ResponseHandler.error(
+            "Something went wrong", status_code=status.HTTP_400_BAD_REQUEST
+        )
+
 
 
 def paginator(queryset, request):

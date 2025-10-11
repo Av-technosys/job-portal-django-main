@@ -23,7 +23,7 @@ def apply_job(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_jobs(request):
-    return filter_search_handler(JobInfo, JobSeekerListingViewSerializer, request)
+    return get_job_listing(JobInfo, JobSeekerListingViewSerializer, request)
 
 
 @api_view(["GET"])

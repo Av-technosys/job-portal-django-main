@@ -67,7 +67,7 @@ NOTIFICATION_TYPE_CHOICES_TITLE = {
     },
     NOTIFICATION_TYPE_CHOICES_ID[1]: {
         "notification_title": "Job Application Update",
-        "notification_body": "A new message received from {sender_name}",
+        "notification_body": "A Job Application Updated from {sender_name}",
     },
 }
 
