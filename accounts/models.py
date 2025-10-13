@@ -5,6 +5,16 @@ from constants.common import USER_TYPE
 from constants.user_profiles import NOTIFICATION_TYPE_CHOICES
 from payment.models import Plan
 
+user_type = models.CharField(
+    max_length=20,
+    choices=[
+        ("admin", "Admin"),
+        ("recruiter", "Recruiter"),
+        ("job_seeker", "Job Seeker"),
+    ],
+    default="job_seeker",
+)
+
 
 class User(AbstractUser):
     phone_number = models.CharField(max_length=15, null=True, blank=True)
@@ -77,6 +87,6 @@ class ContactUs(models.Model):
     subject = models.CharField(max_length=100)
     message = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
