@@ -585,7 +585,7 @@ def get_job_listing(model_class, serializer_class, request):
                 [], status_code=status.HTTP_200_OK
             )
 
-        sort_fields = request.GET.getlist("sort") or ["-created_date"]
+        sort_fields = [field for field in request.GET.getlist("sort") if field.strip()] or ["-created_date"]
         instances = instances.order_by(*sort_fields)
 
         instances = exlcude(request=request, instances=instances)
