@@ -49,6 +49,7 @@ JOB_SEEKER_LIST_VIEW_FIELDS = [
     "is_saved",
     "created_date",
     "company_profile_image",
+    "experience"
 ]
 
 SAVED_JOBS_JOB_SEEKER_LIST_VIEW_FIELDS = [

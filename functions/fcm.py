@@ -85,7 +85,9 @@ def send_notification(send_to_id, topic_name, notification_type):
 
 def list_notification(serializer, request):
     try:
-        notification_instance = Notification.objects.filter(received_by=request.user.id)
+        notification_instance = Notification.objects.filter(
+            received_by=request.user.id
+        ).order_by("-created_date")
 
         page_obj, count, total_pages = paginator(notification_instance, request)
         serializer = serializer(page_obj, many=True)

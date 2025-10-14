@@ -222,7 +222,7 @@ def social_links_job_seeker(request):
 @permission_classes([IsAuthenticated])
 def social_links_job_seekerAdmin(request, job_seeker_id):
     return get_handle_by_userid(
-        SocialMediaLinkJobSeeker, SocialLinkItemJSSerializer, job_seeker_id
+        SocialMediaLinkRecruiter, SocialLinkItemJSSerializer, job_seeker_id
     )
 
 
@@ -266,7 +266,6 @@ def file_upload_job_seeker(request):
 def job_seeker(request):
     return filter_search_handler(StudentProfile, StudentProfileSerializer, request)
 
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def students_all_details(request):
@@ -274,7 +273,6 @@ def students_all_details(request):
     return get_data_from_id_and_serialize(
         StudentProfile, CombineStudentProfileSerializer, student_id
     )
-
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
@@ -345,6 +343,7 @@ def remove_job_seeker(request):
 @permission_classes([IsAuthenticated])
 def remove_recruiter(request):
     return delete_handle(OrganizationInfo, request)
+
 
 
 @api_view(["GET"])

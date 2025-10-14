@@ -649,7 +649,13 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
 
 
     def get_profile_picture(self, obj):
-        file = RecruiterUploadedFile.objects.filter(user=obj, file_type="profile_image").first()
+        # Handle case where obj might be a dict
+        user = obj if isinstance(obj, User) else getattr(obj, "id", None)
+        if not isinstance(user, (User, int)):
+            return None
+
+        user_id = user.id if isinstance(user, User) else user
+        file = RecruiterUploadedFile.objects.filter(user_id=user_id, file_type="profile_image").first()
         return file.file.url if file else None
 
 
