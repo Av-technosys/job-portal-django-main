@@ -1,6 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from handlers.permissions import IsAdmin
 from accounts.models import User , ContactUs
 from functions.fcm import list_notification
 from user_profiles.models import FCMToken
@@ -14,7 +15,8 @@ from .serializers import (
     UserSerializer,
     VerifyOtpAndChangePasswordSerializer,
     VerifyOtpSerializer,
-    ContactUSSerializer
+    ContactUSSerializer,
+    AdminUserSerializer
 )
 from constants.errors import ERROR_LOGOUT_FAILED
 from constants.accounts import SUCCESS_LOGOUT
@@ -27,7 +29,8 @@ from functions.common import (
     delete_handle,
     user_status_handle,
     create_new_handler,
-    list_all_items_handler
+    list_all_items_handler,
+    get_all_admin_details
 )
 
 
@@ -122,3 +125,9 @@ def account_details(request):
 @permission_classes([IsAuthenticated])
 def list_notifications(request):
     return list_notification(NotificationSerializer, request)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsAdmin])
+def get_all_admin(request):
+    return get_all_admin_details(User, AdminUserSerializer, request)

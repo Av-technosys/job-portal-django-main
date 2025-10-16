@@ -133,14 +133,17 @@ class SSOUserSerializer(serializers.Serializer):
             pass
 
         elif user and not user.is_active:
-            user.is_active = True
+            # Do not auto-activate admin users (user_type == 3)
+            if user.user_type != 3:
+                user.is_active = True
             user.save()
 
         else:
             user = User(
                 username=email,
                 email=email,
-                is_active=True,
+                # Keep admin users inactive by default when created via SSO
+                is_active=False if int(user_type) == 3 else True,
                 first_name=name,
                 user_type=user_type,
                 country_code="+91",
@@ -223,8 +226,9 @@ class VerifyOtpSerializer(serializers.Serializer):
         email = self.validated_data["email"]
         user = User.objects.get(email=email)
 
-        # Activate user account
-        user.is_active = True
+        # Activate user account except for admin (user_type == 3)
+        if user.user_type != 3:
+            user.is_active = True
         user.phone_otp = None
         user.email_otp = None
         user.otp_expiration = None  # Clear expiration time as OTPs are used
@@ -377,3 +381,28 @@ class ContactUSSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactUs
         fields = "__all__"
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email", 
+            "username",
+            "first_name",
+            "last_name",
+            "user_type",
+            "phone_number",
+            "country_code",
+            "is_active",
+            "created_date",
+            "updated_date",
+            "profile_picture"
+        ]
+
+    def get_profile_picture(self, obj):
+        file = JobSeekerUploadedFile.objects.filter(user=obj, file_type="profile_image").first()
+        return file.file.url if file else None

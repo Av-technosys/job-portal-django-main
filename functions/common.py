@@ -1151,6 +1151,51 @@ def get_all_applied_applicant_details(job_apply_model, student_profile_model, se
         )
 
 
+def get_all_admin_details(model, serializer_class, request):
+    try:
+        # Filter only admin users (user_type = 3)
+        admin_users = model.objects.filter(user_type=3)
+        
+        if not admin_users.exists():
+            return ResponseHandler.error(
+                message="No admin users found",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Apply search filter if provided
+        search_query = request.GET.get("search")
+        if search_query:
+            admin_users = admin_users.filter(
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(username__icontains=search_query)
+            )
+
+        # Apply sorting
+        sort_fields = request.GET.getlist("sort[]", ["created_date"])
+        admin_users = admin_users.order_by(*sort_fields)
+
+        # Apply pagination
+        page_obj, count, total_pages = paginator(admin_users, request)
+        serializer = serializer_class(page_obj, many=True, context={"request": request})
+
+        response_data = {
+            "total_count": count,
+            "total_pages": total_pages,
+            "current_page": page_obj.number,
+            "data": serializer.data,
+        }
+        return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in get_all_admin_details: {e}")
+        return ResponseHandler.error(
+            RESPONSE_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
 
 
 

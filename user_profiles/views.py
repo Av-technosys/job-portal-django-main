@@ -5,30 +5,35 @@ from accounts.models import User
 from .serializers import *
 from handlers.common import request_handler
 from rest_framework.permissions import IsAuthenticated
-from handlers.permissions import IsRecruiter, IsJobSeeker
+from handlers.permissions import IsRecruiter, IsJobSeeker, IsAdmin
 from jobs.models import JobApply
-from jobs.serializers import JobApplySerializer 
-from assessment.models import AssessmentSession 
+from jobs.serializers import JobApplySerializer
+from assessment.models import AssessmentSession
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def get_admin_meta_details(request): 
-    return get_admin_meta_details_handler(OrganizationInfo, StudentProfile, AssessmentSession, request)
+def get_admin_meta_details(request):
+    return get_admin_meta_details_handler(
+        OrganizationInfo, StudentProfile, AssessmentSession, request
+    )
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def job_seeker_details(request, job_seeker_id): 
+def job_seeker_details(request, job_seeker_id):
     return job_seeker_details_handler(
-        User, JobSeekerDetailsAdminSerializer , request, job_seeker_id
-    ) 
+        User, JobSeekerDetailsAdminSerializer, request, job_seeker_id
+    )
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def recruiter_details(request, recruiter_id): 
+def recruiter_details(request, recruiter_id):
     return job_seeker_details_handler(
-        User, RecruiterDetailsAdminSerializer , request, recruiter_id
-    ) 
+        User, RecruiterDetailsAdminSerializer, request, recruiter_id
+    )
+
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
@@ -47,6 +52,7 @@ def job_seeker_personal_detailsAdmin(request, job_seeker_id):
         User, JobSeekerPersonalProfileSerializer, job_seeker_id
     )
 
+
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def job_seeker_general_details(request):
@@ -58,12 +64,16 @@ def job_seeker_general_details(request):
         return request_handler(
             AcademicQualification, JobSeekerGeneralProfileSerializer, request
         )
-    
+
+
 @api_view(["GET"])
 def job_seeker_general_detailsAdmin(request, job_seeker_id):
     if request.method == "GET":
         return get_handle_profile_admin(
-            AcademicQualification, JobSeekerGeneralProfileSerializer, request, job_seeker_id
+            AcademicQualification,
+            JobSeekerGeneralProfileSerializer,
+            request,
+            job_seeker_id,
         )
 
 
@@ -135,9 +145,7 @@ def company_profile(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def company_profile_admin(request, company_id):
-    return get_customize_handlerAdmin(
-        User, RecruiterProfileSerializer, company_id
-    )
+    return get_customize_handlerAdmin(User, RecruiterProfileSerializer, company_id)
 
 
 @api_view(["GET", "POST"])
@@ -160,8 +168,7 @@ def recruiter_founding_info_details(request):
 @permission_classes([IsAuthenticated])
 def recruiter_founding_info_detailsAdmin(request, recruiter_id):
     return get_customize_handlerAdmin(
-        User,
-        RecruiterProfileFoundingInfoSerializer,recruiter_id
+        User, RecruiterProfileFoundingInfoSerializer, recruiter_id
     )
 
 
@@ -189,6 +196,7 @@ def social_links_recruiter(request):
     return request_handler(
         SocialMediaLinkRecruiter, SocialLinksRecruiterSerializer, request
     )
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -258,7 +266,6 @@ def file_upload_job_seeker(request):
 def job_seeker(request):
     return filter_search_handler(StudentProfile, StudentProfileSerializer, request)
 
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def students_all_details(request):
@@ -266,7 +273,6 @@ def students_all_details(request):
     return get_data_from_id_and_serialize(
         StudentProfile, CombineStudentProfileSerializer, student_id
     )
-
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsJobSeeker])
@@ -308,16 +314,22 @@ def upload_document(request):
         return upload_document_handler(
             RecruiterUploadedFile, UploadedRecruiterDocumentSerializer, request
         )
-        
-@api_view(["GET"])
-@permission_classes([IsAuthenticated, IsJobSeeker])
-def get_all_recruiter(request):
-    return get_all_recruiter_details(OrganizationInfo, RecruiterDetailsSerializer, request)
+
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsJobSeeker])
+@permission_classes([IsAuthenticated, IsAdmin])
+def get_all_recruiter(request):
+    return get_all_recruiter_details(
+        OrganizationInfo, RecruiterDetailsSerializer, request
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsAdmin])
 def get_all_job_seeker(request):
-    return get_all_job_seeker_details(StudentProfile, JobSeekerDetailsSerializer, request)
+    return get_all_job_seeker_details(
+        StudentProfile, JobSeekerDetailsSerializer, request
+    )
     # return get_all_recruiter_details(StudentProfile, StudentProfileSerializer, request)
 
 
@@ -326,19 +338,25 @@ def get_all_job_seeker(request):
 def remove_job_seeker(request):
     return delete_handle(StudentProfile, request)
 
+
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def remove_recruiter(request):
     return delete_handle(OrganizationInfo, request)
 
 
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_applied_applicant(request):
-    return get_all_applied_applicant_details(JobApply, StudentProfile, AppliedApplicantSerializer, request)
+    return get_all_applied_applicant_details(
+        JobApply, StudentProfile, AppliedApplicantSerializer, request
+    )
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsRecruiter])
 def get_applicant_details(request, applicant_id):
-    return get_data_from_id_and_serialize(StudentProfile, CombineStudentProfileSerializer, applicant_id)
-
+    return get_data_from_id_and_serialize(
+        StudentProfile, CombineStudentProfileSerializer, applicant_id
+    )

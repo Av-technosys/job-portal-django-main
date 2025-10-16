@@ -7,9 +7,8 @@ USER_TYPE = [
 
 JOB_ASSURED_LOGO = "https://job-portal-next-ten.vercel.app/ja_logo.png"
 
-COMPANY_EMAIL="hello@nexgenelit.com"
+COMPANY_EMAIL = "hello@nexgenelit.com"
 
 COMPANY_NAME = "Job Assured"
 
 COMPANY_URL = "https://job-portal-next-ten.vercel.app/"
-

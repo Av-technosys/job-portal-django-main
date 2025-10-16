@@ -14,7 +14,8 @@ from .views import (
     set_user_activate,
     set_user_deactivate,
     create_contact_us,
-    get_contact
+    get_contact,
+    get_all_admin
 )
 
 urlpatterns = [
@@ -44,5 +45,6 @@ urlpatterns = [
     path("details/", account_details, name="account_details"),
     path("notifications/", list_notifications, name="list_notification"),
     path("sso/", sso_user, name="sso"),
-    path("remove_user/", remove_user, name="remove_user")
+    path("remove_user/", remove_user, name="remove_user"),
+    path("get_all_admin/", get_all_admin, name="get_all_admin")
 ]
