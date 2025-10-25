@@ -5,6 +5,7 @@ from .models import *
 from handlers.common import *
 from handlers.permissions import IsRecruiter, IsJobSeeker
 from accounts.models import Subscription
+from assessment.models import Attempt
 from accounts.serializers import SubscriptionSerializer
 
 
@@ -18,5 +19,5 @@ def create_order(request):
 @permission_classes([IsAuthenticated])
 def capture_transaction(request):
     return capture_transaction_data(
-        TransactionSerializer, Subscription, SubscriptionSerializer, Plan,Order, request
+        TransactionSerializer, Attempt, SubscriptionSerializer, Plan,Order, request
     )

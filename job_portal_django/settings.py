@@ -111,14 +111,23 @@ WSGI_APPLICATION = "job_portal_django.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
+    # "default": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "NAME": "postgres",
+    #     "USER": "postgres.duhcngbhqlvciricfyph",
+    #     "PASSWORD": "goSHilboz0p8bPhB",
+    #     "HOST": "aws-0-ap-southeast-1.pooler.supabase.com",
+    #     "PORT": "5432",
+    # },
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "postgres",
-        "USER": "postgres.duhcngbhqlvciricfyph",
-        "PASSWORD": "goSHilboz0p8bPhB",
-        "HOST": "aws-0-ap-southeast-1.pooler.supabase.com",
-        "PORT": "5432",
-    },
+        "NAME": "postgres",  # dbname
+        "USER": "postgres.ybixgfoaplxaurbjohyc",  # from your user
+        "PASSWORD": "Avtechnosys123",  # put your actual password here
+        "HOST": "aws-1-ap-southeast-1.pooler.supabase.com",  # from your host
+        "PORT": "5432",  # stays the same
+    }
+
     # "default": {
     #     "ENGINE": "django.db.backends.postgresql",
     #     "NAME": "postgres",

@@ -926,12 +926,12 @@ def create_cart_order(model_class, subscription_model, serializer_class, request
         user_id = request.user.id
         planId = request.data.get("planId")
         amount = model_class.objects.get(name=planId).price
-        is_subscribed = check_user_subscription(subscription_model, user_id)
-        if is_subscribed:
-            return ResponseHandler.error(
-                RESUBSCRIBE_ERROR,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+        # is_subscribed = check_user_subscription(subscription_model, user_id)
+        # if is_subscribed:
+        #     return ResponseHandler.error(
+        #         RESUBSCRIBE_ERROR,
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #     )
 
         razorpay_order = get_razorpay_order(
             {
@@ -964,7 +964,7 @@ def create_cart_order(model_class, subscription_model, serializer_class, request
 
 def capture_transaction_data(
     serializer_class,
-    subscription_model,
+    attempt_model,
     subscription_serializer_class,
     plan_model,
     order_model,
@@ -973,15 +973,28 @@ def capture_transaction_data(
     try:
         order_id = request.data.get("razorpay_order_id")
         plan_code = order_model.objects.get(gateway_order_id=order_id).plan_type
+
+
+        if(plan_code == "ja_test"):
+            # need 
+            # start as assesment test in this plan and del prev
+            pass
+
+        if(plan_code == "ja_basic"):
+            user_id = request.user.id
+            attempt_model.objects.filter(user=user_id).delete()
+
+
+
         request.data["plan"] = plan_model.objects.get(name=plan_code).id
-        user_id = request.user.id
-        is_subscribed = check_user_subscription(subscription_model, user_id)
-        if is_subscribed:
-            return ResponseHandler.error(
-                RESUBSCRIBE_ERROR,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-        serializer_handle(subscription_serializer_class, request)
+        # is_subscribed = check_user_subscription(subscription_model, user_id)
+        # if is_subscribed:
+        #     return ResponseHandler.error(
+        #         RESUBSCRIBE_ERROR,
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #     )
+        # serializer_handle(subscription_serializer_class, request)
+
         return serializer_handle(serializer_class, request)
     except Exception as e:
         logger.error(f"Transaction data capture failed: {str(e)}")
