@@ -68,26 +68,23 @@ class JobSeekerPersonalProfileSerializer(serializers.ModelSerializer):
         file = JobSeekerUploadedFile.objects.filter(user=obj, file_type="profile_image").first()
         return file.file.url if file else None
 
-
     def create(self, validated_data):
         user = self.context["request"].user
 
         user_info_data = {}
         for key in JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_1:
-            if validated_data[key] is not None:
+            if validated_data.get(key) is not None:
                 user_info_data[key] = validated_data[key]
 
-        user_sp_info_data = {
-            "user": user,
-        }
-        validated_sp_data = validated_data["sp_fk_user"]
+        user_sp_info_data = {"user": user}
+        validated_sp_data = validated_data.get("sp_fk_user", {})
+
         for key in JOB_SEEKER_PROFILE_PERSONAL_INFO_SUB_KEYS_2:
-            if validated_sp_data[key] is not None:
+            if validated_sp_data.get(key) is not None:
                 user_sp_info_data[key] = validated_sp_data[key]
-        sp_lookup = {
-            "user": user.id,
-        }
-        if "id" in validated_sp_data and validated_sp_data["id"] is not None:
+
+        sp_lookup = {"user": user.id}
+        if validated_sp_data.get("id"):
             sp_lookup["id"] = validated_sp_data["id"]
 
         with transaction.atomic():
@@ -97,7 +94,9 @@ class JobSeekerPersonalProfileSerializer(serializers.ModelSerializer):
                 **sp_lookup,
                 defaults=user_sp_info_data,
             )
-        return validated_data
+
+        return user
+
 
 
 class AcademicQualificationSerializer(serializers.ModelSerializer):
@@ -442,7 +441,7 @@ class JobSeekerGeneralProfileSerializer(serializers.ModelSerializer):
         # AQ Info
         aq_info_data = {"user": user}
         for key in JOB_SEEKER_PROFILE_GENERAL_INFO_SUB_KEYS_1:
-            if validated_data[key] is not None:
+            if validated_data.get(key) is not None:
                 aq_info_data[key] = validated_data[key]
         aq_lookup = {
             "user": user.id,

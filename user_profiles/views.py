@@ -317,7 +317,7 @@ def upload_document(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdmin])
+@permission_classes([IsAuthenticated, IsJobSeeker ])
 def get_all_recruiter(request):
     return get_all_recruiter_details(
         OrganizationInfo, RecruiterDetailsSerializer, request
