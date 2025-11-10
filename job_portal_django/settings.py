@@ -35,7 +35,8 @@ ALLOWED_HOSTS = [
     "aws-0-ap-southeast-1.pooler.supabase.com",
     "job-portal-django-main.onrender.com",
     "jobportal-backend.avtechnosys.com",
-    "35.244.19.140"
+    "35.244.19.140",
+    "34.93.104.154"
 
 ]
 
