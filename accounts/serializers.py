@@ -55,7 +55,9 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.filter(email=email).first()
 
         # Check if the user already exists & active
+        print("user: ", user)
         if user and user.is_active:
+            print("inside user exist")
             raise ResponseHandler.api_exception_error(ERROR_USER_EXIST)
 
         phone_otp = generate_otp()

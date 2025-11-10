@@ -68,7 +68,7 @@ class JobCombinedSerializer(serializers.Serializer):
     )
     description = serializers.CharField()
     expiration_days = serializers.IntegerField(required=True)
-    date_of_birth = serializers.DateField(format="%Y-%m-%d")
+    # date_of_birth = serializers.DateField(format="%Y-%m-%d")
 
     def create(self, validated_data):
         user = self.context["request"].user

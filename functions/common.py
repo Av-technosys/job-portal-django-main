@@ -97,7 +97,17 @@ def serializer_handle(Serializers, request):
         return ResponseHandler.error(
             serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
         )
+    
+    except APIException as api_error:
+        # Handle serializer or custom API exceptions cleanly
+        logger.warning(f"APIException in serializer_handle: {api_error.detail}")
+        print("APIException in serializer_handle: ", api_error.detail)
+        return ResponseHandler.error(
+            api_error.detail, status_code=status.HTTP_400_BAD_REQUEST
+        )
+    
     except Exception as e:
+        print("error in serializer_handle: ", e)
         logger.error(f"Error in serializer_handle: {e}", exc_info=True)
         return ResponseHandler.error(
             RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
