@@ -40,13 +40,13 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 class AssessmentSessionSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True) 
-    payment = serializers.PrimaryKeyRelatedField(read_only=True)
+    order = serializers.CharField(read_only=True)
 
     class Meta:
         model = AssessmentSession
         fields = [
             "id",
-            "payment",
+            "order",
             "user",
             "overall_score",
             "complete_percentage",

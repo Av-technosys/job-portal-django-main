@@ -17,6 +17,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = "__all__"
+        
 
     def validate(self, data):
         request_data = self.context.get("request", {}).data
