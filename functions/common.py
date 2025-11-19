@@ -934,8 +934,11 @@ def get_razorpay_order(options):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-        def create_cart_order(model_class, subscription_model, serializer_class, request):
+def create_cart_order(model_class, subscription_model, serializer_class, request):
+           
             try:
+                logger.info("create_cart_order() TRIGGERED")
+
                 user_id = getattr(request.user, "id", None)
                 planId = request.data.get("planId")
                 logger.info("create_cart_order called", extra={"user_id": user_id, "planId": planId, "path": getattr(request, "path", None)})
@@ -944,7 +947,7 @@ def get_razorpay_order(options):
                 plan = model_class.objects.get(name=planId)
                 amount = plan.price
                 logger.debug("Fetched plan and price", extra={"planId": planId, "amount": amount})
-
+                
                 # Create Razorpay Order
                 razorpay_order = get_razorpay_order(
                     {
@@ -967,6 +970,11 @@ def get_razorpay_order(options):
                 razorpay_order["gateway_order_id"] = razorpay_order["id"]
                 razorpay_order["user"] = user_id
                 razorpay_order["plan_type"] = planId
+
+               # Convert paise → rupees
+                razorpay_order["amount"] = razorpay_order["amount"] // 100
+                razorpay_order["amount_due"] = razorpay_order["amount_due"] // 100
+                razorpay_order["amount_paid"] = razorpay_order["amount_paid"] // 100
 
                 serializer = serializer_class(data=razorpay_order)
                 if serializer.is_valid():
@@ -997,66 +1005,101 @@ def get_razorpay_order(options):
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
+
+
 def capture_transaction_data(
-            serializer_class,
-            attempt_model,
-            subscription_serializer_class,
-            plan_model,
-            order_model,
-            request,
-            AssessmentSession,
-            Transaction
-            
-        ):
-            try:
-                order_id = request.data.get("razorpay_order_id")
-                logger.info(f"capture_transaction_data called", extra={"order_id": order_id, "user_id": getattr(request.user, "id", None)})
-                
-                plan_code = order_model.objects.get(gateway_order_id=order_id).plan_type
-                logger.debug(f"Plan code retrieved", extra={"plan_code": plan_code, "order_id": order_id})
+        serializer_class,
+        attempt_model,
+        subscription_serializer_class,
+        plan_model,
+        order_model,
+        request,
+        AssessmentSession,
+        Transaction
+    ):
+        try:
+            logger.info("capture_transaction_data() TRIGGERED")
 
-                if(plan_code == "ja_test"):
-                    logger.info(f"Processing ja_test plan", extra={"user_id": request.user.id})
-                    pass
+            order_id = request.data.get("razorpay_order_id")
+            logger.info(
+                "capture_transaction_data called",
+                extra={"order_id": order_id, "user_id": getattr(request.user, "id", None)}
+            )
+            order = order_model.objects.get(gateway_order_id=order_id)
+            plan_code = order.plan_type
 
-                # When plan is the assessment plan, create an AssessmentSession and delete previous if needed
-                if  plan_code == "js_assesment" or plan_code == "js_test":
-                    user = request.user
-                    logger.info(f"Processing assessment plan", extra={"plan_code": plan_code, "user_id": user.id})
+            logger.debug(
+                "Plan code retrieved",
+                extra={"plan_code": plan_code, "order_id": order_id}
+            )
 
-                    # Delete previous assessment session
-                    deleted_count, _ = AssessmentSession.objects.filter(user=user).delete()
-                    logger.info(f"Deleted previous AssessmentSession for user", extra={"user_id": user.id, "deleted_count": deleted_count})
-                    
-                    # Create new assessment session entry
-                    new_session = AssessmentSession.objects.create(
-                        user=user,
-                        order=order_id,
-                        overall_score=0,
-                        complete_percentage=0.00,
-                        is_test_end=False,
-                        status="IN_PROGRESS",
-                    )
-                    logger.info(f"New AssessmentSession created", extra={"user_id": user.id, "session_id": new_session.id})
+            if plan_code == "ja_test":
+                logger.info("Processing ja_test plan", extra={"user_id": request.user.id})
+                pass
 
-                if(plan_code == "ja_basic"):
-                    user_id = request.user.id
-                    deleted_count, _ = attempt_model.objects.filter(user=user_id).delete()
-                    logger.info(f"Deleted attempts for ja_basic plan", extra={"user_id": user_id, "deleted_count": deleted_count})
+            # ASSESSMENT PLANS
+            if plan_code in ["js_assesment", "js_test"]:
+                user = request.user
+                logger.info("Processing assessment plan",
+                            extra={"plan_code": plan_code, "user_id": user.id})
 
-                request.data["plan"] = plan_model.objects.get(name=plan_code).id
-                logger.debug(f"Plan ID assigned", extra={"plan_code": plan_code, "user_id": request.user.id})
+                # delete old session
+                deleted_count, _ = AssessmentSession.objects.filter(user=user).delete()
+                logger.info("Deleted previous AssessmentSession",
+                            extra={"user_id": user.id, "deleted_count": deleted_count})
 
-                return serializer_handle(serializer_class, request)
-            except order_model.DoesNotExist:
-                logger.error(f"Order not found", extra={"order_id": order_id})
-                return ResponseHandler.error("Order not found", status_code=status.HTTP_404_NOT_FOUND)
-            except plan_model.DoesNotExist:
-                logger.error(f"Plan not found", extra={"plan_code": plan_code})
-                return ResponseHandler.error("Plan not found", status_code=status.HTTP_404_NOT_FOUND)
-            except Exception as e:
-                logger.exception(f"Transaction data capture failed", extra={"user_id": getattr(request.user, "id", None)})
-                return ResponseHandler.error("Transaction capture failed", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # create new session
+                new_session = AssessmentSession.objects.create(
+                    user=user,
+                    order=order_id,
+                    overall_score=0,
+                    complete_percentage=0.00,
+                    is_test_end=False,
+                    status="IN_PROGRESS",
+                )
+                logger.info("New AssessmentSession created",
+                            extra={"user_id": user.id, "session_id": new_session.id})
+
+            # BASIC PLAN
+            if plan_code == "ja_basic":
+                user_id = request.user.id
+                deleted_count, _ = attempt_model.objects.filter(user=user_id).delete()
+                logger.info("Deleted attempts for ja_basic plan",
+                            extra={"user_id": user_id, "deleted_count": deleted_count})
+
+
+            request.data["plan"] = plan_model.objects.get(name=plan_code).id
+
+            logger.debug("Plan ID assigned",
+                        extra={"plan_code": plan_code, "user_id": request.user.id})
+
+            order.status = "paid"
+            order.save()
+
+            logger.info(
+                "Order updated to PAID",
+                extra={"order_id": order_id, "user_id": request.user.id}
+            )
+
+            return serializer_handle(serializer_class, request)
+
+        except order_model.DoesNotExist:
+            logger.error("Order not found", extra={"order_id": order_id})
+            return ResponseHandler.error("Order not found", status_code=status.HTTP_404_NOT_FOUND)
+
+        except plan_model.DoesNotExist:
+            logger.error("Plan not found", extra={"plan_code": plan_code})
+            return ResponseHandler.error("Plan not found", status_code=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            logger.exception(
+                "Transaction data capture failed",
+                extra={"user_id": getattr(request.user, "id", None)}
+            )
+            return ResponseHandler.error("Transaction capture failed",
+             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 def retake_test(model_class, subscription_model, serializer_class, attempt_model, request):
             try:
@@ -1082,13 +1125,6 @@ def retake_test(model_class, subscription_model, serializer_class, attempt_model
                         {"message": "subject_id is required"}, status_code=status.HTTP_400_BAD_REQUEST
                     )
 
-                # 🧹 Step 1: Delete previous attempts for this user and subject
-                deleted_count, _ = attempt_model.objects.filter(user_id=user_id, subject_id=subject_id).delete()
-                logger.debug(
-                    f"Deleted previous attempts",
-                    extra={"user_id": user_id, "subject_id": subject_id, "deleted_count": deleted_count},
-                )
-
                 logger.info("Calling create_cart_order for retake_test", extra={"user_id": user_id, "subject_id": subject_id})
                 return create_cart_order(model_class, subscription_model, serializer_class, request)
 
@@ -1104,7 +1140,7 @@ def payment(order, transaction, OrderSerializer, request):
     try:
         logger.info("payment() called", extra={"path": getattr(request, "path", None), "user": getattr(request.user, "id", None)})
 
-        orders = order.objects.all().order_by("-created_date")
+        orders = order.objects.select_related('user').all().order_by("-created_date")
         logger.debug("Fetched orders queryset", extra={"count_estimate": orders.count()})
 
         page_obj, count, total_pages = paginator(orders, request)
