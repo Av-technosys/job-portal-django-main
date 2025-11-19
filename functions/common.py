@@ -14,6 +14,9 @@ from datetime import timedelta
 import time
 from job_portal_django.settings import razorpay_client
 from django.db.models import F
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
+from django.http import JsonResponse
 
 # from weasyprint import HTML
 from io import BytesIO
@@ -920,95 +923,249 @@ def generate_password_string(length=8):
 def get_expired_date(expiration_days):
     return timezone.now() + timedelta(days=expiration_days)
 
-
 def get_razorpay_order(options):
-
     try:
         order = razorpay_client.order.create(data=options)
         return order
     except Exception as e:
         logger.error(f"Razorpay order creation failed: {str(e)}")
-        ResponseHandler.api_exception_error()
-
+        return ResponseHandler.error(
+            {"message": "Failed to create Razorpay order"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 def create_cart_order(model_class, subscription_model, serializer_class, request):
-    try:
-        user_id = request.user.id
-        planId = request.data.get("planId")
-        amount = model_class.objects.get(name=planId).price
-        # is_subscribed = check_user_subscription(subscription_model, user_id)
-        # if is_subscribed:
-        #     return ResponseHandler.error(
-        #         RESUBSCRIBE_ERROR,
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #     )
+           
+            try:
+                logger.info("create_cart_order() TRIGGERED")
 
-        razorpay_order = get_razorpay_order(
-            {
-                "amount": amount * 100,
-                "currency": "INR",
-                "receipt": f"order_{user_id}_{int(time.time())}",
-            }
-        )
+                user_id = getattr(request.user, "id", None)
+                planId = request.data.get("planId")
+                logger.info("create_cart_order called", extra={"user_id": user_id, "planId": planId, "path": getattr(request, "path", None)})
 
-        razorpay_order["gateway_order_id"] = razorpay_order["id"]
-        razorpay_order["user"] = user_id
-        razorpay_order["plan_type"] = planId
+                # Fetch plan price
+                plan = model_class.objects.get(name=planId)
+                amount = plan.price
+                logger.debug("Fetched plan and price", extra={"planId": planId, "amount": amount})
+                
+                # Create Razorpay Order
+                razorpay_order = get_razorpay_order(
+                    {
+                        "amount": amount * 100,
+                        "currency": "INR",
+                        "receipt": f"order_{user_id}_{int(time.time())}",
+                    }
+                )
+                logger.debug("Razorpay order creation response", extra={"razorpay_order": razorpay_order})
 
-        serializer = serializer_class(data=razorpay_order)
-        if serializer.is_valid():
-            serializer.save()
-            # Only return gateway_order_id in response
-            return ResponseHandler.success(
-                {"gateway_order_id": razorpay_order["gateway_order_id"]},
-                status_code=status.HTTP_201_CREATED,
-            )
-        return ResponseHandler.error(
-            serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
-        )
+                # If order creation failed
+                if not isinstance(razorpay_order, dict) or "id" not in razorpay_order:
+                    logger.error("Razorpay order creation failed or returned invalid response", extra={"user_id": user_id, "response": razorpay_order})
+                    return ResponseHandler.error(
+                        {"message": "Razorpay order creation failed"},
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
 
-    except Exception as e:
-        logger.error(f"Cart order creation failed: {str(e)}")
-        return ResponseHandler.error(status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # Add extra fields before saving in DB
+                razorpay_order["gateway_order_id"] = razorpay_order["id"]
+                razorpay_order["user"] = user_id
+                razorpay_order["plan_type"] = planId
+
+               # Convert paise → rupees
+                razorpay_order["amount"] = razorpay_order["amount"] // 100
+                razorpay_order["amount_due"] = razorpay_order["amount_due"] // 100
+                razorpay_order["amount_paid"] = razorpay_order["amount_paid"] // 100
+
+                serializer = serializer_class(data=razorpay_order)
+                if serializer.is_valid():
+                    serializer.save()
+                    logger.info("Saved razorpay order to DB", extra={"gateway_order_id": razorpay_order["gateway_order_id"], "user_id": user_id})
+                    return ResponseHandler.success(
+                        {
+                            "gateway_order_id": razorpay_order["gateway_order_id"],
+                            "amount": amount,
+                        },
+                        status_code=status.HTTP_201_CREATED,
+                    )
+
+                logger.warning("Order serializer validation failed", extra={"errors": serializer.errors, "user_id": user_id})
+                return ResponseHandler.error(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+            except model_class.DoesNotExist:
+                logger.warning("Invalid Plan Selected", extra={"planId": planId, "user_id": user_id})
+                return ResponseHandler.error(
+                    {"message": "Invalid Plan Selected"},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            except Exception as e:
+                logger.exception("Cart order creation failed unexpectedly", extra={"user_id": user_id, "planId": planId})
+                return ResponseHandler.error(
+                    {"message": "Something went wrong while creating order"},
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
 
 
 def capture_transaction_data(
-    serializer_class,
-    attempt_model,
-    subscription_serializer_class,
-    plan_model,
-    order_model,
-    request,
-):
+        serializer_class,
+        attempt_model,
+        subscription_serializer_class,
+        plan_model,
+        order_model,
+        request,
+        AssessmentSession,
+        Transaction
+    ):
+        try:
+            logger.info("capture_transaction_data() TRIGGERED")
+
+            order_id = request.data.get("razorpay_order_id")
+            logger.info(
+                "capture_transaction_data called",
+                extra={"order_id": order_id, "user_id": getattr(request.user, "id", None)}
+            )
+            order = order_model.objects.get(gateway_order_id=order_id)
+            plan_code = order.plan_type
+
+            logger.debug(
+                "Plan code retrieved",
+                extra={"plan_code": plan_code, "order_id": order_id}
+            )
+
+            if plan_code == "ja_test":
+                logger.info("Processing ja_test plan", extra={"user_id": request.user.id})
+                pass
+
+            # ASSESSMENT PLANS
+            if plan_code in ["js_assesment", "js_test"]:
+                user = request.user
+                logger.info("Processing assessment plan",
+                            extra={"plan_code": plan_code, "user_id": user.id})
+
+                # delete old session
+                deleted_count, _ = AssessmentSession.objects.filter(user=user).delete()
+                logger.info("Deleted previous AssessmentSession",
+                            extra={"user_id": user.id, "deleted_count": deleted_count})
+
+                # create new session
+                new_session = AssessmentSession.objects.create(
+                    user=user,
+                    order=order_id,
+                    overall_score=0,
+                    complete_percentage=0.00,
+                    is_test_end=False,
+                    status="IN_PROGRESS",
+                )
+                logger.info("New AssessmentSession created",
+                            extra={"user_id": user.id, "session_id": new_session.id})
+
+            # BASIC PLAN
+            if plan_code == "ja_basic":
+                user_id = request.user.id
+                deleted_count, _ = attempt_model.objects.filter(user=user_id).delete()
+                logger.info("Deleted attempts for ja_basic plan",
+                            extra={"user_id": user_id, "deleted_count": deleted_count})
+
+
+            request.data["plan"] = plan_model.objects.get(name=plan_code).id
+
+            logger.debug("Plan ID assigned",
+                        extra={"plan_code": plan_code, "user_id": request.user.id})
+
+            order.status = "paid"
+            order.save()
+
+            logger.info(
+                "Order updated to PAID",
+                extra={"order_id": order_id, "user_id": request.user.id}
+            )
+
+            return serializer_handle(serializer_class, request)
+
+        except order_model.DoesNotExist:
+            logger.error("Order not found", extra={"order_id": order_id})
+            return ResponseHandler.error("Order not found", status_code=status.HTTP_404_NOT_FOUND)
+
+        except plan_model.DoesNotExist:
+            logger.error("Plan not found", extra={"plan_code": plan_code})
+            return ResponseHandler.error("Plan not found", status_code=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            logger.exception(
+                "Transaction data capture failed",
+                extra={"user_id": getattr(request.user, "id", None)}
+            )
+            return ResponseHandler.error("Transaction capture failed",
+             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+def retake_test(model_class, subscription_model, serializer_class, attempt_model, request):
+            try:
+                plan_id = request.data.get("planId")
+                assesment_session_id = request.data.get("assesment_session_id")
+                subject_id = request.data.get("subject_id")
+                user_id = getattr(request.user, "id", None)
+
+                logger.info(
+                    f"retake_test called",
+                    extra={
+                        "user_id": user_id,
+                        "plan_id": plan_id,
+                        "assesment_session_id": assesment_session_id,
+                        "subject_id": subject_id,
+                        "path": getattr(request, "path", None),
+                    },
+                )
+
+                if not subject_id:
+                    logger.warning("retake_test missing subject_id", extra={"user_id": user_id})
+                    return ResponseHandler.error(
+                        {"message": "subject_id is required"}, status_code=status.HTTP_400_BAD_REQUEST
+                    )
+
+                logger.info("Calling create_cart_order for retake_test", extra={"user_id": user_id, "subject_id": subject_id})
+                return create_cart_order(model_class, subscription_model, serializer_class, request)
+
+            except Exception as e:
+                logger.exception("Something went wrong in retake_test", exc_info=e)
+                return Response(
+                    {"success": False, "message": "Something went wrong while initializing retake test"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+
+def payment(order, transaction, OrderSerializer, request):
     try:
-        order_id = request.data.get("razorpay_order_id")
-        plan_code = order_model.objects.get(gateway_order_id=order_id).plan_type
+        logger.info("payment() called", extra={"path": getattr(request, "path", None), "user": getattr(request.user, "id", None)})
 
+        orders = order.objects.select_related('user').all().order_by("-created_date")
+        logger.debug("Fetched orders queryset", extra={"count_estimate": orders.count()})
 
-        if(plan_code == "ja_test"):
-            # need 
-            # start as assesment test in this plan and del prev
-            pass
+        page_obj, count, total_pages = paginator(orders, request)
+        serializer = OrderSerializer(page_obj, many=True)
+        logger.debug("Serialized page_obj for orders", extra={"page_number": getattr(page_obj, "number", None)})
 
-        if(plan_code == "ja_basic"):
-            user_id = request.user.id
-            attempt_model.objects.filter(user=user_id).delete()
+        total_amount = orders.aggregate(total=Sum("amount"))["total"] or 0
+        logger.info("Computed total amount for orders", extra={"total_amount": total_amount})
 
+        response_data = {
+            "total_amount": total_amount,
+            "pagination": {
+                "total_count": count,
+                "total_pages": total_pages,
+                "current_page": page_obj.number,
+            },
+            "data": serializer.data,
+        }
 
+        logger.info("payment() completed successfully", extra={"total_count": count, "total_amount": total_amount})
+        return JsonResponse(response_data, safe=False)
 
-        request.data["plan"] = plan_model.objects.get(name=plan_code).id
-        # is_subscribed = check_user_subscription(subscription_model, user_id)
-        # if is_subscribed:
-        #     return ResponseHandler.error(
-        #         RESUBSCRIBE_ERROR,
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #     )
-        # serializer_handle(subscription_serializer_class, request)
-
-        return serializer_handle(serializer_class, request)
     except Exception as e:
-        logger.error(f"Transaction data capture failed: {str(e)}")
-        return ResponseHandler.error(status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception("Unexpected error in payment()")
+        raise
 
 
 def generate_pdf(data):
@@ -1486,13 +1643,13 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         
-        prev_attempt = AttemptModel.objects.filter(subject=subject_id, user=user_id)
-
-        if prev_attempt:
-            return ResponseHandler.error(
-                ASSESMENT_TAKEN,
-                status_code=status.HTTP_208_ALREADY_REPORTED,
-            )
+        # prev_attempt = AttemptModel.objects.filter(subject=subject_id, user=user_id)
+           
+        # if prev_attempt:
+        #     return ResponseHandler.error(
+        #         ASSESMENT_TAKEN,
+        #         status_code=status.HTTP_208_ALREADY_REPORTED,
+        #     )
         
         # Now the user is valid to start test
 
