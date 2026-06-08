@@ -41,7 +41,7 @@ ALLOWED_HOSTS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:3001",
     "https://job-portal-django-main.onrender.com",
     "https://job-portal-next-ten.vercel.app",
     "https://job-portal-django.vercel.app",
@@ -121,13 +121,13 @@ DATABASES = {
     #     "PORT": "5432",
     # },
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "postgres",  # dbname
-        "USER": "postgres.ybixgfoaplxaurbjohyc",  # from your user
-        "PASSWORD": "Avtechnosys123",  # put your actual password here
-        "HOST": "aws-1-ap-southeast-1.pooler.supabase.com",  # from your host
-        "PORT": "5432",  # stays the same
-    }
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "postgres",
+            "USER": "postgres.fgqjqliozikyzqnwxpho",
+            "PASSWORD": "Avtechnosys@123",
+            "HOST": "aws-1-ap-south-1.pooler.supabase.com",
+            "PORT": "6543",
+        }
 
     # "default": {
     #     "ENGINE": "django.db.backends.postgresql",
@@ -192,13 +192,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Email settings
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = EMAIL_BACKEND
 EMAIL_HOST = EMAIL_HOST
 EMAIL_USE_TLS = EMAIL_USE_TLS
 EMAIL_PORT = EMAIL_PORT
 EMAIL_HOST_USER = EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
 DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL
+AWS_SES_REGION_NAME = AWS_SES_REGION_NAME
+SES_AWS_ACCESS_KEY_ID = SES_AWS_ACCESS_KEY_ID
+SES_AWS_SECRET_ACCESS_KEY = SES_AWS_SECRET_ACCESS_KEY
 
 # Audit Log
 AUDITLOG_INCLUDE_ALL_MODELS = True

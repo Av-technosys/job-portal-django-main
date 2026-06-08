@@ -48,6 +48,8 @@ class UserSerializer(serializers.ModelSerializer):
         return file.file.url if file else None
 
     def create(self, validated_data):
+        print("yup for registering user this is calling")
+
         email = validated_data["email"]
         phone_number = validated_data["phone_number"]
         password = validated_data["password"]
