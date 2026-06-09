@@ -18,6 +18,16 @@ def get_int_env(key, default):
         return default
     return int(value)
 
+
+def get_none_env(key, default=None):
+    value = os.getenv(key)
+    if value is None:
+        return default
+    value = value.strip()
+    if value == "" or value.lower() in ("none", "null"):
+        return None
+    return value
+
 # TWILIO
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
@@ -47,8 +57,8 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL") or EMAIL_FROM or AWS_SES_FR
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
-AWS_S3_FILE_OVERWRITE = os.getenv("AWS_S3_FILE_OVERWRITE")
-AWS_DEFAULT_ACL = os.getenv("AWS_DEFAULT_ACL")
+AWS_S3_FILE_OVERWRITE = get_bool_env("AWS_S3_FILE_OVERWRITE", False)
+AWS_DEFAULT_ACL = get_none_env("AWS_DEFAULT_ACL")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 # RAZORPAY
