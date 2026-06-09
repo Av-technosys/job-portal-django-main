@@ -20,6 +20,7 @@ NO_FILTER_PROVIDED = (
 NO_QUERY_PROVIDED = "No search query provided."
 ERROR_JOB_ID_REQUIRED = "Job ID is required"
 ERROR_NO_APPLICATIONS_FOUND = "No applications found for this job"
+ERROR_STUDENT_PROFILE_REQUIRED = "Complete your profile before applying for jobs."
 ALREADY_APPLIED = "You have already applied for this job."
 ALREADY_SAVED = "You have already saved this job."
 INVALID_JOB_STATUS = "Invalid job status"

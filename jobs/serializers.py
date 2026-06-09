@@ -10,6 +10,7 @@ from functions.common import (
     get_location_formatted,
     get_recruiter_profile_image,
     get_salary_formatted,
+    is_job_seeker_profile_complete_for_apply,
     is_job_seeker,
     logger,
     get_expired_date,
@@ -382,7 +383,7 @@ class JobPostedListSerializer(serializers.ModelSerializer):
     title = serializers.CharField()
     salary = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
-    application_count = serializers.IntegerField(source="job_id_applied.count")
+    application_count = serializers.SerializerMethodField()
     job_id = serializers.IntegerField(source="id")
     job_status = serializers.SerializerMethodField()
 
@@ -398,6 +399,13 @@ class JobPostedListSerializer(serializers.ModelSerializer):
 
     def get_location(self, obj):
         return get_location_formatted(obj)
+
+    def get_application_count(self, obj):
+        return sum(
+            1
+            for student_id in obj.job_id_applied.values_list("student_id", flat=True)
+            if is_job_seeker_profile_complete_for_apply(student_id)
+        )
 
     def get_job_status(self, obj):
         return get_job_post_status(obj)
