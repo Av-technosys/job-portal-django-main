@@ -631,11 +631,57 @@ def paginator(queryset, request):
     return page_obj, paginator.count, paginator.num_pages
 
 
+def get_missing_job_seeker_apply_profile_sections(user_id):
+    from user_profiles.models import (
+        AcademicQualification,
+        Salary,
+        SkillSet,
+        StudentProfile,
+        WorkExperience,
+    )
+
+    missing_sections = []
+    student_profile = StudentProfile.objects.filter(user_id=user_id).first()
+
+    if not student_profile:
+        missing_sections.append("basic details")
+        return missing_sections
+
+    if not AcademicQualification.objects.filter(user_id=user_id).exists():
+        missing_sections.append("qualification")
+
+    if not SkillSet.objects.filter(user_id=user_id).exists():
+        missing_sections.append("skills")
+
+    salary = Salary.objects.filter(user_id=user_id).first()
+    if not salary or salary.expected_salary <= 0:
+        missing_sections.append("salary expectation")
+
+    if student_profile.experience > 0 and not WorkExperience.objects.filter(
+        user_id=user_id
+    ).exists():
+        missing_sections.append("work experience")
+
+    return missing_sections
+
+
+def is_job_seeker_profile_complete_for_apply(user_id):
+    return len(get_missing_job_seeker_apply_profile_sections(user_id)) == 0
+
+
 def job_apply_handler(serializer_class, JobInfo, request):
     try:
         # Student Id is used by logged in student user
         student_id = request.user.id
         job_id = request.data.get("job")
+
+        missing_sections = get_missing_job_seeker_apply_profile_sections(student_id)
+        if missing_sections:
+            return ResponseHandler.error(
+                f"{ERROR_STUDENT_PROFILE_REQUIRED} Missing: {', '.join(missing_sections)}.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
         job_owner_id = get_object_or_404(JobInfo, id=job_id).user_id
         request.data["student"] = student_id
         request.data["owner"] = job_owner_id
@@ -680,10 +726,13 @@ def application_handler(
             )
 
         if not related_profiles.exists():
-            return ResponseHandler.error(
-                message=ERROR_NO_APPLICATIONS_FOUND,
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
+            response_data = {
+                "total_count": 0,
+                "total_pages": 0,
+                "current_page": int(request.GET.get("page", 1)),
+                "data": [],
+            }
+            return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
         page_obj, count, total_pages = paginator(related_profiles, request)
         serializer = profile_serializer(page_obj, many=True)
@@ -717,7 +766,12 @@ def get_application_data(_id, modal_class, serializer_class, profile, lookup):
         related_ids = [application.get(lookup) for application in applications.data]
 
         if lookup == "student":
-            related_profiles = profile.objects.filter(user_id__in=related_ids)
+            complete_profile_user_ids = [
+                user_id
+                for user_id in related_ids
+                if is_job_seeker_profile_complete_for_apply(user_id)
+            ]
+            related_profiles = profile.objects.filter(user_id__in=complete_profile_user_ids)
 
         return related_profiles
     except Exception as err:
