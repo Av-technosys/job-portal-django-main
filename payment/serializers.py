@@ -8,6 +8,10 @@ from functions.common import (
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+
     class Meta:
         model = Order
         fields = "__all__"
@@ -17,6 +21,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = "__all__"
+        
 
     def validate(self, data):
         request_data = self.context.get("request", {}).data
