@@ -25,6 +25,7 @@ from functions.common import (
 from constants.accounts import (
     PASSWORD_RESET,
     REGISTRATION_META_FIELDS,
+    SUCCESS_OTP_VERIFICATION_PENDING_APPROVAL,
     SUCCESS_SENDING_OTP,
     USER_META_FIELDS,
 )
@@ -230,13 +231,16 @@ class VerifyOtpSerializer(serializers.Serializer):
         email = self.validated_data["email"]
         user = User.objects.get(email=email)
 
-        # Activate user account except for admin (user_type == 3)
-        if user.user_type != 3:
+        # Recruiters and admins must still be activated by an admin after OTP.
+        if user.user_type == 1:
             user.is_active = True
         user.phone_otp = None
         user.email_otp = None
         user.otp_expiration = None  # Clear expiration time as OTPs are used
         user.save()
+
+        if not user.is_active:
+            return {"message": SUCCESS_OTP_VERIFICATION_PENDING_APPROVAL}
 
         token, _ = Token.objects.get_or_create(user=user)
         if token:

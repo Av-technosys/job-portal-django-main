@@ -797,6 +797,103 @@ class JobSeekerDetailsSerializer(serializers.ModelSerializer):
         model = StudentProfile
         fields = JOB_SEEKER_DETAILS_FIELDS
 
+
+class AdminRecruiterListSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField()
+    industry_type = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
+    country = serializers.SerializerMethodField()
+    user = serializers.IntegerField(source="id", read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "first_name",
+            "industry_type",
+            "city",
+            "state",
+            "country",
+            "profile_image",
+            "user",
+            "email",
+            "is_active",
+            "phone_number",
+            "country_code",
+        ]
+
+    def get_profile_image(self, obj):
+        try:
+            return get_recruiter_profile_image(obj)
+        except Exception:
+            return None
+
+    def get_industry_type(self, obj):
+        try:
+            return obj.fi_fk_user.get_industry_type_display()
+        except Exception:
+            return None
+
+    def get_city(self, obj):
+        try:
+            return obj.oi_fk_user.city
+        except Exception:
+            return None
+
+    def get_state(self, obj):
+        try:
+            return obj.oi_fk_user.state
+        except Exception:
+            return None
+
+    def get_country(self, obj):
+        try:
+            return obj.oi_fk_user.country
+        except Exception:
+            return None
+
+
+class AdminJobSeekerListSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField()
+    gender = serializers.SerializerMethodField()
+    date_of_birth = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    country = serializers.SerializerMethodField()
+    experience = serializers.SerializerMethodField()
+    user = serializers.IntegerField(source="id", read_only=True)
+
+    class Meta:
+        model = User
+        fields = JOB_SEEKER_DETAILS_FIELDS
+
+    def get_profile_image(self, obj):
+        try:
+            return get_job_seeker_profile_image(obj)
+        except Exception:
+            return None
+
+    def get_student_profile_field(self, obj, field):
+        try:
+            return getattr(obj.sp_fk_user, field)
+        except Exception:
+            return None
+
+    def get_gender(self, obj):
+        return self.get_student_profile_field(obj, "gender")
+
+    def get_date_of_birth(self, obj):
+        return self.get_student_profile_field(obj, "date_of_birth")
+
+    def get_city(self, obj):
+        return self.get_student_profile_field(obj, "city")
+
+    def get_country(self, obj):
+        return self.get_student_profile_field(obj, "country")
+
+    def get_experience(self, obj):
+        return self.get_student_profile_field(obj, "experience")
+
 class AppliedApplicantSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name')
     city = serializers.CharField()
