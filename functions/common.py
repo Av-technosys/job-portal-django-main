@@ -1024,6 +1024,10 @@ def create_cart_order(model_class, subscription_model, serializer_class, request
                 razorpay_order["gateway_order_id"] = razorpay_order["id"]
                 razorpay_order["user"] = user_id
                 razorpay_order["plan_type"] = planId
+                razorpay_order["notes"] = {
+                    "assesment_session_id": request.data.get("assesment_session_id"),
+                    "subject_id": request.data.get("subject_id"),
+                }
 
                # Convert paise → rupees
                 razorpay_order["amount"] = razorpay_order["amount"] // 100
@@ -1081,6 +1085,7 @@ def capture_transaction_data(
             )
             order = order_model.objects.get(gateway_order_id=order_id)
             plan_code = order.plan_type
+            assessment_session_id = None
 
             logger.debug(
                 "Plan code retrieved",
@@ -1092,7 +1097,7 @@ def capture_transaction_data(
                 pass
 
             # ASSESSMENT PLANS
-            if plan_code in ["js_assesment", "js_test"]:
+            if plan_code == "js_assesment":
                 user = request.user
                 logger.info("Processing assessment plan",
                             extra={"plan_code": plan_code, "user_id": user.id})
@@ -1111,8 +1116,50 @@ def capture_transaction_data(
                     is_test_end=False,
                     status="IN_PROGRESS",
                 )
+                assessment_session_id = new_session.id
                 logger.info("New AssessmentSession created",
                             extra={"user_id": user.id, "session_id": new_session.id})
+
+            if plan_code == "js_test":
+                user = request.user
+                subject_id = order.notes.get("subject_id") if order.notes else None
+                assesment_session_id = (
+                    order.notes.get("assesment_session_id") if order.notes else None
+                )
+
+                if not subject_id or not assesment_session_id:
+                    return ResponseHandler.error(
+                        "Retake subject details not found",
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                assessment_session = AssessmentSession.objects.filter(
+                    id=assesment_session_id,
+                    user=user,
+                ).first()
+
+                if not assessment_session:
+                    return ResponseHandler.error(
+                        "Assessment session not found",
+                        status_code=status.HTTP_404_NOT_FOUND,
+                    )
+                assessment_session_id = assessment_session.id
+
+                deleted_count, _ = attempt_model.objects.filter(
+                    user=user,
+                    assessment_session_id=assesment_session_id,
+                    subject_id=subject_id,
+                ).delete()
+
+                logger.info(
+                    "Unlocked subject retake",
+                    extra={
+                        "user_id": user.id,
+                        "session_id": assesment_session_id,
+                        "subject_id": subject_id,
+                        "deleted_attempts": deleted_count,
+                    },
+                )
 
             # BASIC PLAN
             if plan_code == "ja_basic":
@@ -1135,11 +1182,36 @@ def capture_transaction_data(
                 extra={"order_id": order_id, "user_id": request.user.id}
             )
 
-            return serializer_handle(serializer_class, request)
+            if request.user.id:
+                request.data["user"] = request.user.id
+
+            serializer = serializer_class(data=request.data, context={"request": request})
+            if serializer.is_valid():
+                serializer.save()
+                response_data = dict(serializer.data)
+                if assessment_session_id:
+                    response_data["assessment_session_id"] = assessment_session_id
+                    response_data["assesment_session_id"] = assessment_session_id
+                return ResponseHandler.success(
+                    response_data,
+                    status_code=status.HTTP_201_CREATED,
+                )
+
+            return ResponseHandler.error(
+                serializer.errors,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         except order_model.DoesNotExist:
             logger.error("Order not found", extra={"order_id": order_id})
             return ResponseHandler.error("Order not found", status_code=status.HTTP_404_NOT_FOUND)
+
+        except APIException as api_error:
+            logger.warning(f"APIException in capture_transaction_data: {api_error.detail}")
+            return ResponseHandler.error(
+                api_error.detail,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         except plan_model.DoesNotExist:
             logger.error("Plan not found", extra={"plan_code": plan_code})
@@ -1155,63 +1227,106 @@ def capture_transaction_data(
 
 
 
-def retake_test(model_class, subscription_model, serializer_class, attempt_model, request):
-            try:
-                plan_id = request.data.get("planId")
-                assesment_session_id = request.data.get("assesment_session_id")
-                subject_id = request.data.get("subject_id")
-                user_id = getattr(request.user, "id", None)
+def retake_test(model_class, subscription_model, serializer_class, attempt_model, assessment_session_model, request):
+    try:
+        plan_id = request.data.get("planId")
+        assesment_session_id = request.data.get("assesment_session_id")
+        subject_id = request.data.get("subject_id")
+        user_id = getattr(request.user, "id", None)
 
-                logger.info(
-                    f"retake_test called",
-                    extra={
-                        "user_id": user_id,
-                        "plan_id": plan_id,
-                        "assesment_session_id": assesment_session_id,
-                        "subject_id": subject_id,
-                        "path": getattr(request, "path", None),
-                    },
-                )
+        logger.info(
+            "retake_test called",
+            extra={
+                "user_id": user_id,
+                "plan_id": plan_id,
+                "assesment_session_id": assesment_session_id,
+                "subject_id": subject_id,
+                "path": getattr(request, "path", None),
+            },
+        )
 
-                if not subject_id:
-                    logger.warning("retake_test missing subject_id", extra={"user_id": user_id})
-                    return ResponseHandler.error(
-                        {"message": "subject_id is required"}, status_code=status.HTTP_400_BAD_REQUEST
-                    )
+        if not subject_id:
+            logger.warning("retake_test missing subject_id", extra={"user_id": user_id})
+            return ResponseHandler.error(
+                {"message": "subject_id is required"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
-                logger.info("Calling create_cart_order for retake_test", extra={"user_id": user_id, "subject_id": subject_id})
-                return create_cart_order(model_class, subscription_model, serializer_class, request)
+        if not assesment_session_id:
+            logger.warning("retake_test missing assesment_session_id", extra={"user_id": user_id})
+            return ResponseHandler.error(
+                {"message": "assesment_session_id is required"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
-            except Exception as e:
-                logger.exception("Something went wrong in retake_test", exc_info=e)
-                return Response(
-                    {"success": False, "message": "Something went wrong while initializing retake test"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
+        assessment_session = assessment_session_model.objects.filter(
+            id=assesment_session_id,
+            user_id=user_id,
+        ).first()
+
+        if not assessment_session:
+            return ResponseHandler.error(
+                {"message": "Assessment session not found"},
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        previous_attempt = attempt_model.objects.filter(
+            user_id=user_id,
+            assessment_session_id=assesment_session_id,
+            subject_id=subject_id,
+        ).first()
+
+        if not previous_attempt:
+            return ResponseHandler.error(
+                {"message": "Retake is only available for an attempted subject"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        logger.info(
+            "Calling create_cart_order for retake_test",
+            extra={"user_id": user_id, "subject_id": subject_id},
+        )
+        return create_cart_order(model_class, subscription_model, serializer_class, request)
+
+    except Exception as e:
+        logger.exception("Something went wrong in retake_test", exc_info=e)
+        return Response(
+            {"success": False, "message": "Something went wrong while initializing retake test"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 def payment(order, transaction, OrderSerializer, request):
     try:
         logger.info("payment() called", extra={"path": getattr(request, "path", None), "user": getattr(request.user, "id", None)})
 
-        orders = order.objects.select_related('user').all().order_by("-created_date")
+        orders = order.objects.select_related('user').all().order_by("-created_date", "-id")
         logger.debug("Fetched orders queryset", extra={"count_estimate": orders.count()})
 
         page_obj, count, total_pages = paginator(orders, request)
         serializer = OrderSerializer(page_obj, many=True)
         logger.debug("Serialized page_obj for orders", extra={"page_number": getattr(page_obj, "number", None)})
 
-        total_amount = orders.aggregate(total=Sum("amount"))["total"] or 0
-        logger.info("Computed total amount for orders", extra={"total_amount": total_amount})
+        paid_orders = orders.filter(status__iexact="paid")
+        total_amount = paid_orders.aggregate(total=Sum("amount"))["total"] or 0
+        logger.info("Computed total paid amount for orders", extra={"total_amount": total_amount})
+
+        serialized_orders = list(serializer.data)
+        for serial_number, item in enumerate(serialized_orders, start=page_obj.start_index()):
+            item["serial_number"] = serial_number
 
         response_data = {
             "total_amount": total_amount,
+            "paid_total_count": paid_orders.count(),
             "pagination": {
                 "total_count": count,
                 "total_pages": total_pages,
                 "current_page": page_obj.number,
+                "page_size": page_obj.paginator.per_page,
+                "start_index": page_obj.start_index(),
+                "end_index": page_obj.end_index(),
             },
-            "data": serializer.data,
+            "data": serialized_orders,
         }
 
         logger.info("payment() completed successfully", extra={"total_count": count, "total_amount": total_amount})
@@ -1290,7 +1405,6 @@ def get_all_recruiter_details(model, serializer_class, request):
                 message=ERROR_NOT_FOUND,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
-
         # 🔹 Sorting
         sort_fields = request.GET.getlist("sort[]", ["created_date"])
         recruiter_details = recruiter_details.annotate(
@@ -1622,12 +1736,86 @@ def create_question_handler(questions_serializer, request):
         )
 
 
+def get_random_questions_for_subject(QuestionModel, subject_id, subject):
+    difficulty_config = [
+        (1, "easy", subject.easy_question_count),
+        (2, "medium", subject.medium_question_count),
+        (3, "difficult", subject.difficult_question_count),
+    ]
+    selected_ids = []
+    missing_questions = []
+
+    for level, label, required_count in difficulty_config:
+        question_ids = list(
+            QuestionModel.objects.filter(
+                subject_id=subject_id,
+                difficulty_level=level,
+            ).values_list("id", flat=True)
+        )
+        available_count = len(question_ids)
+
+        if available_count < required_count:
+            missing_questions.append(
+                {
+                    "difficulty": label,
+                    "required": required_count,
+                    "available": available_count,
+                }
+            )
+            continue
+
+        if required_count > 0:
+            selected_ids.extend(random.sample(question_ids, required_count))
+
+    if missing_questions:
+        return None, missing_questions
+
+    return QuestionModel.objects.filter(id__in=selected_ids), None
+
+
 def get_free_test_question_handler(QuestionModel, SubjectModel, AttemptSerializer,QuestionsSerializer, request):
     try:
 
         # Save payment details 
         subject_id = request.GET.get("subject_id")
         user_id = request.user.id
+
+        if not subject_id:
+            return ResponseHandler.error(
+                {"message": "subject_id is required"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Share questions
+        # 1. Fetch subject
+        subject = SubjectModel.objects.filter(id=subject_id).first()
+
+        if not subject:
+            return ResponseHandler.error(
+                {"message": "Subject not found"},
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not subject.is_live:
+            return ResponseHandler.error(
+                "This subject is not live yet.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        all_questions, missing_questions = get_random_questions_for_subject(
+            QuestionModel,
+            subject_id,
+            subject,
+        )
+
+        if missing_questions:
+            return ResponseHandler.error(
+                {
+                    "message": "Not enough questions configured for this subject.",
+                    "details": missing_questions,
+                },
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Create new attpemt
         data = {"user": user_id, "status": "IN_PROGRESS", "subject": subject_id}
@@ -1643,10 +1831,6 @@ def get_free_test_question_handler(QuestionModel, SubjectModel, AttemptSerialize
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         
-        # Share questions
-        # 1. Fetch subject
-        subject = get_object_or_404(SubjectModel, id=subject_id) 
-
         # 2. Prepare base response (metadata)
         test_data = {
             "exam_name": subject.exam_name,
@@ -1661,8 +1845,6 @@ def get_free_test_question_handler(QuestionModel, SubjectModel, AttemptSerialize
             "attempt_id": attempt_id
         }
 
-        # 3. Collect random questions by difficulty_level
-        all_questions = QuestionModel.objects.filter(subject_id=subject_id)
         serialized_questions = QuestionsSerializer(all_questions, many=True).data
 
         # 5. Add to response
@@ -1685,16 +1867,23 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
 
         if not assesment_session_id or not subject_id:
             return ResponseHandler.error(
-                RESPONSE_ERROR,
+                {"message": "assesment_session_id and subject_id are required"},
                 status_code=status.HTTP_400_BAD_REQUEST,
             ) 
         
-        assesment_details = AssessmentSessionModel.objects.get(id=assesment_session_id)
+        assesment_details = AssessmentSessionModel.objects.filter(
+            id=assesment_session_id,
+            user_id=user_id,
+        ).first()
 
-        if not assesment_details or not assesment_details.user_id == user_id:
-            return ResponseHandler.error(
-                RESPONSE_ERROR,
-                status_code=status.HTTP_400_BAD_REQUEST,
+        if not assesment_details:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Assessment session expired. Please login again.",
+                    "force_logout": True,
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
             )
         
         # prev_attempt = AttemptModel.objects.filter(subject=subject_id, user=user_id)
@@ -1705,6 +1894,37 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
         #         status_code=status.HTTP_208_ALREADY_REPORTED,
         #     )
         
+        # Share questions
+        # 1. Fetch subject
+        subject = SubjectModel.objects.filter(id=subject_id).first()
+
+        if not subject:
+            return ResponseHandler.error(
+                {"message": "Subject not found"},
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not subject.is_live:
+            return ResponseHandler.error(
+                "This subject is not live yet.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        all_questions, missing_questions = get_random_questions_for_subject(
+            QuestionModel,
+            subject_id,
+            subject,
+        )
+
+        if missing_questions:
+            return ResponseHandler.error(
+                {
+                    "message": "Not enough questions configured for this subject.",
+                    "details": missing_questions,
+                },
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Now the user is valid to start test
 
         # Create new attpemt
@@ -1721,10 +1941,6 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
                 serializer.errors,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
-        
-        # Share questions
-        # 1. Fetch subject
-        subject = get_object_or_404(SubjectModel, id=subject_id) 
 
         # 2. Prepare base response (metadata)
         test_data = {
@@ -1740,26 +1956,6 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
             "attempt_id": attempt_id
         }
 
-        # 3. Collect random questions by difficulty_level
-        def sample_questions(level: int, count: int):
-            qs = QuestionModel.objects.filter(subject_id=subject_id, difficulty_level=level)
-            qs_ids = list(qs.values_list("id", flat=True))
-
-            if not qs_ids:
-                return QuestionModel.objects.none()
-
-            if count > len(qs_ids):
-                count = len(qs_ids)
-
-            selected_ids = random.sample(qs_ids, count)
-            return QuestionModel.objects.filter(id__in=selected_ids)
-
-        easy_qs = sample_questions(1, subject.easy_question_count)
-        medium_qs = sample_questions(2, subject.medium_question_count)
-        difficult_qs = sample_questions(3, subject.difficult_question_count)
-
-        # 4. Serialize
-        all_questions = easy_qs | medium_qs | difficult_qs
         serialized_questions = QuestionsSerializer(all_questions, many=True).data
 
         # 5. Add to response

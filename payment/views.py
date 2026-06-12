@@ -12,6 +12,15 @@ from payment.models import Transaction
 from payment.models import Order
 from .serializers import OrderSerializer
 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_plans(request):
+    plans = Plan.objects.all().order_by("id")
+    serializer = PlanSerializer(plans, many=True)
+    return ResponseHandler.success(serializer.data)
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_order(request):
@@ -29,7 +38,7 @@ def capture_transaction(request):
 @permission_classes([IsAuthenticated])
 def create_transaction(request):
     return retake_test(
-        Plan, Subscription, OrderSerializer, Attempt, request
+        Plan, Subscription, OrderSerializer, Attempt, AssessmentSession, request
     )
 
 @permission_classes([IsAuthenticated])

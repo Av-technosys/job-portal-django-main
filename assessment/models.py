@@ -19,6 +19,7 @@ class Subject(models.Model):
     difficult_question_count = models.PositiveIntegerField(default=0)
 
     is_paid = models.BooleanField(default=True)
+    is_live = models.BooleanField(default=False)
 
     marks_correct = models.DecimalField(max_digits=5, decimal_places=2, default=1.0)
     marks_incorrect = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
