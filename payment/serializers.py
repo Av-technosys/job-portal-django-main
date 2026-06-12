@@ -1,10 +1,16 @@
 from rest_framework import serializers
-from .models import Order, Transaction
+from .models import Plan, Order, Transaction
 from functions.send_email import send_payment_receipt
 from job_portal_django.settings import razorpay_client
 from functions.common import (
     logger,
 )
+
+
+class PlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Plan
+        fields = ["id", "name", "price"]
 
 
 class OrderSerializer(serializers.ModelSerializer):
