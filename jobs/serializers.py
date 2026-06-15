@@ -23,7 +23,7 @@ from functions.send_email import (
 )
 from user_profiles.serializers import SocialLinkItemSerializer
 from .models import *
-from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS, ALREADY_SAVED
+from constants.errors import ALREADY_APPLIED, ALREADY_SAVED
 from constants.jobs import (
     JOB_APPLIED_VIEW_FIELDS,
     JOB_DESCRIPTION_SERIALIZER_FEILDS,
@@ -32,7 +32,6 @@ from constants.jobs import (
     JOB_POSTED_VIEW_FEILDS,
     JOB_SEEKER_LIST_VIEW_FIELDS,
     SAVED_JOBS_JOB_SEEKER_LIST_VIEW_FIELDS,
-    VALID_STATUS_TRANSITIONS,
 )
 
 from user_profiles.models import FoundingInfo
@@ -108,15 +107,9 @@ class JobApplySerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         job_apply_instance = self.instance
-        new_status = data.get("status")
-
-        if job_apply_instance and new_status is not None:
-            current_status = job_apply_instance.status
-            if new_status not in VALID_STATUS_TRANSITIONS.get(current_status, []):
-                raise serializers.ValidationError({"message": INVALID_JOB_STATUS})
         student = data.get("student")
         job = data.get("job")
-        if JobApply.objects.filter(student=student, job=job).exists():
+        if not job_apply_instance and JobApply.objects.filter(student=student, job=job).exists():
             raise serializers.ValidationError({"message": ALREADY_APPLIED})
 
         return data

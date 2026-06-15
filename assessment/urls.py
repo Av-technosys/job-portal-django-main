@@ -35,6 +35,7 @@ urlpatterns = [
 
         path("get_user_assesment_session/", get_user_assesment_session, name="get_user_assesment_session"),
         path("get_all_assesment_attempts/<int:session_id>/", get_all_assesment_attempts, name="get_all_assesment_attempts"),
+        path("get_applicant_assesment_attempts/<int:applicant_id>/", get_applicant_assesment_attempts, name="get_applicant_assesment_attempts"),
         path("get_results/<int:attempt_id>/", get_results, name="get_results"),
         path("submit_test/<int:attempt_id>/", submit_test, name="submit_test"),
         # path("update_user_assesment_session/", update_user_assesment_session, name="update_user_assesment_session"),
