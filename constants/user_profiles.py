@@ -178,6 +178,7 @@ FIND_RECUITER_VIEW_FEILDS = [
     "user",
     "company_profile_image",
     "company_name",
+    "posted_jobs_count",
     "organization_type",
     "industry_type",
     "city",

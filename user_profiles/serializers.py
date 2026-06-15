@@ -20,6 +20,7 @@ from functions.profile import process_items
 from .models import *
 from functions.common import get_recruiter_profile_image, get_location_formatted, get_industry_type, get_job_seeker_profile_image
 from django.db import transaction
+from jobs.models import JobInfo
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     user =  UserSerializer(read_only=True)
@@ -340,10 +341,9 @@ class SocialLinksJobSeekerSerializer(serializers.Serializer):
 class FindRecruiterListSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
     company_name = serializers.SerializerMethodField(source="user.first_name")
-    organization_type = serializers.CharField(
-        source="user.founding_info.organization_type"
-    )
-    industry_type = serializers.CharField(source="user.founding_info.industry_type")
+    posted_jobs_count = serializers.SerializerMethodField()
+    organization_type = serializers.SerializerMethodField()
+    industry_type = serializers.SerializerMethodField()
     created_date = serializers.DateTimeField()
     updated_date = serializers.DateTimeField()
     company_id = serializers.IntegerField(source="id")
@@ -361,6 +361,15 @@ class FindRecruiterListSerializer(serializers.ModelSerializer):
 
     def get_location(self, obj):
         return get_location_formatted(obj)
+
+    def get_posted_jobs_count(self, obj):
+        return JobInfo.objects.filter(user=obj.user).count()
+
+    def get_organization_type(self, obj):
+        return getattr(getattr(obj.user, "fi_fk_user", None), "organization_type", "")
+
+    def get_industry_type(self, obj):
+        return getattr(getattr(obj.user, "fi_fk_user", None), "industry_type", "")
 
 
 class WorkExperienceJobSeekerProfileSerializer(serializers.ModelSerializer):
