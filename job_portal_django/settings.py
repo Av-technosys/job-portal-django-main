@@ -146,8 +146,9 @@ AUTH_USER_MODEL = "accounts.User"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "accounts.authentication.ActiveUserTokenAuthentication",
     ],
+    "EXCEPTION_HANDLER": "accounts.exception_handlers.custom_exception_handler",
     # Other settings...
 }
 

@@ -18,7 +18,7 @@ from .serializers import (
     ContactUSSerializer,
     AdminUserSerializer
 )
-from constants.errors import ERROR_LOGOUT_FAILED
+from constants.errors import ERROR_LOGOUT_FAILED, ERROR_USER_INACTIVE
 from constants.accounts import SUCCESS_LOGOUT
 from functions.common import (
     ResponseHandler,
@@ -45,16 +45,19 @@ def sso_user(request):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated, IsAdmin])
 def remove_user(request):
     return delete_handle(User, request)
 
 
 @api_view(["POST"])
-def set_user_activate(request): 
+@permission_classes([IsAuthenticated, IsAdmin])
+def set_user_activate(request):
     return user_status_handle(User, request, True)
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated, IsAdmin])
 def set_user_deactivate(request):
     return user_status_handle(User, request, False)
 
@@ -70,6 +73,24 @@ def get_contact(request):
 @api_view(["POST"])
 def user_login(request):
     return serializer_handle_customize_response_only_validate(LoginSerializer, request)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def session_status(request):
+    if not request.user.is_active:
+        return ResponseHandler.error(
+            message={"message": ERROR_USER_INACTIVE, "force_logout": True},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+    return ResponseHandler.success(
+        data={
+            "is_active": True,
+            "force_logout": False,
+            "user_id": request.user.id,
+        },
+        status_code=status.HTTP_200_OK,
+    )
 
 
 @api_view(["POST"])

@@ -25,7 +25,6 @@ from functions.common import (
 from constants.accounts import (
     PASSWORD_RESET,
     REGISTRATION_META_FIELDS,
-    SUCCESS_OTP_VERIFICATION_PENDING_APPROVAL,
     SUCCESS_SENDING_OTP,
     USER_META_FIELDS,
 )
@@ -57,11 +56,13 @@ class UserSerializer(serializers.ModelSerializer):
 
         user = User.objects.filter(email=email).first()
 
-        # Check if the user already exists & active
+        # Existing accounts stay under admin control.
         print("user: ", user)
-        if user and user.is_active:
-            print("inside user exist")
-            raise ResponseHandler.api_exception_error(ERROR_USER_EXIST)
+        if user:
+            if user.is_active:
+                print("inside user exist")
+                raise ResponseHandler.api_exception_error(ERROR_USER_EXIST)
+            raise ResponseHandler.api_exception_error(ERROR_USER_INACTIVE)
 
         phone_otp = generate_otp()
         email_otp = generate_otp()
@@ -73,14 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
         # Set OTP expiration time to 10 minutes from now
         otp_expiration = timezone.now() + timedelta(minutes=10)
 
-        if user and not user.is_active:
-            user.email = email
-            user.user_type = validated_data["user_type"]
-            user.first_name = validated_data["first_name"]
-            user.phone_number = phone_number
-
-        else:
-            user = User(**validated_data)
+        user = User(**validated_data)
 
         user.username = email
         user.email_otp = email_otp
@@ -91,7 +85,7 @@ class UserSerializer(serializers.ModelSerializer):
         user.country_code = "+91"
 
         user.set_password(password)
-        user.is_active = False
+        user.is_active = False if int(user.user_type) == 3 else True
         user.save()
 
         # Send OTP via SMS and Email
@@ -134,20 +128,13 @@ class SSOUserSerializer(serializers.Serializer):
 
         user = User.objects.filter(email=email).first()
 
-        if user and user.is_active:
-            pass
-
-        elif user and not user.is_active:
-            # Do not auto-activate admin users (user_type == 3)
-            if user.user_type != 3:
-                user.is_active = True
-            user.save()
-
+        if user:
+            if not user.is_active:
+                raise ResponseHandler.api_exception_error(ERROR_USER_INACTIVE)
         else:
             user = User(
                 username=email,
                 email=email,
-                # Keep admin users inactive by default when created via SSO
                 is_active=False if int(user_type) == 3 else True,
                 first_name=name,
                 user_type=user_type,
@@ -231,8 +218,7 @@ class VerifyOtpSerializer(serializers.Serializer):
         email = self.validated_data["email"]
         user = User.objects.get(email=email)
 
-        # Recruiters and admins must still be activated by an admin after OTP.
-        if user.user_type == 1:
+        if user.user_type != 3:
             user.is_active = True
         user.phone_otp = None
         user.email_otp = None
@@ -240,7 +226,7 @@ class VerifyOtpSerializer(serializers.Serializer):
         user.save()
 
         if not user.is_active:
-            return {"message": SUCCESS_OTP_VERIFICATION_PENDING_APPROVAL}
+            raise ResponseHandler.api_exception_error(ERROR_USER_INACTIVE)
 
         token, _ = Token.objects.get_or_create(user=user)
         if token:

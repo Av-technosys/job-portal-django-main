@@ -10,6 +10,7 @@ from .views import (
     verify_otp,
     verify_reset_password,
     sso_user,
+    session_status,
     remove_user,
     set_user_activate,
     set_user_deactivate,
@@ -21,6 +22,7 @@ from .views import (
 urlpatterns = [
     path("register/", register_user, name="register"),
     path("login/", user_login, name="login"),
+    path("session_status/", session_status, name="session_status"),
     path("activate/", set_user_activate, name="set_user_activate"),
     path("deactivate/", set_user_deactivate, name="set_user_deactivate"),
     path("contacts/", create_contact_us, name="create_contact"),
