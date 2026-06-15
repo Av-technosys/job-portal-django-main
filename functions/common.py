@@ -206,10 +206,10 @@ def get_customize_handlerAdmin(model, serializer_class,job_seeker_id):
             ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
         )
 
-def get_admin_meta_details_handler(organizationInfoModel, studentProfileModle, assessmentModel, request):
+def get_admin_meta_details_handler(user_model, assessmentModel, request):
     data = {
-        "recruiter_count": organizationInfoModel.objects.count(),
-        "job_seeker_count": studentProfileModle.objects.count(),
+        "recruiter_count": user_model.objects.filter(user_type=2).count(),
+        "job_seeker_count": user_model.objects.filter(user_type=1).count(),
         "assessment_count": assessmentModel.objects.count(),
     }
     return ResponseHandler.success(data, status_code=status.HTTP_200_OK)
@@ -476,12 +476,12 @@ def filters(request):
             q_filters = Q(title__icontains=filter_result)
         elif "list_recruiters" in request.path:
             q_filters = Q(first_name=filter_result) | Q(
-                company_description__icontains=filter_result
+                company_about_us__icontains=filter_result
             )
         elif "list_all_recruiter" in request.path:
-            q_filters = Q(user__first_name__icontains=filter_result)
+            q_filters = Q(first_name__icontains=filter_result)
         elif "list_all_job_seeker" in request.path:
-            q_filters = Q(user__first_name__icontains=filter_result)
+            q_filters = Q(first_name__icontains=filter_result)
 
     filter_mappings = {
         "education": "user__academicqualification__specialization__in",
@@ -1394,22 +1394,51 @@ def job_status_update(model, serializer_class, request):
 def get_all_recruiter_details(model, serializer_class, request):
     try:
         # 🔹 Apply filters and search
-        q_filters, filter_kwargs = filters(request) 
-        recruiter_details = model.objects.select_related("user")
+        q_filters, filter_kwargs = filters(request)
+        if model.__name__ == "User":
+            recruiter_details = model.objects.filter(user_type=2)
+        else:
+            recruiter_details = model.objects.select_related("user")
 
         if q_filters or filter_kwargs:
-            recruiter_details = recruiter_details.filter(q_filters, **filter_kwargs) 
+            recruiter_details = recruiter_details.filter(q_filters, **filter_kwargs)
 
         if not recruiter_details.exists():
             return ResponseHandler.error(  # ✅ added return
                 message=ERROR_NOT_FOUND,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
-        # 🔹 Sorting
-        sort_fields = request.GET.getlist("sort[]", ["created_date"])
-        recruiter_details = recruiter_details.annotate(
-            first_name=F("user__first_name")
-        ).order_by(*sort_fields)
+        if model.__name__ != "User":
+            recruiter_details = recruiter_details.annotate(
+                first_name=F("user__first_name")
+            )
+
+        # Frontend labels do not always match model field names.
+        sort_aliases = {
+            "created_at": "created_date",
+            "-created_at": "-created_date",
+            "name": "first_name",
+            "-name": "-first_name",
+        }
+        if model.__name__ == "User":
+            sort_aliases.update(
+                {
+                    "industry_type": "fi_fk_user__industry_type",
+                    "-industry_type": "-fi_fk_user__industry_type",
+                }
+            )
+        else:
+            sort_aliases.update(
+                {
+                    "industry_type": "user__fi_fk_user__industry_type",
+                    "-industry_type": "-user__fi_fk_user__industry_type",
+                }
+            )
+        sort_fields = [
+            sort_aliases.get(field, field)
+            for field in request.GET.getlist("sort[]", ["created_date"])
+        ]
+        recruiter_details = recruiter_details.order_by(*sort_fields)
 
         # 🔹 Pagination
         page_obj, count, total_pages = paginator(recruiter_details, request)
@@ -1433,12 +1462,15 @@ def get_all_recruiter_details(model, serializer_class, request):
 def get_all_job_seeker_details(model, serializer_class, request):
     try:
         # 🔹 Apply filters and search
-        q_filters, filter_kwargs = filters(request) 
+        q_filters, filter_kwargs = filters(request)
 
-        job_seeker_details = model.objects.select_related('user')
+        if model.__name__ == "User":
+            job_seeker_details = model.objects.filter(user_type=1)
+        else:
+            job_seeker_details = model.objects.select_related('user')
 
         if q_filters or filter_kwargs:
-            job_seeker_details = job_seeker_details.filter(q_filters, **filter_kwargs) 
+            job_seeker_details = job_seeker_details.filter(q_filters, **filter_kwargs)
 
         if not job_seeker_details.exists():
             return ResponseHandler.error(  # ✅ added return
@@ -1446,11 +1478,21 @@ def get_all_job_seeker_details(model, serializer_class, request):
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
-        sort_fields = request.GET.getlist("sort[]", ["created_date"])
+        sort_aliases = {
+            "created_at": "created_date",
+            "-created_at": "-created_date",
+            "name": "first_name",
+            "-name": "-first_name",
+        }
+        sort_fields = [
+            sort_aliases.get(field, field)
+            for field in request.GET.getlist("sort[]", ["created_date"])
+        ]
 
-        job_seeker_details = job_seeker_details.annotate(
-            first_name=F('user__first_name')
-        )
+        if model.__name__ != "User":
+            job_seeker_details = job_seeker_details.annotate(
+                first_name=F('user__first_name')
+            )
 
         job_seeker_details = job_seeker_details.order_by(*sort_fields)
 

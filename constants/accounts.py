@@ -1,5 +1,8 @@
 SUCCESS_LOGOUT = "Successfully logged out."
 SUCCESS_OTP_VERIFICATION = "OTP verified successfully. Account activated."
+SUCCESS_OTP_VERIFICATION_PENDING_APPROVAL = (
+    "OTP verified successfully. Awaiting admin approval."
+)
 OTP_MESSAGE = "Your OTP code is"
 USER_REGISTERED = "User registered"
 EMAIL_OTP_SUBJECT = "Your Email OTP Code"
