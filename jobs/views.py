@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .models import *
 from assessment.models import Attempt
+from functions.cache import get_or_set_response_cache
 from handlers.common import *
 from user_profiles.models import StudentProfile
 from user_profiles.serializers import ListCandidateSerializer, StudentProfileSerializer
@@ -24,7 +25,12 @@ def apply_job(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_jobs(request):
-    return get_job_listing(JobInfo, JobSeekerListingViewSerializer, request)
+    return get_or_set_response_cache(
+        request,
+        "list_jobs",
+        lambda: get_job_listing(JobInfo, JobSeekerListingViewSerializer, request),
+        vary_by_user=True,
+    )
 
 
 @api_view(["GET"])

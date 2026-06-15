@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import importlib.util
+import os
 from pathlib import Path
 from constants.env_data import *
 from firebase_admin import credentials, initialize_app
@@ -151,6 +153,29 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "accounts.exception_handlers.custom_exception_handler",
     # Other settings...
 }
+
+PUBLIC_LIST_CACHE_TIMEOUT = 14 * 24 * 60 * 60
+
+REDIS_URL = os.getenv("REDIS_URL")
+REDIS_AVAILABLE = importlib.util.find_spec("redis") is not None
+
+if REDIS_URL and REDIS_AVAILABLE:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+            "KEY_PREFIX": os.getenv("CACHE_KEY_PREFIX", "job_portal"),
+            "TIMEOUT": PUBLIC_LIST_CACHE_TIMEOUT,
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "default-locmem",
+            "TIMEOUT": PUBLIC_LIST_CACHE_TIMEOUT,
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {

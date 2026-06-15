@@ -1,4 +1,5 @@
 from rest_framework.decorators import api_view, permission_classes
+from functions.cache import get_or_set_response_cache
 from functions.common import *
 from user_profiles.models import *
 from accounts.models import User
@@ -290,7 +291,13 @@ def store_fcm_token(request):
 
 @api_view(["GET"])
 def get_recruiter(request):
-    return filter_search_handler(OrganizationInfo, FindRecruiterListSerializer, request)
+    return get_or_set_response_cache(
+        request,
+        "list_recruiters",
+        lambda: filter_search_handler(
+            OrganizationInfo, FindRecruiterListSerializer, request
+        ),
+    )
 
 
 @api_view(["GET"])
