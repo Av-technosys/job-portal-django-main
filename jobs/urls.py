@@ -20,6 +20,11 @@ urlpatterns = [
     path("list_submitted_jobs/", list_submitted_jobs, name="list_submitted_jobs"),
     # get application status
     path("application_status/", application_status, name="application_status"),
+    path(
+        "application_assessment_scores/<int:application_id>/",
+        application_assessment_scores,
+        name="application_assessment_scores",
+    ),
     # chat
     path("<int:job_id>", job_details_by_id, name="job_details_by_id"),
     path("chat/<int:application_id>", chat, name="chat"),

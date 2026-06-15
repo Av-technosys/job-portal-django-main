@@ -23,6 +23,9 @@ from django.db import transaction
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     user =  UserSerializer(read_only=True)
+    application_id = serializers.SerializerMethodField()
+    application_status = serializers.SerializerMethodField()
+
     class Meta:
         model = StudentProfile
         fields = [
@@ -38,8 +41,30 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "postal_code",
             "country",
             "created_date",
-            "updated_date"
+            "updated_date",
+            "application_id",
+            "application_status",
         ]
+
+    def get_application_id(self, obj):
+        try:
+            job_id = self.context.get("job_id")
+            if not job_id:
+                return None
+            application = obj.user.student_id_applied.get(job_id=job_id)
+            return application.id
+        except Exception:
+            return None
+
+    def get_application_status(self, obj):
+        try:
+            job_id = self.context.get("job_id")
+            if not job_id:
+                return None
+            application = obj.user.student_id_applied.get(job_id=job_id)
+            return application.status
+        except Exception:
+            return None
 
 
 
@@ -905,7 +930,10 @@ class AppliedApplicantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentProfile
-        fields = JOB_SEEKER_DETAILS_FIELDS
+        fields = JOB_SEEKER_DETAILS_FIELDS + [
+            "application_id",
+            "application_status",
+        ]
 
     def get_profile_image(self, obj):
         try:

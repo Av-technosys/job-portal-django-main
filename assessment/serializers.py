@@ -115,7 +115,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 class AssessmentSessionSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True) 
-    order = serializers.PrimaryKeyRelatedField(read_only=True)
+    order = serializers.CharField(read_only=True)
 
     class Meta:
         model = AssessmentSession
@@ -135,6 +135,8 @@ class AttemptSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     subject = serializers.StringRelatedField() 
     subject_id = serializers.PrimaryKeyRelatedField(read_only=True)
+    subject_name = serializers.CharField(source="subject.exam_name", read_only=True)
+    section_name = serializers.CharField(source="subject.section_name", read_only=True)
     assessment_session = serializers.PrimaryKeyRelatedField(read_only=True)
      
     status = serializers.ChoiceField(choices=Attempt.STATUS_CHOICES)
@@ -145,6 +147,9 @@ class AttemptSerializer(serializers.ModelSerializer):
 
 
 class AttemptSerializerSave(serializers.ModelSerializer): 
+    subject_name = serializers.CharField(source="subject.exam_name", read_only=True)
+    section_name = serializers.CharField(source="subject.section_name", read_only=True)
+
     class Meta:
         model = Attempt
         fields = "__all__"

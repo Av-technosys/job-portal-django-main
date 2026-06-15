@@ -15,6 +15,7 @@ import time
 from job_portal_django.settings import razorpay_client
 from django.db.models import F
 from django.db.models import Sum
+from django.db import transaction as db_transaction
 from django.db.models.functions import TruncMonth
 from django.http import JsonResponse
 
@@ -226,12 +227,9 @@ def get_handle_profile(model, serializer_class, request):
     
 
 def get_handle_profile_admin(model, serializer_class, request, job_seeker_id):
-    print("job_seeker_id: ", job_seeker_id)
     try:
         instance = model.objects.get(user=job_seeker_id)
-        print("instance: ", instance)
         serializer = serializer_class(instance)
-        print("serializer: ", serializer)
         return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
     except model.DoesNotExist:
         return ResponseHandler.error(
@@ -714,19 +712,33 @@ def application_handler(
                     )
                 )
             else:
+                applications = modal_class.objects.filter(
+                    job_id=id,
+                    owner_id=request.user.id,
+                ).order_by("-created_date")
                 _id = list(
-                    modal_class.objects.filter(job_id=id).values_list(
-                        "student_id", flat=True
-                    )
+                    applications.values_list("student_id", flat=True)
+                )
+                related_profiles = profile.objects.filter(user_id__in=_id).order_by(
+                    "-created_date"
                 )
 
-            related_profiles = get_application_data(
-                _id,
-                modal_class,
-                serializer_class,
-                profile,
-                "student",
-            )
+                if not related_profiles.exists():
+                    response_data = {
+                        "total_count": 0,
+                        "total_pages": 0,
+                        "current_page": int(request.GET.get("page", 1)),
+                        "data": [],
+                    }
+                    return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+            if not id:
+                related_profiles = get_application_data(
+                    _id,
+                    modal_class,
+                    serializer_class,
+                    profile,
+                    "student",
+                )
 
         if not related_profiles.exists():
             response_data = {
@@ -738,7 +750,15 @@ def application_handler(
             return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
         page_obj, count, total_pages = paginator(related_profiles, request)
-        serializer = profile_serializer(page_obj, many=True)
+        serializer_context = {}
+        if request.GET.get("id"):
+            serializer_context["job_id"] = request.GET.get("id")
+
+        serializer = profile_serializer(
+            page_obj,
+            many=True,
+            context=serializer_context,
+        )
         response_data = {
             "total_count": count,
             "total_pages": total_pages,
@@ -789,7 +809,6 @@ def handle_application_status(model, serializer_class, request):
         try:
             job_id = request.data.get("job_id")
             student_id = request.data.get("student_id")
-            print(job_id, student_id)
             if not job_id or not student_id:
                 return ResponseHandler.error(
                     RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
@@ -1083,6 +1102,45 @@ def capture_transaction_data(
                 "capture_transaction_data called",
                 extra={"order_id": order_id, "user_id": getattr(request.user, "id", None)}
             )
+
+            if not order_id:
+                return ResponseHandler.error(
+                    {"message": "razorpay_order_id is required"},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            existing_transaction = Transaction.objects.filter(
+                razorpay_order_id=order_id
+            ).first()
+            if existing_transaction:
+                order = order_model.objects.filter(gateway_order_id=order_id).first()
+                if order and order.status != "paid":
+                    order.status = "paid"
+                    order.save(update_fields=["status", "updated_date"])
+
+                response_data = serializer_class(existing_transaction).data
+                if order and order.plan_type == "js_assesment":
+                    assessment_session = AssessmentSession.objects.filter(
+                        user=request.user,
+                        order=order_id,
+                    ).order_by("-created_at", "-id").first()
+                    if assessment_session:
+                        response_data["assessment_session_id"] = assessment_session.id
+                        response_data["assesment_session_id"] = assessment_session.id
+                elif order and order.plan_type == "js_test":
+                    assessment_session_id = (
+                        order.notes.get("assesment_session_id") if order.notes else None
+                    )
+                    if assessment_session_id:
+                        response_data["assessment_session_id"] = assessment_session_id
+                        response_data["assesment_session_id"] = assessment_session_id
+
+                logger.info(
+                    "Duplicate transaction capture returned existing transaction",
+                    extra={"order_id": order_id, "user_id": getattr(request.user, "id", None)},
+                )
+                return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+
             order = order_model.objects.get(gateway_order_id=order_id)
             plan_code = order.plan_type
             assessment_session_id = None
@@ -1092,101 +1150,109 @@ def capture_transaction_data(
                 extra={"plan_code": plan_code, "order_id": order_id}
             )
 
-            if plan_code == "ja_test":
-                logger.info("Processing ja_test plan", extra={"user_id": request.user.id})
-                pass
-
-            # ASSESSMENT PLANS
-            if plan_code == "js_assesment":
-                user = request.user
-                logger.info("Processing assessment plan",
-                            extra={"plan_code": plan_code, "user_id": user.id})
-
-                # delete old session
-                deleted_count, _ = AssessmentSession.objects.filter(user=user).delete()
-                logger.info("Deleted previous AssessmentSession",
-                            extra={"user_id": user.id, "deleted_count": deleted_count})
-
-                # create new session
-                new_session = AssessmentSession.objects.create(
-                    user=user,
-                    order=order_id,
-                    overall_score=0,
-                    complete_percentage=0.00,
-                    is_test_end=False,
-                    status="IN_PROGRESS",
-                )
-                assessment_session_id = new_session.id
-                logger.info("New AssessmentSession created",
-                            extra={"user_id": user.id, "session_id": new_session.id})
-
-            if plan_code == "js_test":
-                user = request.user
-                subject_id = order.notes.get("subject_id") if order.notes else None
-                assesment_session_id = (
-                    order.notes.get("assesment_session_id") if order.notes else None
-                )
-
-                if not subject_id or not assesment_session_id:
-                    return ResponseHandler.error(
-                        "Retake subject details not found",
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                assessment_session = AssessmentSession.objects.filter(
-                    id=assesment_session_id,
-                    user=user,
-                ).first()
-
-                if not assessment_session:
-                    return ResponseHandler.error(
-                        "Assessment session not found",
-                        status_code=status.HTTP_404_NOT_FOUND,
-                    )
-                assessment_session_id = assessment_session.id
-
-                deleted_count, _ = attempt_model.objects.filter(
-                    user=user,
-                    assessment_session_id=assesment_session_id,
-                    subject_id=subject_id,
-                ).delete()
-
-                logger.info(
-                    "Unlocked subject retake",
-                    extra={
-                        "user_id": user.id,
-                        "session_id": assesment_session_id,
-                        "subject_id": subject_id,
-                        "deleted_attempts": deleted_count,
-                    },
-                )
-
-            # BASIC PLAN
-            if plan_code == "ja_basic":
-                user_id = request.user.id
-                deleted_count, _ = attempt_model.objects.filter(user=user_id).delete()
-                logger.info("Deleted attempts for ja_basic plan",
-                            extra={"user_id": user_id, "deleted_count": deleted_count})
-
-
-            request.data["plan"] = plan_model.objects.get(name=plan_code).id
+            payment_data = request.data.copy()
+            payment_data["plan"] = plan_model.objects.get(name=plan_code).id
+            if request.user.id:
+                payment_data["user"] = request.user.id
 
             logger.debug("Plan ID assigned",
                         extra={"plan_code": plan_code, "user_id": request.user.id})
 
-            order.status = "paid"
-            order.save()
+            serializer = serializer_class(data=payment_data, context={"request": request})
+            if not serializer.is_valid():
+                return ResponseHandler.error(
+                    serializer.errors,
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
 
-            logger.info(
-                "Order updated to PAID",
-                extra={"order_id": order_id, "user_id": request.user.id}
-            )
+            with db_transaction.atomic():
+                order = order_model.objects.select_for_update().get(
+                    gateway_order_id=order_id
+                )
 
-            if request.user.id:
-                request.data["user"] = request.user.id
+                if plan_code == "ja_test":
+                    logger.info("Processing ja_test plan", extra={"user_id": request.user.id})
 
-            serializer = serializer_class(data=request.data, context={"request": request})
-            if serializer.is_valid():
+                # ASSESSMENT PLANS
+                if plan_code == "js_assesment":
+                    user = request.user
+                    logger.info("Processing assessment plan",
+                                extra={"plan_code": plan_code, "user_id": user.id})
+
+                    # delete old session
+                    deleted_count, _ = AssessmentSession.objects.filter(user=user).delete()
+                    logger.info("Deleted previous AssessmentSession",
+                                extra={"user_id": user.id, "deleted_count": deleted_count})
+
+                    # create new session
+                    new_session = AssessmentSession.objects.create(
+                        user=user,
+                        order=order_id,
+                        overall_score=0,
+                        complete_percentage=0.00,
+                        is_test_end=False,
+                        status="IN_PROGRESS",
+                    )
+                    assessment_session_id = new_session.id
+                    logger.info("New AssessmentSession created",
+                                extra={"user_id": user.id, "session_id": new_session.id})
+
+                if plan_code == "js_test":
+                    user = request.user
+                    subject_id = order.notes.get("subject_id") if order.notes else None
+                    assesment_session_id = (
+                        order.notes.get("assesment_session_id") if order.notes else None
+                    )
+
+                    if not subject_id or not assesment_session_id:
+                        return ResponseHandler.error(
+                            "Retake subject details not found",
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                    assessment_session = AssessmentSession.objects.filter(
+                        id=assesment_session_id,
+                        user=user,
+                    ).first()
+
+                    if not assessment_session:
+                        return ResponseHandler.error(
+                            "Assessment session not found",
+                            status_code=status.HTTP_404_NOT_FOUND,
+                        )
+                    assessment_session_id = assessment_session.id
+
+                    deleted_count, _ = attempt_model.objects.filter(
+                        user=user,
+                        assessment_session_id=assesment_session_id,
+                        subject_id=subject_id,
+                    ).delete()
+
+                    logger.info(
+                        "Unlocked subject retake",
+                        extra={
+                            "user_id": user.id,
+                            "session_id": assesment_session_id,
+                            "subject_id": subject_id,
+                            "deleted_attempts": deleted_count,
+                        },
+                    )
+
+                # BASIC PLAN
+                if plan_code == "ja_basic":
+                    user_id = request.user.id
+                    deleted_count, _ = attempt_model.objects.filter(user=user_id).delete()
+                    logger.info("Deleted attempts for ja_basic plan",
+                                extra={"user_id": user_id, "deleted_count": deleted_count})
+
+                order.status = "paid"
+                order.save(update_fields=["status", "updated_date"])
+
+                logger.info(
+                    "Order updated to PAID",
+                    extra={"order_id": order_id, "user_id": request.user.id}
+                )
+
                 serializer.save()
                 response_data = dict(serializer.data)
                 if assessment_session_id:
@@ -1196,11 +1262,6 @@ def capture_transaction_data(
                     response_data,
                     status_code=status.HTTP_201_CREATED,
                 )
-
-            return ResponseHandler.error(
-                serializer.errors,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
 
         except order_model.DoesNotExist:
             logger.error("Order not found", extra={"order_id": order_id})
@@ -1317,6 +1378,7 @@ def payment(order, transaction, OrderSerializer, request):
 
         response_data = {
             "total_amount": total_amount,
+            "total_orders_count": count,
             "paid_total_count": paid_orders.count(),
             "pagination": {
                 "total_count": count,
@@ -2078,10 +2140,15 @@ def submit_test_handler(AttemptModel, AttemptAnswerModel, Question, attempt_id, 
             question_answers.append(question_answer)
 
         AttemptAnswerModel.objects.bulk_create(question_answers)
+        attempt_details.status = "COMPLETED"
+        attempt_details.submit_time = timezone.now()
+        attempt_details.save(update_fields=["status", "submit_time", "updated_at"])
 
         return ResponseHandler.success(
             {
-                "success": "submited sucessfully",
+                "message": "submitted successfully",
+                "continue_url": "/dashboard",
+                "redirect_url": "/dashboard",
             }, 
             status_code=status.HTTP_200_OK
         )
@@ -2254,12 +2321,20 @@ def get_results_handler(attempt_model, attempt_answer_model, attempt_id, request
 
         # Get attempt id
         attempt = attempt_model.objects.get(id=attempt_id)
+        assessment_total = attempt.maximum_possible_score
+        total_marks_scored = attempt.score
+
         if attempt.score is not None :
             return ResponseHandler.success(
                 {
-                    "assesment_total": attempt.maximum_possible_score,
-                    "total_marks_scored": attempt.score,
-                    "assesment_session_id": getattr(attempt.assessment_session, "id", 0)
+                    "assessment_total": assessment_total,
+                    "assesment_total": assessment_total,
+                    "total_marks_scored": total_marks_scored,
+                    "assesment_session_id": getattr(attempt.assessment_session, "id", 0),
+                    "assessment_session_id": getattr(attempt.assessment_session, "id", 0),
+                    "subject_id": getattr(attempt.subject, "id", None),
+                    "subject_name": getattr(attempt.subject, "exam_name", None),
+                    "section_name": getattr(attempt.subject, "section_name", None),
                 },
                 status_code=status.HTTP_200_OK
             )
@@ -2290,9 +2365,14 @@ def get_results_handler(attempt_model, attempt_answer_model, attempt_id, request
         attempt.save()
 
         response_data = {
-            "assesment_total ": assesment_total,
+            "assessment_total": assesment_total,
+            "assesment_total": assesment_total,
             "total_marks_scored": total_marks_scored,
-            "assesment_session_id" : subject_id
+            "assesment_session_id" : subject_id,
+            "assessment_session_id" : subject_id,
+            "subject_id": getattr(attempt.subject, "id", None),
+            "subject_name": getattr(attempt.subject, "exam_name", None),
+            "section_name": getattr(attempt.subject, "section_name", None),
         }
 
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
