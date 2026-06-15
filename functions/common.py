@@ -32,6 +32,7 @@ def generate_otp():
 
 from constants.errors import *
 from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
 from constants.common import USER_TYPE
 from constants.user_profiles import JOB_SEEKER_DOCUMENT_TYPES, RECRUITER_DOCUMENT_TYPES
 from constants.jobs import JOB_POST_STATUS_FEILDS, JOB_STATUS_UPDATED
@@ -260,13 +261,58 @@ def delete_handle(model, request):
         )
     return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
 
+
+def notify_force_logout_user(user_id):
+    try:
+        from firebase_admin import messaging
+        from user_profiles.models import FCMToken
+
+        fcm_tokens = list(
+            FCMToken.objects.filter(user_id=user_id).values_list("fcm_token", flat=True)
+        )
+        for fcm_token in fcm_tokens:
+            try:
+                messaging.send(
+                    messaging.Message(
+                        token=fcm_token,
+                        data={
+                            "type": "force_logout",
+                            "force_logout": "true",
+                            "message": ERROR_USER_INACTIVE,
+                        },
+                    )
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send force logout notification: {e}")
+        FCMToken.objects.filter(user_id=user_id).delete()
+    except Exception as e:
+        logger.warning(f"Failed to clear FCM tokens for force logout: {e}")
+
+
+def force_logout_user(user_id):
+    notify_force_logout_user(user_id)
+    Token.objects.filter(user_id=user_id).delete()
+
+
+def mark_user_for_force_logout(user_id):
+    notify_force_logout_user(user_id)
+
+
 def user_status_handle(model, request, active_status):
-    user_id = request.data.get("id") 
+    user_id = request.data.get("id")
     instances = model.objects.filter(id=user_id)
     if instances.exists():
         instances.update(is_active=active_status)
+        if not active_status:
+            mark_user_for_force_logout(user_id)
+        action = "active" if active_status else "inactive"
         return ResponseHandler.success(
-            {"message": "Status updated to " + ("active" if active_status else "inactive")}, status_code=status.HTTP_204_NO_CONTENT
+            {
+                "message": "Status updated to " + action,
+                "is_active": active_status,
+                "force_logout": not active_status,
+            },
+            status_code=status.HTTP_200_OK,
         )
     return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
 
