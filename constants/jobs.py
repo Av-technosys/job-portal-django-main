@@ -75,6 +75,8 @@ JOB_APPLIED_VIEW_FIELDS = [
     "applied_date",
     "job_id",
     "application_id",
+    "application_status",
+    "application_status_label",
     "company_profile_image",
     "role",
 ]

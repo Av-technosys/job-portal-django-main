@@ -32,6 +32,7 @@ from constants.jobs import (
     JOB_POSTED_VIEW_FEILDS,
     JOB_SEEKER_LIST_VIEW_FIELDS,
     SAVED_JOBS_JOB_SEEKER_LIST_VIEW_FIELDS,
+    JOB_STATUS_FIELDS,
 )
 
 from user_profiles.models import FoundingInfo
@@ -115,12 +116,13 @@ class JobApplySerializer(serializers.ModelSerializer):
         return data
 
     def save(self):
+        is_new_application = self.instance is None
         job = super().save()
         self.send_apply_notification()
-        self.send_email_confirmation_for_the_application()
+        self.send_email_confirmation_for_the_application(is_new_application)
         return job
 
-    def send_email_confirmation_for_the_application(self):
+    def send_email_confirmation_for_the_application(self, is_new_application=False):
         try:
             job_id = self.data.get("job")
             recruiter_id = self.data.get("owner")
@@ -149,12 +151,13 @@ class JobApplySerializer(serializers.ModelSerializer):
                     status_text,
                 )
 
-            send_application_received_to_recruiter(
-                student_details,
-                recruiter_details,
-                job_details,
-                recruiter_personal_details,
-            )
+            if is_new_application:
+                send_application_received_to_recruiter(
+                    student_details,
+                    recruiter_details,
+                    job_details,
+                    recruiter_personal_details,
+                )
 
         except Exception as e:
             logger.error(f"Error in send_email_confirmation_for_the_application: {e}")
@@ -355,6 +358,8 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
     applied_date = serializers.DateTimeField(source="created_date")
     job_id = serializers.IntegerField(source="job.id")
     application_id = serializers.IntegerField(source="id")
+    application_status = serializers.IntegerField(source="status")
+    application_status_label = serializers.SerializerMethodField()
 
     class Meta:
         model = JobApply
@@ -368,6 +373,9 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
 
     def get_company_profile_image(self, obj):
         return get_recruiter_profile_image(obj.job.user)
+
+    def get_application_status_label(self, obj):
+        return obj.get_status_display()
 
 
 class JobPostedListSerializer(serializers.ModelSerializer):

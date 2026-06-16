@@ -398,6 +398,10 @@ def upload_handler(model, serializer_class, request):
     elif request.method == "DELETE":
         instance_id = request.data.get("id")
         instance = model.objects.get(id=instance_id, user=request.user)
+        if getattr(instance, "file_type", None) == "resume":
+            return ResponseHandler.error(
+                "Resume is required.", status_code=status.HTTP_400_BAD_REQUEST
+            )
         if instance.file:
             instance.file.delete(save=False)
             instance.delete()
@@ -452,6 +456,10 @@ def upload_document_handler(model, serializer_class, request):
     elif request.method == "DELETE":
         instance_id = request.data.get("id")
         instance = model.objects.get(id=instance_id, user=request.user)
+        if getattr(instance, "file_type", None) == "resume":
+            return ResponseHandler.error(
+                "Resume is required.", status_code=status.HTTP_400_BAD_REQUEST
+            )
         if instance.file:
             instance.file.delete(save=False)
             instance.delete()
@@ -683,6 +691,7 @@ def get_missing_job_seeker_apply_profile_sections(user_id):
         AcademicQualification,
         Salary,
         SkillSet,
+        JobSeekerUploadedFile,
         StudentProfile,
         WorkExperience,
     )
@@ -699,6 +708,11 @@ def get_missing_job_seeker_apply_profile_sections(user_id):
 
     if not SkillSet.objects.filter(user_id=user_id).exists():
         missing_sections.append("skills")
+
+    if not JobSeekerUploadedFile.objects.filter(
+        user_id=user_id, file_type="resume"
+    ).exists():
+        missing_sections.append("resume")
 
     salary = Salary.objects.filter(user_id=user_id).first()
     if not salary or salary.expected_salary <= 0:
@@ -2142,53 +2156,70 @@ def submit_test_handler(AttemptModel, AttemptAnswerModel, Question, attempt_id, 
         subject_correct_score = attempt_details.subject.marks_correct
         subject_incorrect_score = attempt_details.subject.marks_incorrect
 
-        # questionId_currentQIndex: answer_status
-        answers = request.data.get("answers")
+        # questionId_currentQIndex: selected option
+        answers = request.data.get("answers") or {}
         result = {}
  
         for question, answer in answers.items():
  
-            question_key, question_value = question.split("_") 
-            answer_key, answer_value = answer.split("_") 
-            result[int(question_key)] = int(answer_value)
+            question_key = question.split("_")[0]
+            selected_option = answer
+
+            # Backward compatibility for the old frontend payload: "1_0", "1_1", etc.
+            if isinstance(answer, str) and answer.startswith("1_"):
+                selected_option = {
+                    0: "option_1",
+                    1: "option_2",
+                    2: "option_3",
+                    3: "option_4",
+                }.get(int(answer.split("_")[1]), "option_1")
+            elif isinstance(answer, str) and answer in {"A", "B", "C", "D"}:
+                selected_option = {
+                    "A": "option_1",
+                    "B": "option_2",
+                    "C": "option_3",
+                    "D": "option_4",
+                }[answer]
+
+            result[int(question_key)] = selected_option
  
-
-        option_mapping = {
-            0: "OPTION_1",
-            1: "OPTION_2",
-            2: "OPTION_3",
-            3: "OPTION_4"
-        }
-
-
-        #  change value according to subject 
-        correct_answer_score = 1
-        incorrect_answer_score = 0
 
         # Prepare the list of QuestionAnswer instances to insert
         question_answers = []
-        for question_id, option_value in result.items():
-            score = incorrect_answer_score
+        for question_id, selected_option in result.items():
+            score = subject_incorrect_score
             question_obj = Question.objects.get(id=question_id)
-            selected_option = option_mapping.get(option_value, "OPTION_1")
             is_correct = (selected_option == question_obj.correct_option)
 
             if is_correct:
-                score = correct_answer_score
+                score = subject_correct_score
 
             question_answer = AttemptAnswerModel(
                 attempt=attempt_details,
                 question=question_obj,
-                selected_option=option_mapping.get(option_value, "OPTION_1"),  # Default to OPTION_1 if not found
+                selected_option=selected_option,
                 is_correct=is_correct,
                 score=score,
             )
             question_answers.append(question_answer)
 
+        AttemptAnswerModel.objects.filter(attempt=attempt_details).delete()
         AttemptAnswerModel.objects.bulk_create(question_answers)
+        total_questions = (
+            attempt_details.subject.easy_question_count
+            + attempt_details.subject.medium_question_count
+            + attempt_details.subject.difficult_question_count
+        )
+        total_answers = len(question_answers)
+        not_answered_score = (total_questions - total_answers) * attempt_details.subject.marks_unattempted
+        total_marks_scored = sum(answer.score for answer in question_answers) + not_answered_score
+        assessment_total = total_questions * subject_correct_score
+
         attempt_details.status = "COMPLETED"
         attempt_details.submit_time = timezone.now()
-        attempt_details.save(update_fields=["status", "submit_time", "updated_at"])
+        attempt_details.score = total_marks_scored
+        attempt_details.maximum_possible_score = assessment_total
+        attempt_details.save(update_fields=["status", "submit_time", "score", "maximum_possible_score", "updated_at"])
 
         return ResponseHandler.success(
             {
@@ -2367,24 +2398,6 @@ def get_results_handler(attempt_model, attempt_answer_model, attempt_id, request
 
         # Get attempt id
         attempt = attempt_model.objects.get(id=attempt_id)
-        assessment_total = attempt.maximum_possible_score
-        total_marks_scored = attempt.score
-
-        if attempt.score is not None :
-            return ResponseHandler.success(
-                {
-                    "assessment_total": assessment_total,
-                    "assesment_total": assessment_total,
-                    "total_marks_scored": total_marks_scored,
-                    "assesment_session_id": getattr(attempt.assessment_session, "id", 0),
-                    "assessment_session_id": getattr(attempt.assessment_session, "id", 0),
-                    "subject_id": getattr(attempt.subject, "id", None),
-                    "subject_name": getattr(attempt.subject, "exam_name", None),
-                    "section_name": getattr(attempt.subject, "section_name", None),
-                },
-                status_code=status.HTTP_200_OK
-            )
-
         attempt_answers = attempt_answer_model.objects.filter(attempt=attempt_id)
 
         # get the score
@@ -2401,14 +2414,30 @@ def get_results_handler(attempt_model, attempt_answer_model, attempt_id, request
 
         assesment_total = total_questions * CA
 
-        total_answer_sum = total_answers * CA
+        total_answer_sum = 0
+        incorrect_score = getattr(attempt.subject, "marks_incorrect", 0)
+        for answer in attempt_answers:
+            selected_option = (answer.selected_option or "").lower()
+            is_correct = selected_option == answer.question.correct_option
+            answer_score = CA if is_correct else incorrect_score
+            total_answer_sum += answer_score
+
+            if (
+                answer.selected_option != selected_option
+                or answer.is_correct != is_correct
+                or answer.score != answer_score
+            ):
+                answer.selected_option = selected_option
+                answer.is_correct = is_correct
+                answer.score = answer_score
+                answer.save(update_fields=["selected_option", "is_correct", "score"])
 
         total_marks_scored = not_answered_calc + total_answer_sum
 
         # store the score in database
         attempt.score = total_marks_scored
         attempt.maximum_possible_score = assesment_total
-        attempt.save()
+        attempt.save(update_fields=["score", "maximum_possible_score", "updated_at"])
 
         response_data = {
             "assessment_total": assesment_total,

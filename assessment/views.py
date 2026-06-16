@@ -165,24 +165,40 @@ def get_applicant_assesment_attempts(request, applicant_id):
         assessment_total = attempt.maximum_possible_score
         total_marks_scored = attempt.score
 
-        if total_marks_scored is None or assessment_total is None:
-            total_answers = attempt.answers.count()
-            total_questions = (
-                attempt.subject.easy_question_count
-                + attempt.subject.medium_question_count
-                + attempt.subject.difficult_question_count
-            )
-            not_answered_calc = (
-                total_questions - total_answers
-            ) * attempt.subject.marks_unattempted
-            assessment_total = total_questions * attempt.subject.marks_correct
-            total_marks_scored = not_answered_calc + (
-                total_answers * attempt.subject.marks_correct
-            )
+        attempt_answers = attempt.answers.all()
+        total_answers = attempt_answers.count()
+        total_questions = (
+            attempt.subject.easy_question_count
+            + attempt.subject.medium_question_count
+            + attempt.subject.difficult_question_count
+        )
+        not_answered_calc = (
+            total_questions - total_answers
+        ) * attempt.subject.marks_unattempted
+        assessment_total = total_questions * attempt.subject.marks_correct
+        total_answer_score = 0
+        incorrect_score = attempt.subject.marks_incorrect
+        for answer in attempt_answers:
+            selected_option = (answer.selected_option or "").lower()
+            is_correct = selected_option == answer.question.correct_option
+            answer_score = attempt.subject.marks_correct if is_correct else incorrect_score
+            total_answer_score += answer_score
 
-            attempt.score = total_marks_scored
-            attempt.maximum_possible_score = assessment_total
-            attempt.save(update_fields=["score", "maximum_possible_score", "updated_at"])
+            if (
+                answer.selected_option != selected_option
+                or answer.is_correct != is_correct
+                or answer.score != answer_score
+            ):
+                answer.selected_option = selected_option
+                answer.is_correct = is_correct
+                answer.score = answer_score
+                answer.save(update_fields=["selected_option", "is_correct", "score"])
+
+        total_marks_scored = not_answered_calc + total_answer_score
+
+        attempt.score = total_marks_scored
+        attempt.maximum_possible_score = assessment_total
+        attempt.save(update_fields=["score", "maximum_possible_score", "updated_at"])
 
         response_data.append(
             {

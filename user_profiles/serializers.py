@@ -838,6 +838,7 @@ class AdminRecruiterListSerializer(serializers.ModelSerializer):
     city = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
     country = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     user = serializers.IntegerField(source="id", read_only=True)
 
     class Meta:
@@ -853,6 +854,7 @@ class AdminRecruiterListSerializer(serializers.ModelSerializer):
             "user",
             "email",
             "is_active",
+            "status",
             "phone_number",
             "country_code",
         ]
@@ -887,14 +889,19 @@ class AdminRecruiterListSerializer(serializers.ModelSerializer):
         except Exception:
             return None
 
+    def get_status(self, obj):
+        return "Active" if obj.is_active else "Inactive"
+
 
 class AdminJobSeekerListSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField()
     gender = serializers.SerializerMethodField()
     date_of_birth = serializers.SerializerMethodField()
     city = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
     country = serializers.SerializerMethodField()
     experience = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     user = serializers.IntegerField(source="id", read_only=True)
 
     class Meta:
@@ -922,11 +929,17 @@ class AdminJobSeekerListSerializer(serializers.ModelSerializer):
     def get_city(self, obj):
         return self.get_student_profile_field(obj, "city")
 
+    def get_state(self, obj):
+        return self.get_student_profile_field(obj, "state")
+
     def get_country(self, obj):
         return self.get_student_profile_field(obj, "country")
 
     def get_experience(self, obj):
         return self.get_student_profile_field(obj, "experience")
+
+    def get_status(self, obj):
+        return "Active" if obj.is_active else "Inactive"
 
 class AppliedApplicantSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name')

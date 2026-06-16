@@ -1,6 +1,6 @@
 from .serializers import *
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import *
 from assessment.models import Attempt
 from functions.cache import get_or_set_response_cache
@@ -23,7 +23,7 @@ def apply_job(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def list_jobs(request):
     return get_or_set_response_cache(
         request,
@@ -179,7 +179,7 @@ def summary_view(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def job_details_by_id(request, job_id):
     return job_details_by_job_id(JobInfo, job_id, JobDetailsCombinedSerializer, request)
 
