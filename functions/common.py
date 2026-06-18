@@ -1422,6 +1422,28 @@ def payment(order, transaction, OrderSerializer, request):
         logger.info("payment() called", extra={"path": getattr(request, "path", None), "user": getattr(request.user, "id", None)})
 
         orders = order.objects.select_related('user').all().order_by("-created_date", "-id")
+        if getattr(request.user, "user_type", None) != 3:
+            orders = orders.filter(user=request.user)
+
+        search = request.GET.get("search")
+        if search:
+            orders = orders.filter(
+                Q(gateway_order_id__icontains=search)
+                | Q(receipt__icontains=search)
+                | Q(status__icontains=search)
+                | Q(plan_type__icontains=search)
+                | Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__email__icontains=search)
+                | Q(user__username__icontains=search)
+            )
+
+        sort_fields = request.GET.getlist("sort[]") or request.GET.getlist("sort")
+        allowed_sort_fields = {"created_date", "-created_date", "amount", "-amount"}
+        sort_fields = [field for field in sort_fields if field in allowed_sort_fields]
+        if sort_fields:
+            orders = orders.order_by(*sort_fields, "-id")
+
         logger.debug("Fetched orders queryset", extra={"count_estimate": orders.count()})
 
         page_obj, count, total_pages = paginator(orders, request)
@@ -1643,12 +1665,16 @@ def get_industry_type(obj):
         
 def get_all_applied_applicant_details(job_apply_model, student_profile_model, serializer_class, request):
     try:
-        job_id = request.data.get('job_id')
+        job_id = (
+            request.data.get("job_id")
+            or request.query_params.get("job_id")
+            or request.query_params.get("id")
+        )
         applications = job_apply_model.objects.filter(job_id=job_id)
         student_ids = list(applications.values_list('student_id', flat=True))
         students = student_profile_model.objects.filter(user_id__in=student_ids)
-        serializer = serializer_class(students, many=True, context={'job_id': job_id})
-        page_obj, count, total_pages = paginator(students, request) 
+        page_obj, count, total_pages = paginator(students, request)
+        serializer = serializer_class(page_obj, many=True, context={'job_id': job_id})
         response_data = {
             "total_count": count,
             "total_pages": total_pages,

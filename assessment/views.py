@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 from .serializers import *
 from .models import *
 from accounts.models import User
 from accounts.serializers import UserMetaSerializer
 from functions.common import create_new_handler, list_all_items_handler, delete_item_by_id_handler, get_item_by_id_handler, update_item_by_id_handler,get_question_by_subject_id_handler, get_test_question_handler, create_question_handler, create_payment_handler, get_payment_by_userid_handler, get_payment_by_id_handler, update_payment_by_id_handler, get_user_assesment_session_handler, get_all_assesment_attempts_handler, get_results_handler, submit_test_handler, get_free_test_question_handler, upload_question_image_handler, ResponseHandler
-from handlers.permissions import IsRecruiter
+from handlers.permissions import IsJobSeekerOrRecruiter
 from user_profiles.models import StudentProfile
 
 # Create your views here.
@@ -144,7 +145,7 @@ def get_all_assesment_attempts(request, session_id):
 
 # Assesment
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsRecruiter])
+@permission_classes([IsAuthenticated, IsJobSeekerOrRecruiter])
 def get_applicant_assesment_attempts(request, applicant_id):
     applicant_user_ids = {applicant_id}
 
@@ -156,8 +157,18 @@ def get_applicant_assesment_attempts(request, applicant_id):
     if user_student_profile:
         applicant_user_ids.add(user_student_profile.user_id)
 
+    if request.user.user_type == 1 and request.user.id not in applicant_user_ids:
+        return ResponseHandler.error(
+            "You do not have permission to view these assessment attempts.",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    attempt_filters = {"user_id__in": applicant_user_ids}
+    if request.user.user_type == 2:
+        attempt_filters["subject__is_paid"] = True
+
     attempts = Attempt.objects.filter(
-        user_id__in=applicant_user_ids,
+        **attempt_filters,
     ).select_related("subject", "assessment_session").order_by("-updated_at", "-id")
     response_data = []
 

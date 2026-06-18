@@ -1,3 +1,6 @@
+import html
+import re
+
 from rest_framework import serializers
 from functions.fcm import save_notification, send_notification
 from constants.user_profiles import (
@@ -33,6 +36,7 @@ from constants.jobs import (
     JOB_SEEKER_LIST_VIEW_FIELDS,
     SAVED_JOBS_JOB_SEEKER_LIST_VIEW_FIELDS,
     JOB_STATUS_FIELDS,
+    VALID_STATUS_TRANSITIONS,
 )
 
 from user_profiles.models import FoundingInfo
@@ -70,6 +74,16 @@ class JobCombinedSerializer(serializers.Serializer):
     description = serializers.CharField()
     expiration_days = serializers.IntegerField(required=True)
     # date_of_birth = serializers.DateField(format="%Y-%m-%d")
+
+    def validate_description(self, value):
+        plain_text = (
+            html.unescape(re.sub(r"<[^>]*>", "", value))
+            .replace("\xa0", " ")
+            .strip()
+        )
+        if not plain_text:
+            raise serializers.ValidationError("This field is required.")
+        return value
 
     def create(self, validated_data):
         user = self.context["request"].user
@@ -112,6 +126,22 @@ class JobApplySerializer(serializers.ModelSerializer):
         job = data.get("job")
         if not job_apply_instance and JobApply.objects.filter(student=student, job=job).exists():
             raise serializers.ValidationError({"message": ALREADY_APPLIED})
+
+        if job_apply_instance and "status" in data:
+            current_status = job_apply_instance.status
+            next_status = data["status"]
+            allowed_statuses = VALID_STATUS_TRANSITIONS.get(current_status, [])
+            if next_status != current_status and next_status not in allowed_statuses:
+                status_labels = dict(JOB_STATUS_FIELDS)
+                raise serializers.ValidationError(
+                    {
+                        "status": (
+                            f"Cannot move application status from "
+                            f"{status_labels.get(current_status, current_status)} to "
+                            f"{status_labels.get(next_status, next_status)}."
+                        )
+                    }
+                )
 
         return data
 

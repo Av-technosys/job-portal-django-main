@@ -41,6 +41,7 @@ def create_transaction(request):
         Plan, Subscription, OrderSerializer, Attempt, AssessmentSession, request
     )
 
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def payment_details(request):
     return payment(

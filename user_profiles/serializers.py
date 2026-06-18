@@ -21,6 +21,28 @@ from .models import *
 from functions.common import get_recruiter_profile_image, get_location_formatted, get_industry_type, get_job_seeker_profile_image
 from django.db import transaction
 from jobs.models import JobInfo
+from django.db.models import Sum
+
+
+def get_work_experience_total(user):
+    if not user:
+        return 0
+
+    return user.we_fk_user.aggregate(total=Sum("experience"))["total"] or 0
+
+
+def get_profile_experience(student_profile):
+    work_experience_total = get_work_experience_total(
+        getattr(student_profile, "user", None)
+    )
+    if work_experience_total:
+        return work_experience_total
+
+    profile_experience = getattr(student_profile, "experience", 0) or 0
+    if profile_experience:
+        return profile_experience
+
+    return 0
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     user =  UserSerializer(read_only=True)
@@ -652,6 +674,10 @@ class JobSeekerAdditionalProfileSerializer(serializers.ModelSerializer):
                     ],
                 )
 
+            StudentProfile.objects.filter(user=user).update(
+                experience=get_work_experience_total(user)
+            )
+
         return validated_data
 
     class Meta:
@@ -936,17 +962,25 @@ class AdminJobSeekerListSerializer(serializers.ModelSerializer):
         return self.get_student_profile_field(obj, "country")
 
     def get_experience(self, obj):
-        return self.get_student_profile_field(obj, "experience")
+        student_profile = getattr(obj, "sp_fk_user", None)
+        if not student_profile:
+            return None
+
+        return get_profile_experience(student_profile)
 
     def get_status(self, obj):
         return "Active" if obj.is_active else "Inactive"
 
 class AppliedApplicantSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(source='user.first_name')
-    city = serializers.CharField()
-    country = serializers.CharField()
-    experience = serializers.IntegerField()
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+    is_active = serializers.BooleanField(source='user.is_active', read_only=True)
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True)
+    country_code = serializers.CharField(source='user.country_code', read_only=True)
+    user = serializers.IntegerField(source='user.id', read_only=True)
+    experience = serializers.SerializerMethodField()
     profile_image = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     application_status = serializers.SerializerMethodField()
     application_id = serializers.SerializerMethodField()
 
@@ -978,6 +1012,12 @@ class AppliedApplicantSerializer(serializers.ModelSerializer):
             return application.status
         except Exception:
             return None
+
+    def get_status(self, obj):
+        return "Active" if obj.user.is_active else "Inactive"
+
+    def get_experience(self, obj):
+        return get_profile_experience(obj)
 
 
 
