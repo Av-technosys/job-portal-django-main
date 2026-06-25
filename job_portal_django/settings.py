@@ -38,17 +38,18 @@ ALLOWED_HOSTS = [
     "job-portal-django-main.onrender.com",
     "jobportal-backend.avtechnosys.com",
     "35.244.19.140",
-    "34.93.104.154"
+    "34.93.104.154",
+    "job-portal-nextjs-pied.vercel"
 
 ]
-
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://job-portal-django-main.onrender.com",
     "https://job-portal-next-ten.vercel.app",
     "https://job-portal-django.vercel.app",
     "https://job-portal-nextjs.vercel.app",
-    "https://jobportal.avtechnosys.com"
+    "https://jobportal.avtechnosys.com",
+    "https://job-portal-nextjs-pied.vercel.app/"
 ]
 
 cred = credentials.Certificate("./job_portal_django/account-key.json")
