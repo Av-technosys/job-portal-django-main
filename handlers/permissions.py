@@ -35,3 +35,12 @@ class IsAdmin(BasePermission):
 
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.user_type == 3
+
+
+class IsAdminOrJobSeeker(BasePermission):
+    """
+    Permission for Admin users and Job Seekers.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.user_type in [1, 3]

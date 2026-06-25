@@ -14,6 +14,10 @@ from datetime import timedelta
 import time
 from job_portal_django.settings import razorpay_client
 from django.db.models import F
+from django.db.models import Sum
+from django.db import transaction as db_transaction
+from django.db.models.functions import TruncMonth
+from django.http import JsonResponse
 
 # from weasyprint import HTML
 from io import BytesIO
@@ -28,6 +32,7 @@ def generate_otp():
 
 from constants.errors import *
 from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
 from constants.common import USER_TYPE
 from constants.user_profiles import JOB_SEEKER_DOCUMENT_TYPES, RECRUITER_DOCUMENT_TYPES
 from constants.jobs import JOB_POST_STATUS_FEILDS, JOB_STATUS_UPDATED
@@ -203,10 +208,10 @@ def get_customize_handlerAdmin(model, serializer_class,job_seeker_id):
             ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND
         )
 
-def get_admin_meta_details_handler(organizationInfoModel, studentProfileModle, assessmentModel, request):
+def get_admin_meta_details_handler(user_model, assessmentModel, request):
     data = {
-        "recruiter_count": organizationInfoModel.objects.count(),
-        "job_seeker_count": studentProfileModle.objects.count(),
+        "recruiter_count": user_model.objects.filter(user_type=2).count(),
+        "job_seeker_count": user_model.objects.filter(user_type=1).count(),
         "assessment_count": assessmentModel.objects.count(),
     }
     return ResponseHandler.success(data, status_code=status.HTTP_200_OK)
@@ -223,12 +228,9 @@ def get_handle_profile(model, serializer_class, request):
     
 
 def get_handle_profile_admin(model, serializer_class, request, job_seeker_id):
-    print("job_seeker_id: ", job_seeker_id)
     try:
         instance = model.objects.get(user=job_seeker_id)
-        print("instance: ", instance)
         serializer = serializer_class(instance)
-        print("serializer: ", serializer)
         return ResponseHandler.success(serializer.data, status_code=status.HTTP_200_OK)
     except model.DoesNotExist:
         return ResponseHandler.error(
@@ -259,13 +261,58 @@ def delete_handle(model, request):
         )
     return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
 
+
+def notify_force_logout_user(user_id):
+    try:
+        from firebase_admin import messaging
+        from user_profiles.models import FCMToken
+
+        fcm_tokens = list(
+            FCMToken.objects.filter(user_id=user_id).values_list("fcm_token", flat=True)
+        )
+        for fcm_token in fcm_tokens:
+            try:
+                messaging.send(
+                    messaging.Message(
+                        token=fcm_token,
+                        data={
+                            "type": "force_logout",
+                            "force_logout": "true",
+                            "message": ERROR_USER_INACTIVE,
+                        },
+                    )
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send force logout notification: {e}")
+        FCMToken.objects.filter(user_id=user_id).delete()
+    except Exception as e:
+        logger.warning(f"Failed to clear FCM tokens for force logout: {e}")
+
+
+def force_logout_user(user_id):
+    notify_force_logout_user(user_id)
+    Token.objects.filter(user_id=user_id).delete()
+
+
+def mark_user_for_force_logout(user_id):
+    notify_force_logout_user(user_id)
+
+
 def user_status_handle(model, request, active_status):
-    user_id = request.data.get("id") 
+    user_id = request.data.get("id")
     instances = model.objects.filter(id=user_id)
     if instances.exists():
         instances.update(is_active=active_status)
+        if not active_status:
+            mark_user_for_force_logout(user_id)
+        action = "active" if active_status else "inactive"
         return ResponseHandler.success(
-            {"message": "Status updated to " + ("active" if active_status else "inactive")}, status_code=status.HTTP_204_NO_CONTENT
+            {
+                "message": "Status updated to " + action,
+                "is_active": active_status,
+                "force_logout": not active_status,
+            },
+            status_code=status.HTTP_200_OK,
         )
     return ResponseHandler.error(ERROR_NOT_FOUND, status_code=status.HTTP_404_NOT_FOUND)
 
@@ -351,6 +398,10 @@ def upload_handler(model, serializer_class, request):
     elif request.method == "DELETE":
         instance_id = request.data.get("id")
         instance = model.objects.get(id=instance_id, user=request.user)
+        if getattr(instance, "file_type", None) == "resume":
+            return ResponseHandler.error(
+                "Resume is required.", status_code=status.HTTP_400_BAD_REQUEST
+            )
         if instance.file:
             instance.file.delete(save=False)
             instance.delete()
@@ -405,6 +456,10 @@ def upload_document_handler(model, serializer_class, request):
     elif request.method == "DELETE":
         instance_id = request.data.get("id")
         instance = model.objects.get(id=instance_id, user=request.user)
+        if getattr(instance, "file_type", None) == "resume":
+            return ResponseHandler.error(
+                "Resume is required.", status_code=status.HTTP_400_BAD_REQUEST
+            )
         if instance.file:
             instance.file.delete(save=False)
             instance.delete()
@@ -473,12 +528,12 @@ def filters(request):
             q_filters = Q(title__icontains=filter_result)
         elif "list_recruiters" in request.path:
             q_filters = Q(first_name=filter_result) | Q(
-                company_description__icontains=filter_result
+                company_about_us__icontains=filter_result
             )
         elif "list_all_recruiter" in request.path:
-            q_filters = Q(user__first_name__icontains=filter_result)
+            q_filters = Q(first_name__icontains=filter_result)
         elif "list_all_job_seeker" in request.path:
-            q_filters = Q(user__first_name__icontains=filter_result)
+            q_filters = Q(first_name__icontains=filter_result)
 
     filter_mappings = {
         "education": "user__academicqualification__specialization__in",
@@ -631,11 +686,63 @@ def paginator(queryset, request):
     return page_obj, paginator.count, paginator.num_pages
 
 
+def get_missing_job_seeker_apply_profile_sections(user_id):
+    from user_profiles.models import (
+        AcademicQualification,
+        Salary,
+        SkillSet,
+        JobSeekerUploadedFile,
+        StudentProfile,
+        WorkExperience,
+    )
+
+    missing_sections = []
+    student_profile = StudentProfile.objects.filter(user_id=user_id).first()
+
+    if not student_profile:
+        missing_sections.append("basic details")
+        return missing_sections
+
+    if not AcademicQualification.objects.filter(user_id=user_id).exists():
+        missing_sections.append("qualification")
+
+    if not SkillSet.objects.filter(user_id=user_id).exists():
+        missing_sections.append("skills")
+
+    if not JobSeekerUploadedFile.objects.filter(
+        user_id=user_id, file_type="resume"
+    ).exists():
+        missing_sections.append("resume")
+
+    salary = Salary.objects.filter(user_id=user_id).first()
+    if not salary or salary.expected_salary <= 0:
+        missing_sections.append("salary expectation")
+
+    if student_profile.experience > 0 and not WorkExperience.objects.filter(
+        user_id=user_id
+    ).exists():
+        missing_sections.append("work experience")
+
+    return missing_sections
+
+
+def is_job_seeker_profile_complete_for_apply(user_id):
+    return len(get_missing_job_seeker_apply_profile_sections(user_id)) == 0
+
+
 def job_apply_handler(serializer_class, JobInfo, request):
     try:
         # Student Id is used by logged in student user
         student_id = request.user.id
         job_id = request.data.get("job")
+
+        missing_sections = get_missing_job_seeker_apply_profile_sections(student_id)
+        if missing_sections:
+            return ResponseHandler.error(
+                f"{ERROR_STUDENT_PROFILE_REQUIRED} Missing: {', '.join(missing_sections)}.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
         job_owner_id = get_object_or_404(JobInfo, id=job_id).user_id
         request.data["student"] = student_id
         request.data["owner"] = job_owner_id
@@ -665,28 +772,53 @@ def application_handler(
                     )
                 )
             else:
+                applications = modal_class.objects.filter(
+                    job_id=id,
+                    owner_id=request.user.id,
+                ).order_by("-created_date")
                 _id = list(
-                    modal_class.objects.filter(job_id=id).values_list(
-                        "student_id", flat=True
-                    )
+                    applications.values_list("student_id", flat=True)
+                )
+                related_profiles = profile.objects.filter(user_id__in=_id).order_by(
+                    "-created_date"
                 )
 
-            related_profiles = get_application_data(
-                _id,
-                modal_class,
-                serializer_class,
-                profile,
-                "student",
-            )
+                if not related_profiles.exists():
+                    response_data = {
+                        "total_count": 0,
+                        "total_pages": 0,
+                        "current_page": int(request.GET.get("page", 1)),
+                        "data": [],
+                    }
+                    return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+            if not id:
+                related_profiles = get_application_data(
+                    _id,
+                    modal_class,
+                    serializer_class,
+                    profile,
+                    "student",
+                )
 
         if not related_profiles.exists():
-            return ResponseHandler.error(
-                message=ERROR_NO_APPLICATIONS_FOUND,
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
+            response_data = {
+                "total_count": 0,
+                "total_pages": 0,
+                "current_page": int(request.GET.get("page", 1)),
+                "data": [],
+            }
+            return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
 
         page_obj, count, total_pages = paginator(related_profiles, request)
-        serializer = profile_serializer(page_obj, many=True)
+        serializer_context = {}
+        if request.GET.get("id"):
+            serializer_context["job_id"] = request.GET.get("id")
+
+        serializer = profile_serializer(
+            page_obj,
+            many=True,
+            context=serializer_context,
+        )
         response_data = {
             "total_count": count,
             "total_pages": total_pages,
@@ -717,7 +849,12 @@ def get_application_data(_id, modal_class, serializer_class, profile, lookup):
         related_ids = [application.get(lookup) for application in applications.data]
 
         if lookup == "student":
-            related_profiles = profile.objects.filter(user_id__in=related_ids)
+            complete_profile_user_ids = [
+                user_id
+                for user_id in related_ids
+                if is_job_seeker_profile_complete_for_apply(user_id)
+            ]
+            related_profiles = profile.objects.filter(user_id__in=complete_profile_user_ids)
 
         return related_profiles
     except Exception as err:
@@ -732,7 +869,6 @@ def handle_application_status(model, serializer_class, request):
         try:
             job_id = request.data.get("job_id")
             student_id = request.data.get("student_id")
-            print(job_id, student_id)
             if not job_id or not student_id:
                 return ResponseHandler.error(
                     RESPONSE_ERROR, status_code=status.HTTP_400_BAD_REQUEST
@@ -920,95 +1056,429 @@ def generate_password_string(length=8):
 def get_expired_date(expiration_days):
     return timezone.now() + timedelta(days=expiration_days)
 
-
 def get_razorpay_order(options):
-
     try:
         order = razorpay_client.order.create(data=options)
         return order
     except Exception as e:
         logger.error(f"Razorpay order creation failed: {str(e)}")
-        ResponseHandler.api_exception_error()
-
+        return ResponseHandler.error(
+            {"message": "Failed to create Razorpay order"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 def create_cart_order(model_class, subscription_model, serializer_class, request):
-    try:
-        user_id = request.user.id
-        planId = request.data.get("planId")
-        amount = model_class.objects.get(name=planId).price
-        # is_subscribed = check_user_subscription(subscription_model, user_id)
-        # if is_subscribed:
-        #     return ResponseHandler.error(
-        #         RESUBSCRIBE_ERROR,
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #     )
+           
+            try:
+                logger.info("create_cart_order() TRIGGERED")
 
-        razorpay_order = get_razorpay_order(
-            {
-                "amount": amount * 100,
-                "currency": "INR",
-                "receipt": f"order_{user_id}_{int(time.time())}",
-            }
-        )
+                user_id = getattr(request.user, "id", None)
+                planId = request.data.get("planId")
+                logger.info("create_cart_order called", extra={"user_id": user_id, "planId": planId, "path": getattr(request, "path", None)})
 
-        razorpay_order["gateway_order_id"] = razorpay_order["id"]
-        razorpay_order["user"] = user_id
-        razorpay_order["plan_type"] = planId
+                # Fetch plan price
+                plan = model_class.objects.get(name=planId)
+                amount = plan.price
+                logger.debug("Fetched plan and price", extra={"planId": planId, "amount": amount})
+                
+                # Create Razorpay Order
+                razorpay_order = get_razorpay_order(
+                    {
+                        "amount": amount * 100,
+                        "currency": "INR",
+                        "receipt": f"order_{user_id}_{int(time.time())}",
+                    }
+                )
+                logger.debug("Razorpay order creation response", extra={"razorpay_order": razorpay_order})
 
-        serializer = serializer_class(data=razorpay_order)
-        if serializer.is_valid():
-            serializer.save()
-            # Only return gateway_order_id in response
-            return ResponseHandler.success(
-                {"gateway_order_id": razorpay_order["gateway_order_id"]},
-                status_code=status.HTTP_201_CREATED,
-            )
-        return ResponseHandler.error(
-            serializer.errors, status_code=status.HTTP_400_BAD_REQUEST
-        )
+                # If order creation failed
+                if not isinstance(razorpay_order, dict) or "id" not in razorpay_order:
+                    logger.error("Razorpay order creation failed or returned invalid response", extra={"user_id": user_id, "response": razorpay_order})
+                    return ResponseHandler.error(
+                        {"message": "Razorpay order creation failed"},
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
 
-    except Exception as e:
-        logger.error(f"Cart order creation failed: {str(e)}")
-        return ResponseHandler.error(status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # Add extra fields before saving in DB
+                razorpay_order["gateway_order_id"] = razorpay_order["id"]
+                razorpay_order["user"] = user_id
+                razorpay_order["plan_type"] = planId
+                razorpay_order["notes"] = {
+                    "assesment_session_id": request.data.get("assesment_session_id"),
+                    "subject_id": request.data.get("subject_id"),
+                }
+
+               # Convert paise → rupees
+                razorpay_order["amount"] = razorpay_order["amount"] // 100
+                razorpay_order["amount_due"] = razorpay_order["amount_due"] // 100
+                razorpay_order["amount_paid"] = razorpay_order["amount_paid"] // 100
+
+                serializer = serializer_class(data=razorpay_order)
+                if serializer.is_valid():
+                    serializer.save()
+                    logger.info("Saved razorpay order to DB", extra={"gateway_order_id": razorpay_order["gateway_order_id"], "user_id": user_id})
+                    return ResponseHandler.success(
+                        {
+                            "gateway_order_id": razorpay_order["gateway_order_id"],
+                            "amount": amount,
+                        },
+                        status_code=status.HTTP_201_CREATED,
+                    )
+
+                logger.warning("Order serializer validation failed", extra={"errors": serializer.errors, "user_id": user_id})
+                return ResponseHandler.error(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+
+            except model_class.DoesNotExist:
+                logger.warning("Invalid Plan Selected", extra={"planId": planId, "user_id": user_id})
+                return ResponseHandler.error(
+                    {"message": "Invalid Plan Selected"},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            except Exception as e:
+                logger.exception("Cart order creation failed unexpectedly", extra={"user_id": user_id, "planId": planId})
+                return ResponseHandler.error(
+                    {"message": "Something went wrong while creating order"},
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
 
 
 def capture_transaction_data(
-    serializer_class,
-    attempt_model,
-    subscription_serializer_class,
-    plan_model,
-    order_model,
-    request,
-):
+        serializer_class,
+        attempt_model,
+        subscription_serializer_class,
+        plan_model,
+        order_model,
+        request,
+        AssessmentSession,
+        Transaction
+    ):
+        try:
+            logger.info("capture_transaction_data() TRIGGERED")
+
+            order_id = request.data.get("razorpay_order_id")
+            logger.info(
+                "capture_transaction_data called",
+                extra={"order_id": order_id, "user_id": getattr(request.user, "id", None)}
+            )
+
+            if not order_id:
+                return ResponseHandler.error(
+                    {"message": "razorpay_order_id is required"},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            existing_transaction = Transaction.objects.filter(
+                razorpay_order_id=order_id
+            ).first()
+            if existing_transaction:
+                order = order_model.objects.filter(gateway_order_id=order_id).first()
+                if order and order.status != "paid":
+                    order.status = "paid"
+                    order.save(update_fields=["status", "updated_date"])
+
+                response_data = serializer_class(existing_transaction).data
+                if order and order.plan_type == "js_assesment":
+                    assessment_session = AssessmentSession.objects.filter(
+                        user=request.user,
+                        order=order_id,
+                    ).order_by("-created_at", "-id").first()
+                    if assessment_session:
+                        response_data["assessment_session_id"] = assessment_session.id
+                        response_data["assesment_session_id"] = assessment_session.id
+                elif order and order.plan_type == "js_test":
+                    assessment_session_id = (
+                        order.notes.get("assesment_session_id") if order.notes else None
+                    )
+                    if assessment_session_id:
+                        response_data["assessment_session_id"] = assessment_session_id
+                        response_data["assesment_session_id"] = assessment_session_id
+
+                logger.info(
+                    "Duplicate transaction capture returned existing transaction",
+                    extra={"order_id": order_id, "user_id": getattr(request.user, "id", None)},
+                )
+                return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)
+
+            order = order_model.objects.get(gateway_order_id=order_id)
+            plan_code = order.plan_type
+            assessment_session_id = None
+
+            logger.debug(
+                "Plan code retrieved",
+                extra={"plan_code": plan_code, "order_id": order_id}
+            )
+
+            payment_data = request.data.copy()
+            payment_data["plan"] = plan_model.objects.get(name=plan_code).id
+            if request.user.id:
+                payment_data["user"] = request.user.id
+
+            logger.debug("Plan ID assigned",
+                        extra={"plan_code": plan_code, "user_id": request.user.id})
+
+            serializer = serializer_class(data=payment_data, context={"request": request})
+            if not serializer.is_valid():
+                return ResponseHandler.error(
+                    serializer.errors,
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            with db_transaction.atomic():
+                order = order_model.objects.select_for_update().get(
+                    gateway_order_id=order_id
+                )
+
+                if plan_code == "ja_test":
+                    logger.info("Processing ja_test plan", extra={"user_id": request.user.id})
+
+                # ASSESSMENT PLANS
+                if plan_code == "js_assesment":
+                    user = request.user
+                    logger.info("Processing assessment plan",
+                                extra={"plan_code": plan_code, "user_id": user.id})
+
+                    # delete old session
+                    deleted_count, _ = AssessmentSession.objects.filter(user=user).delete()
+                    logger.info("Deleted previous AssessmentSession",
+                                extra={"user_id": user.id, "deleted_count": deleted_count})
+
+                    # create new session
+                    new_session = AssessmentSession.objects.create(
+                        user=user,
+                        order=order_id,
+                        overall_score=0,
+                        complete_percentage=0.00,
+                        is_test_end=False,
+                        status="IN_PROGRESS",
+                    )
+                    assessment_session_id = new_session.id
+                    logger.info("New AssessmentSession created",
+                                extra={"user_id": user.id, "session_id": new_session.id})
+
+                if plan_code == "js_test":
+                    user = request.user
+                    subject_id = order.notes.get("subject_id") if order.notes else None
+                    assesment_session_id = (
+                        order.notes.get("assesment_session_id") if order.notes else None
+                    )
+
+                    if not subject_id or not assesment_session_id:
+                        return ResponseHandler.error(
+                            "Retake subject details not found",
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                    assessment_session = AssessmentSession.objects.filter(
+                        id=assesment_session_id,
+                        user=user,
+                    ).first()
+
+                    if not assessment_session:
+                        return ResponseHandler.error(
+                            "Assessment session not found",
+                            status_code=status.HTTP_404_NOT_FOUND,
+                        )
+                    assessment_session_id = assessment_session.id
+
+                    deleted_count, _ = attempt_model.objects.filter(
+                        user=user,
+                        assessment_session_id=assesment_session_id,
+                        subject_id=subject_id,
+                    ).delete()
+
+                    logger.info(
+                        "Unlocked subject retake",
+                        extra={
+                            "user_id": user.id,
+                            "session_id": assesment_session_id,
+                            "subject_id": subject_id,
+                            "deleted_attempts": deleted_count,
+                        },
+                    )
+
+                # BASIC PLAN
+                if plan_code == "ja_basic":
+                    user_id = request.user.id
+                    deleted_count, _ = attempt_model.objects.filter(user=user_id).delete()
+                    logger.info("Deleted attempts for ja_basic plan",
+                                extra={"user_id": user_id, "deleted_count": deleted_count})
+
+                order.status = "paid"
+                order.save(update_fields=["status", "updated_date"])
+
+                logger.info(
+                    "Order updated to PAID",
+                    extra={"order_id": order_id, "user_id": request.user.id}
+                )
+
+                serializer.save()
+                response_data = dict(serializer.data)
+                if assessment_session_id:
+                    response_data["assessment_session_id"] = assessment_session_id
+                    response_data["assesment_session_id"] = assessment_session_id
+                return ResponseHandler.success(
+                    response_data,
+                    status_code=status.HTTP_201_CREATED,
+                )
+
+        except order_model.DoesNotExist:
+            logger.error("Order not found", extra={"order_id": order_id})
+            return ResponseHandler.error("Order not found", status_code=status.HTTP_404_NOT_FOUND)
+
+        except APIException as api_error:
+            logger.warning(f"APIException in capture_transaction_data: {api_error.detail}")
+            return ResponseHandler.error(
+                api_error.detail,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except plan_model.DoesNotExist:
+            logger.error("Plan not found", extra={"plan_code": plan_code})
+            return ResponseHandler.error("Plan not found", status_code=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            logger.exception(
+                "Transaction data capture failed",
+                extra={"user_id": getattr(request.user, "id", None)}
+            )
+            return ResponseHandler.error("Transaction capture failed",
+             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+def retake_test(model_class, subscription_model, serializer_class, attempt_model, assessment_session_model, request):
     try:
-        order_id = request.data.get("razorpay_order_id")
-        plan_code = order_model.objects.get(gateway_order_id=order_id).plan_type
+        plan_id = request.data.get("planId")
+        assesment_session_id = request.data.get("assesment_session_id")
+        subject_id = request.data.get("subject_id")
+        user_id = getattr(request.user, "id", None)
 
+        logger.info(
+            "retake_test called",
+            extra={
+                "user_id": user_id,
+                "plan_id": plan_id,
+                "assesment_session_id": assesment_session_id,
+                "subject_id": subject_id,
+                "path": getattr(request, "path", None),
+            },
+        )
 
-        if(plan_code == "ja_test"):
-            # need 
-            # start as assesment test in this plan and del prev
-            pass
+        if not subject_id:
+            logger.warning("retake_test missing subject_id", extra={"user_id": user_id})
+            return ResponseHandler.error(
+                {"message": "subject_id is required"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
-        if(plan_code == "ja_basic"):
-            user_id = request.user.id
-            attempt_model.objects.filter(user=user_id).delete()
+        if not assesment_session_id:
+            logger.warning("retake_test missing assesment_session_id", extra={"user_id": user_id})
+            return ResponseHandler.error(
+                {"message": "assesment_session_id is required"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
+        assessment_session = assessment_session_model.objects.filter(
+            id=assesment_session_id,
+            user_id=user_id,
+        ).first()
 
+        if not assessment_session:
+            return ResponseHandler.error(
+                {"message": "Assessment session not found"},
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
 
-        request.data["plan"] = plan_model.objects.get(name=plan_code).id
-        # is_subscribed = check_user_subscription(subscription_model, user_id)
-        # if is_subscribed:
-        #     return ResponseHandler.error(
-        #         RESUBSCRIBE_ERROR,
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #     )
-        # serializer_handle(subscription_serializer_class, request)
+        previous_attempt = attempt_model.objects.filter(
+            user_id=user_id,
+            assessment_session_id=assesment_session_id,
+            subject_id=subject_id,
+        ).first()
 
-        return serializer_handle(serializer_class, request)
+        if not previous_attempt:
+            return ResponseHandler.error(
+                {"message": "Retake is only available for an attempted subject"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        logger.info(
+            "Calling create_cart_order for retake_test",
+            extra={"user_id": user_id, "subject_id": subject_id},
+        )
+        return create_cart_order(model_class, subscription_model, serializer_class, request)
+
     except Exception as e:
-        logger.error(f"Transaction data capture failed: {str(e)}")
-        return ResponseHandler.error(status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.exception("Something went wrong in retake_test", exc_info=e)
+        return Response(
+            {"success": False, "message": "Something went wrong while initializing retake test"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+def payment(order, transaction, OrderSerializer, request):
+    try:
+        logger.info("payment() called", extra={"path": getattr(request, "path", None), "user": getattr(request.user, "id", None)})
+
+        orders = order.objects.select_related('user').all().order_by("-created_date", "-id")
+        if getattr(request.user, "user_type", None) != 3:
+            orders = orders.filter(user=request.user)
+
+        search = request.GET.get("search")
+        if search:
+            orders = orders.filter(
+                Q(gateway_order_id__icontains=search)
+                | Q(receipt__icontains=search)
+                | Q(status__icontains=search)
+                | Q(plan_type__icontains=search)
+                | Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__email__icontains=search)
+                | Q(user__username__icontains=search)
+            )
+
+        sort_fields = request.GET.getlist("sort[]") or request.GET.getlist("sort")
+        allowed_sort_fields = {"created_date", "-created_date", "amount", "-amount"}
+        sort_fields = [field for field in sort_fields if field in allowed_sort_fields]
+        if sort_fields:
+            orders = orders.order_by(*sort_fields, "-id")
+
+        logger.debug("Fetched orders queryset", extra={"count_estimate": orders.count()})
+
+        page_obj, count, total_pages = paginator(orders, request)
+        serializer = OrderSerializer(page_obj, many=True)
+        logger.debug("Serialized page_obj for orders", extra={"page_number": getattr(page_obj, "number", None)})
+
+        paid_orders = orders.filter(status__iexact="paid")
+        total_amount = paid_orders.aggregate(total=Sum("amount"))["total"] or 0
+        logger.info("Computed total paid amount for orders", extra={"total_amount": total_amount})
+
+        serialized_orders = list(serializer.data)
+        for serial_number, item in enumerate(serialized_orders, start=page_obj.start_index()):
+            item["serial_number"] = serial_number
+
+        response_data = {
+            "total_amount": total_amount,
+            "total_orders_count": count,
+            "paid_total_count": paid_orders.count(),
+            "pagination": {
+                "total_count": count,
+                "total_pages": total_pages,
+                "current_page": page_obj.number,
+                "page_size": page_obj.paginator.per_page,
+                "start_index": page_obj.start_index(),
+                "end_index": page_obj.end_index(),
+            },
+            "data": serialized_orders,
+        }
+
+        logger.info("payment() completed successfully", extra={"total_count": count, "total_amount": total_amount})
+        return JsonResponse(response_data, safe=False)
+
+    except Exception as e:
+        logger.exception("Unexpected error in payment()")
+        raise
 
 
 def generate_pdf(data):
@@ -1068,23 +1538,51 @@ def job_status_update(model, serializer_class, request):
 def get_all_recruiter_details(model, serializer_class, request):
     try:
         # 🔹 Apply filters and search
-        q_filters, filter_kwargs = filters(request) 
-        recruiter_details = model.objects.select_related("user")
+        q_filters, filter_kwargs = filters(request)
+        if model.__name__ == "User":
+            recruiter_details = model.objects.filter(user_type=2)
+        else:
+            recruiter_details = model.objects.select_related("user")
 
         if q_filters or filter_kwargs:
-            recruiter_details = recruiter_details.filter(q_filters, **filter_kwargs) 
+            recruiter_details = recruiter_details.filter(q_filters, **filter_kwargs)
 
         if not recruiter_details.exists():
             return ResponseHandler.error(  # ✅ added return
                 message=ERROR_NOT_FOUND,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
+        if model.__name__ != "User":
+            recruiter_details = recruiter_details.annotate(
+                first_name=F("user__first_name")
+            )
 
-        # 🔹 Sorting
-        sort_fields = request.GET.getlist("sort[]", ["created_date"])
-        recruiter_details = recruiter_details.annotate(
-            first_name=F("user__first_name")
-        ).order_by(*sort_fields)
+        # Frontend labels do not always match model field names.
+        sort_aliases = {
+            "created_at": "created_date",
+            "-created_at": "-created_date",
+            "name": "first_name",
+            "-name": "-first_name",
+        }
+        if model.__name__ == "User":
+            sort_aliases.update(
+                {
+                    "industry_type": "fi_fk_user__industry_type",
+                    "-industry_type": "-fi_fk_user__industry_type",
+                }
+            )
+        else:
+            sort_aliases.update(
+                {
+                    "industry_type": "user__fi_fk_user__industry_type",
+                    "-industry_type": "-user__fi_fk_user__industry_type",
+                }
+            )
+        sort_fields = [
+            sort_aliases.get(field, field)
+            for field in request.GET.getlist("sort[]", ["created_date"])
+        ]
+        recruiter_details = recruiter_details.order_by(*sort_fields)
 
         # 🔹 Pagination
         page_obj, count, total_pages = paginator(recruiter_details, request)
@@ -1108,12 +1606,15 @@ def get_all_recruiter_details(model, serializer_class, request):
 def get_all_job_seeker_details(model, serializer_class, request):
     try:
         # 🔹 Apply filters and search
-        q_filters, filter_kwargs = filters(request) 
+        q_filters, filter_kwargs = filters(request)
 
-        job_seeker_details = model.objects.select_related('user')
+        if model.__name__ == "User":
+            job_seeker_details = model.objects.filter(user_type=1)
+        else:
+            job_seeker_details = model.objects.select_related('user')
 
         if q_filters or filter_kwargs:
-            job_seeker_details = job_seeker_details.filter(q_filters, **filter_kwargs) 
+            job_seeker_details = job_seeker_details.filter(q_filters, **filter_kwargs)
 
         if not job_seeker_details.exists():
             return ResponseHandler.error(  # ✅ added return
@@ -1121,11 +1622,21 @@ def get_all_job_seeker_details(model, serializer_class, request):
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
-        sort_fields = request.GET.getlist("sort[]", ["created_date"])
+        sort_aliases = {
+            "created_at": "created_date",
+            "-created_at": "-created_date",
+            "name": "first_name",
+            "-name": "-first_name",
+        }
+        sort_fields = [
+            sort_aliases.get(field, field)
+            for field in request.GET.getlist("sort[]", ["created_date"])
+        ]
 
-        job_seeker_details = job_seeker_details.annotate(
-            first_name=F('user__first_name')
-        )
+        if model.__name__ != "User":
+            job_seeker_details = job_seeker_details.annotate(
+                first_name=F('user__first_name')
+            )
 
         job_seeker_details = job_seeker_details.order_by(*sort_fields)
 
@@ -1154,12 +1665,16 @@ def get_industry_type(obj):
         
 def get_all_applied_applicant_details(job_apply_model, student_profile_model, serializer_class, request):
     try:
-        job_id = request.data.get('job_id')
+        job_id = (
+            request.data.get("job_id")
+            or request.query_params.get("job_id")
+            or request.query_params.get("id")
+        )
         applications = job_apply_model.objects.filter(job_id=job_id)
         student_ids = list(applications.values_list('student_id', flat=True))
         students = student_profile_model.objects.filter(user_id__in=student_ids)
-        serializer = serializer_class(students, many=True, context={'job_id': job_id})
-        page_obj, count, total_pages = paginator(students, request) 
+        page_obj, count, total_pages = paginator(students, request)
+        serializer = serializer_class(page_obj, many=True, context={'job_id': job_id})
         response_data = {
             "total_count": count,
             "total_pages": total_pages,
@@ -1411,12 +1926,86 @@ def create_question_handler(questions_serializer, request):
         )
 
 
+def get_random_questions_for_subject(QuestionModel, subject_id, subject):
+    difficulty_config = [
+        (1, "easy", subject.easy_question_count),
+        (2, "medium", subject.medium_question_count),
+        (3, "difficult", subject.difficult_question_count),
+    ]
+    selected_ids = []
+    missing_questions = []
+
+    for level, label, required_count in difficulty_config:
+        question_ids = list(
+            QuestionModel.objects.filter(
+                subject_id=subject_id,
+                difficulty_level=level,
+            ).values_list("id", flat=True)
+        )
+        available_count = len(question_ids)
+
+        if available_count < required_count:
+            missing_questions.append(
+                {
+                    "difficulty": label,
+                    "required": required_count,
+                    "available": available_count,
+                }
+            )
+            continue
+
+        if required_count > 0:
+            selected_ids.extend(random.sample(question_ids, required_count))
+
+    if missing_questions:
+        return None, missing_questions
+
+    return QuestionModel.objects.filter(id__in=selected_ids), None
+
+
 def get_free_test_question_handler(QuestionModel, SubjectModel, AttemptSerializer,QuestionsSerializer, request):
     try:
 
         # Save payment details 
         subject_id = request.GET.get("subject_id")
         user_id = request.user.id
+
+        if not subject_id:
+            return ResponseHandler.error(
+                {"message": "subject_id is required"},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Share questions
+        # 1. Fetch subject
+        subject = SubjectModel.objects.filter(id=subject_id).first()
+
+        if not subject:
+            return ResponseHandler.error(
+                {"message": "Subject not found"},
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not subject.is_live:
+            return ResponseHandler.error(
+                "This subject is not live yet.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        all_questions, missing_questions = get_random_questions_for_subject(
+            QuestionModel,
+            subject_id,
+            subject,
+        )
+
+        if missing_questions:
+            return ResponseHandler.error(
+                {
+                    "message": "Not enough questions configured for this subject.",
+                    "details": missing_questions,
+                },
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Create new attpemt
         data = {"user": user_id, "status": "IN_PROGRESS", "subject": subject_id}
@@ -1432,10 +2021,6 @@ def get_free_test_question_handler(QuestionModel, SubjectModel, AttemptSerialize
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         
-        # Share questions
-        # 1. Fetch subject
-        subject = get_object_or_404(SubjectModel, id=subject_id) 
-
         # 2. Prepare base response (metadata)
         test_data = {
             "exam_name": subject.exam_name,
@@ -1450,8 +2035,6 @@ def get_free_test_question_handler(QuestionModel, SubjectModel, AttemptSerialize
             "attempt_id": attempt_id
         }
 
-        # 3. Collect random questions by difficulty_level
-        all_questions = QuestionModel.objects.filter(subject_id=subject_id)
         serialized_questions = QuestionsSerializer(all_questions, many=True).data
 
         # 5. Add to response
@@ -1474,26 +2057,64 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
 
         if not assesment_session_id or not subject_id:
             return ResponseHandler.error(
-                RESPONSE_ERROR,
+                {"message": "assesment_session_id and subject_id are required"},
                 status_code=status.HTTP_400_BAD_REQUEST,
             ) 
         
-        assesment_details = AssessmentSessionModel.objects.get(id=assesment_session_id)
+        assesment_details = AssessmentSessionModel.objects.filter(
+            id=assesment_session_id,
+            user_id=user_id,
+        ).first()
 
-        if not assesment_details or not assesment_details.user_id == user_id:
+        if not assesment_details:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Assessment session expired. Please login again.",
+                    "force_logout": True,
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        
+        # prev_attempt = AttemptModel.objects.filter(subject=subject_id, user=user_id)
+           
+        # if prev_attempt:
+        #     return ResponseHandler.error(
+        #         ASSESMENT_TAKEN,
+        #         status_code=status.HTTP_208_ALREADY_REPORTED,
+        #     )
+        
+        # Share questions
+        # 1. Fetch subject
+        subject = SubjectModel.objects.filter(id=subject_id).first()
+
+        if not subject:
             return ResponseHandler.error(
-                RESPONSE_ERROR,
+                {"message": "Subject not found"},
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not subject.is_live:
+            return ResponseHandler.error(
+                "This subject is not live yet.",
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
-        
-        prev_attempt = AttemptModel.objects.filter(subject=subject_id, user=user_id)
 
-        if prev_attempt:
+        all_questions, missing_questions = get_random_questions_for_subject(
+            QuestionModel,
+            subject_id,
+            subject,
+        )
+
+        if missing_questions:
             return ResponseHandler.error(
-                ASSESMENT_TAKEN,
-                status_code=status.HTTP_208_ALREADY_REPORTED,
+                {
+                    "message": "Not enough questions configured for this subject.",
+                    "details": missing_questions,
+                },
+                status_code=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         # Now the user is valid to start test
 
         # Create new attpemt
@@ -1510,10 +2131,6 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
                 serializer.errors,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
-        
-        # Share questions
-        # 1. Fetch subject
-        subject = get_object_or_404(SubjectModel, id=subject_id) 
 
         # 2. Prepare base response (metadata)
         test_data = {
@@ -1529,26 +2146,6 @@ def get_test_question_handler(QuestionModel, SubjectModel, AssessmentSessionMode
             "attempt_id": attempt_id
         }
 
-        # 3. Collect random questions by difficulty_level
-        def sample_questions(level: int, count: int):
-            qs = QuestionModel.objects.filter(subject_id=subject_id, difficulty_level=level)
-            qs_ids = list(qs.values_list("id", flat=True))
-
-            if not qs_ids:
-                return QuestionModel.objects.none()
-
-            if count > len(qs_ids):
-                count = len(qs_ids)
-
-            selected_ids = random.sample(qs_ids, count)
-            return QuestionModel.objects.filter(id__in=selected_ids)
-
-        easy_qs = sample_questions(1, subject.easy_question_count)
-        medium_qs = sample_questions(2, subject.medium_question_count)
-        difficult_qs = sample_questions(3, subject.difficult_question_count)
-
-        # 4. Serialize
-        all_questions = easy_qs | medium_qs | difficult_qs
         serialized_questions = QuestionsSerializer(all_questions, many=True).data
 
         # 5. Add to response
@@ -1585,54 +2182,76 @@ def submit_test_handler(AttemptModel, AttemptAnswerModel, Question, attempt_id, 
         subject_correct_score = attempt_details.subject.marks_correct
         subject_incorrect_score = attempt_details.subject.marks_incorrect
 
-        # questionId_currentQIndex: answer_status
-        answers = request.data.get("answers")
+        # questionId_currentQIndex: selected option
+        answers = request.data.get("answers") or {}
         result = {}
  
         for question, answer in answers.items():
  
-            question_key, question_value = question.split("_") 
-            answer_key, answer_value = answer.split("_") 
-            result[int(question_key)] = int(answer_value)
+            question_key = question.split("_")[0]
+            selected_option = answer
+
+            # Backward compatibility for the old frontend payload: "1_0", "1_1", etc.
+            if isinstance(answer, str) and answer.startswith("1_"):
+                selected_option = {
+                    0: "option_1",
+                    1: "option_2",
+                    2: "option_3",
+                    3: "option_4",
+                }.get(int(answer.split("_")[1]), "option_1")
+            elif isinstance(answer, str) and answer in {"A", "B", "C", "D"}:
+                selected_option = {
+                    "A": "option_1",
+                    "B": "option_2",
+                    "C": "option_3",
+                    "D": "option_4",
+                }[answer]
+
+            result[int(question_key)] = selected_option
  
-
-        option_mapping = {
-            0: "OPTION_1",
-            1: "OPTION_2",
-            2: "OPTION_3",
-            3: "OPTION_4"
-        }
-
-
-        #  change value according to subject 
-        correct_answer_score = 1
-        incorrect_answer_score = 0
 
         # Prepare the list of QuestionAnswer instances to insert
         question_answers = []
-        for question_id, option_value in result.items():
-            score = incorrect_answer_score
+        for question_id, selected_option in result.items():
+            score = subject_incorrect_score
             question_obj = Question.objects.get(id=question_id)
-            selected_option = option_mapping.get(option_value, "OPTION_1")
             is_correct = (selected_option == question_obj.correct_option)
 
             if is_correct:
-                score = correct_answer_score
+                score = subject_correct_score
 
             question_answer = AttemptAnswerModel(
                 attempt=attempt_details,
                 question=question_obj,
-                selected_option=option_mapping.get(option_value, "OPTION_1"),  # Default to OPTION_1 if not found
+                selected_option=selected_option,
                 is_correct=is_correct,
                 score=score,
             )
             question_answers.append(question_answer)
 
+        AttemptAnswerModel.objects.filter(attempt=attempt_details).delete()
         AttemptAnswerModel.objects.bulk_create(question_answers)
+        total_questions = (
+            attempt_details.subject.easy_question_count
+            + attempt_details.subject.medium_question_count
+            + attempt_details.subject.difficult_question_count
+        )
+        total_answers = len(question_answers)
+        not_answered_score = (total_questions - total_answers) * attempt_details.subject.marks_unattempted
+        total_marks_scored = sum(answer.score for answer in question_answers) + not_answered_score
+        assessment_total = total_questions * subject_correct_score
+
+        attempt_details.status = "COMPLETED"
+        attempt_details.submit_time = timezone.now()
+        attempt_details.score = total_marks_scored
+        attempt_details.maximum_possible_score = assessment_total
+        attempt_details.save(update_fields=["status", "submit_time", "score", "maximum_possible_score", "updated_at"])
 
         return ResponseHandler.success(
             {
-                "success": "submited sucessfully",
+                "message": "submitted successfully",
+                "continue_url": "/dashboard",
+                "redirect_url": "/dashboard",
             }, 
             status_code=status.HTTP_200_OK
         )
@@ -1805,16 +2424,6 @@ def get_results_handler(attempt_model, attempt_answer_model, attempt_id, request
 
         # Get attempt id
         attempt = attempt_model.objects.get(id=attempt_id)
-        if attempt.score is not None :
-            return ResponseHandler.success(
-                {
-                    "assesment_total": attempt.maximum_possible_score,
-                    "total_marks_scored": attempt.score,
-                    "assesment_session_id": getattr(attempt.assessment_session, "id", 0)
-                },
-                status_code=status.HTTP_200_OK
-            )
-
         attempt_answers = attempt_answer_model.objects.filter(attempt=attempt_id)
 
         # get the score
@@ -1831,19 +2440,40 @@ def get_results_handler(attempt_model, attempt_answer_model, attempt_id, request
 
         assesment_total = total_questions * CA
 
-        total_answer_sum = total_answers * CA
+        total_answer_sum = 0
+        incorrect_score = getattr(attempt.subject, "marks_incorrect", 0)
+        for answer in attempt_answers:
+            selected_option = (answer.selected_option or "").lower()
+            is_correct = selected_option == answer.question.correct_option
+            answer_score = CA if is_correct else incorrect_score
+            total_answer_sum += answer_score
+
+            if (
+                answer.selected_option != selected_option
+                or answer.is_correct != is_correct
+                or answer.score != answer_score
+            ):
+                answer.selected_option = selected_option
+                answer.is_correct = is_correct
+                answer.score = answer_score
+                answer.save(update_fields=["selected_option", "is_correct", "score"])
 
         total_marks_scored = not_answered_calc + total_answer_sum
 
         # store the score in database
         attempt.score = total_marks_scored
         attempt.maximum_possible_score = assesment_total
-        attempt.save()
+        attempt.save(update_fields=["score", "maximum_possible_score", "updated_at"])
 
         response_data = {
-            "assesment_total ": assesment_total,
+            "assessment_total": assesment_total,
+            "assesment_total": assesment_total,
             "total_marks_scored": total_marks_scored,
-            "assesment_session_id" : subject_id
+            "assesment_session_id" : subject_id,
+            "assessment_session_id" : subject_id,
+            "subject_id": getattr(attempt.subject, "id", None),
+            "subject_name": getattr(attempt.subject, "exam_name", None),
+            "section_name": getattr(attempt.subject, "section_name", None),
         }
 
         return ResponseHandler.success(response_data, status_code=status.HTTP_200_OK)

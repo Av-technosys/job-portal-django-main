@@ -48,17 +48,21 @@ class UserSerializer(serializers.ModelSerializer):
         return file.file.url if file else None
 
     def create(self, validated_data):
+        print("yup for registering user this is calling")
+
         email = validated_data["email"]
         phone_number = validated_data["phone_number"]
         password = validated_data["password"]
 
         user = User.objects.filter(email=email).first()
 
-        # Check if the user already exists & active
+        # Existing accounts stay under admin control.
         print("user: ", user)
-        if user and user.is_active:
-            print("inside user exist")
-            raise ResponseHandler.api_exception_error(ERROR_USER_EXIST)
+        if user:
+            if user.is_active:
+                print("inside user exist")
+                raise ResponseHandler.api_exception_error(ERROR_USER_EXIST)
+            raise ResponseHandler.api_exception_error(ERROR_USER_INACTIVE)
 
         phone_otp = generate_otp()
         email_otp = generate_otp()
@@ -70,14 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
         # Set OTP expiration time to 10 minutes from now
         otp_expiration = timezone.now() + timedelta(minutes=10)
 
-        if user and not user.is_active:
-            user.email = email
-            user.user_type = validated_data["user_type"]
-            user.first_name = validated_data["first_name"]
-            user.phone_number = phone_number
-
-        else:
-            user = User(**validated_data)
+        user = User(**validated_data)
 
         user.username = email
         user.email_otp = email_otp
@@ -88,7 +85,7 @@ class UserSerializer(serializers.ModelSerializer):
         user.country_code = "+91"
 
         user.set_password(password)
-        user.is_active = False
+        user.is_active = False if int(user.user_type) == 3 else True
         user.save()
 
         # Send OTP via SMS and Email
@@ -131,20 +128,13 @@ class SSOUserSerializer(serializers.Serializer):
 
         user = User.objects.filter(email=email).first()
 
-        if user and user.is_active:
-            pass
-
-        elif user and not user.is_active:
-            # Do not auto-activate admin users (user_type == 3)
-            if user.user_type != 3:
-                user.is_active = True
-            user.save()
-
+        if user:
+            if not user.is_active:
+                raise ResponseHandler.api_exception_error(ERROR_USER_INACTIVE)
         else:
             user = User(
                 username=email,
                 email=email,
-                # Keep admin users inactive by default when created via SSO
                 is_active=False if int(user_type) == 3 else True,
                 first_name=name,
                 user_type=user_type,
@@ -228,13 +218,15 @@ class VerifyOtpSerializer(serializers.Serializer):
         email = self.validated_data["email"]
         user = User.objects.get(email=email)
 
-        # Activate user account except for admin (user_type == 3)
         if user.user_type != 3:
             user.is_active = True
         user.phone_otp = None
         user.email_otp = None
         user.otp_expiration = None  # Clear expiration time as OTPs are used
         user.save()
+
+        if not user.is_active:
+            raise ResponseHandler.api_exception_error(ERROR_USER_INACTIVE)
 
         token, _ = Token.objects.get_or_create(user=user)
         if token:

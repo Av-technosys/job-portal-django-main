@@ -1,3 +1,6 @@
+import html
+import re
+
 from rest_framework import serializers
 from functions.fcm import save_notification, send_notification
 from constants.user_profiles import (
@@ -10,6 +13,7 @@ from functions.common import (
     get_location_formatted,
     get_recruiter_profile_image,
     get_salary_formatted,
+    is_job_seeker_profile_complete_for_apply,
     is_job_seeker,
     logger,
     get_expired_date,
@@ -22,7 +26,7 @@ from functions.send_email import (
 )
 from user_profiles.serializers import SocialLinkItemSerializer
 from .models import *
-from constants.errors import ALREADY_APPLIED, INVALID_JOB_STATUS, ALREADY_SAVED
+from constants.errors import ALREADY_APPLIED, ALREADY_SAVED
 from constants.jobs import (
     JOB_APPLIED_VIEW_FIELDS,
     JOB_DESCRIPTION_SERIALIZER_FEILDS,
@@ -31,6 +35,7 @@ from constants.jobs import (
     JOB_POSTED_VIEW_FEILDS,
     JOB_SEEKER_LIST_VIEW_FIELDS,
     SAVED_JOBS_JOB_SEEKER_LIST_VIEW_FIELDS,
+    JOB_STATUS_FIELDS,
     VALID_STATUS_TRANSITIONS,
 )
 
@@ -70,6 +75,16 @@ class JobCombinedSerializer(serializers.Serializer):
     expiration_days = serializers.IntegerField(required=True)
     # date_of_birth = serializers.DateField(format="%Y-%m-%d")
 
+    def validate_description(self, value):
+        plain_text = (
+            html.unescape(re.sub(r"<[^>]*>", "", value))
+            .replace("\xa0", " ")
+            .strip()
+        )
+        if not plain_text:
+            raise serializers.ValidationError("This field is required.")
+        return value
+
     def create(self, validated_data):
         user = self.context["request"].user
         expiration_days = validated_data["expiration_days"]
@@ -107,26 +122,37 @@ class JobApplySerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         job_apply_instance = self.instance
-        new_status = data.get("status")
-
-        if job_apply_instance and new_status is not None:
-            current_status = job_apply_instance.status
-            if new_status not in VALID_STATUS_TRANSITIONS.get(current_status, []):
-                raise serializers.ValidationError({"message": INVALID_JOB_STATUS})
         student = data.get("student")
         job = data.get("job")
-        if JobApply.objects.filter(student=student, job=job).exists():
+        if not job_apply_instance and JobApply.objects.filter(student=student, job=job).exists():
             raise serializers.ValidationError({"message": ALREADY_APPLIED})
+
+        if job_apply_instance and "status" in data:
+            current_status = job_apply_instance.status
+            next_status = data["status"]
+            allowed_statuses = VALID_STATUS_TRANSITIONS.get(current_status, [])
+            if next_status != current_status and next_status not in allowed_statuses:
+                status_labels = dict(JOB_STATUS_FIELDS)
+                raise serializers.ValidationError(
+                    {
+                        "status": (
+                            f"Cannot move application status from "
+                            f"{status_labels.get(current_status, current_status)} to "
+                            f"{status_labels.get(next_status, next_status)}."
+                        )
+                    }
+                )
 
         return data
 
     def save(self):
+        is_new_application = self.instance is None
         job = super().save()
         self.send_apply_notification()
-        self.send_email_confirmation_for_the_application()
+        self.send_email_confirmation_for_the_application(is_new_application)
         return job
 
-    def send_email_confirmation_for_the_application(self):
+    def send_email_confirmation_for_the_application(self, is_new_application=False):
         try:
             job_id = self.data.get("job")
             recruiter_id = self.data.get("owner")
@@ -155,12 +181,13 @@ class JobApplySerializer(serializers.ModelSerializer):
                     status_text,
                 )
 
-            send_application_received_to_recruiter(
-                student_details,
-                recruiter_details,
-                job_details,
-                recruiter_personal_details,
-            )
+            if is_new_application:
+                send_application_received_to_recruiter(
+                    student_details,
+                    recruiter_details,
+                    job_details,
+                    recruiter_personal_details,
+                )
 
         except Exception as e:
             logger.error(f"Error in send_email_confirmation_for_the_application: {e}")
@@ -361,6 +388,8 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
     applied_date = serializers.DateTimeField(source="created_date")
     job_id = serializers.IntegerField(source="job.id")
     application_id = serializers.IntegerField(source="id")
+    application_status = serializers.IntegerField(source="status")
+    application_status_label = serializers.SerializerMethodField()
 
     class Meta:
         model = JobApply
@@ -375,6 +404,9 @@ class AppliedJobListViewSerializer(serializers.ModelSerializer):
     def get_company_profile_image(self, obj):
         return get_recruiter_profile_image(obj.job.user)
 
+    def get_application_status_label(self, obj):
+        return obj.get_status_display()
+
 
 class JobPostedListSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
@@ -382,7 +414,7 @@ class JobPostedListSerializer(serializers.ModelSerializer):
     title = serializers.CharField()
     salary = serializers.SerializerMethodField()
     location = serializers.SerializerMethodField()
-    application_count = serializers.IntegerField(source="job_id_applied.count")
+    application_count = serializers.SerializerMethodField()
     job_id = serializers.IntegerField(source="id")
     job_status = serializers.SerializerMethodField()
 
@@ -398,6 +430,13 @@ class JobPostedListSerializer(serializers.ModelSerializer):
 
     def get_location(self, obj):
         return get_location_formatted(obj)
+
+    def get_application_count(self, obj):
+        return sum(
+            1
+            for student_id in obj.job_id_applied.values_list("student_id", flat=True)
+            if is_job_seeker_profile_complete_for_apply(student_id)
+        )
 
     def get_job_status(self, obj):
         return get_job_post_status(obj)

@@ -19,6 +19,7 @@ class Subject(models.Model):
     difficult_question_count = models.PositiveIntegerField(default=0)
 
     is_paid = models.BooleanField(default=True)
+    is_live = models.BooleanField(default=False)
 
     marks_correct = models.DecimalField(max_digits=5, decimal_places=2, default=1.0)
     marks_incorrect = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
@@ -99,7 +100,7 @@ class AssessmentSession(models.Model):
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, blank=True, null=True)
+    order = models.CharField(max_length=100, blank=True, null=True)
 
     overall_score = models.IntegerField(default=0)
     complete_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)

@@ -1,11 +1,12 @@
 from rest_framework.decorators import api_view, permission_classes
+from functions.cache import get_or_set_response_cache
 from functions.common import *
 from user_profiles.models import *
 from accounts.models import User
 from .serializers import *
 from handlers.common import request_handler
 from rest_framework.permissions import IsAuthenticated
-from handlers.permissions import IsRecruiter, IsJobSeeker, IsAdmin
+from handlers.permissions import IsRecruiter, IsJobSeeker, IsAdmin, IsAdminOrJobSeeker
 from jobs.models import JobApply
 from jobs.serializers import JobApplySerializer
 from assessment.models import AssessmentSession
@@ -15,7 +16,7 @@ from assessment.models import AssessmentSession
 @permission_classes([IsAuthenticated])
 def get_admin_meta_details(request):
     return get_admin_meta_details_handler(
-        OrganizationInfo, StudentProfile, AssessmentSession, request
+        User, AssessmentSession, request
     )
 
 
@@ -290,7 +291,13 @@ def store_fcm_token(request):
 
 @api_view(["GET"])
 def get_recruiter(request):
-    return filter_search_handler(OrganizationInfo, FindRecruiterListSerializer, request)
+    return get_or_set_response_cache(
+        request,
+        "list_recruiters",
+        lambda: filter_search_handler(
+            OrganizationInfo, FindRecruiterListSerializer, request
+        ),
+    )
 
 
 @api_view(["GET"])
@@ -317,10 +324,10 @@ def upload_document(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsJobSeeker ])
+@permission_classes([IsAuthenticated, IsAdminOrJobSeeker])
 def get_all_recruiter(request):
     return get_all_recruiter_details(
-        OrganizationInfo, RecruiterDetailsSerializer, request
+        User, AdminRecruiterListSerializer, request
     )
 
 
@@ -328,7 +335,7 @@ def get_all_recruiter(request):
 @permission_classes([IsAuthenticated, IsAdmin])
 def get_all_job_seeker(request):
     return get_all_job_seeker_details(
-        StudentProfile, JobSeekerDetailsSerializer, request
+        User, AdminJobSeekerListSerializer, request
     )
     # return get_all_recruiter_details(StudentProfile, StudentProfileSerializer, request)
 

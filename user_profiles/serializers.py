@@ -20,9 +20,35 @@ from functions.profile import process_items
 from .models import *
 from functions.common import get_recruiter_profile_image, get_location_formatted, get_industry_type, get_job_seeker_profile_image
 from django.db import transaction
+from jobs.models import JobInfo
+from django.db.models import Sum
+
+
+def get_work_experience_total(user):
+    if not user:
+        return 0
+
+    return user.we_fk_user.aggregate(total=Sum("experience"))["total"] or 0
+
+
+def get_profile_experience(student_profile):
+    work_experience_total = get_work_experience_total(
+        getattr(student_profile, "user", None)
+    )
+    if work_experience_total:
+        return work_experience_total
+
+    profile_experience = getattr(student_profile, "experience", 0) or 0
+    if profile_experience:
+        return profile_experience
+
+    return 0
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     user =  UserSerializer(read_only=True)
+    application_id = serializers.SerializerMethodField()
+    application_status = serializers.SerializerMethodField()
+
     class Meta:
         model = StudentProfile
         fields = [
@@ -38,8 +64,30 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "postal_code",
             "country",
             "created_date",
-            "updated_date"
+            "updated_date",
+            "application_id",
+            "application_status",
         ]
+
+    def get_application_id(self, obj):
+        try:
+            job_id = self.context.get("job_id")
+            if not job_id:
+                return None
+            application = obj.user.student_id_applied.get(job_id=job_id)
+            return application.id
+        except Exception:
+            return None
+
+    def get_application_status(self, obj):
+        try:
+            job_id = self.context.get("job_id")
+            if not job_id:
+                return None
+            application = obj.user.student_id_applied.get(job_id=job_id)
+            return application.status
+        except Exception:
+            return None
 
 
 
@@ -315,10 +363,9 @@ class SocialLinksJobSeekerSerializer(serializers.Serializer):
 class FindRecruiterListSerializer(serializers.ModelSerializer):
     company_profile_image = serializers.SerializerMethodField()
     company_name = serializers.SerializerMethodField(source="user.first_name")
-    organization_type = serializers.CharField(
-        source="user.founding_info.organization_type"
-    )
-    industry_type = serializers.CharField(source="user.founding_info.industry_type")
+    posted_jobs_count = serializers.SerializerMethodField()
+    organization_type = serializers.SerializerMethodField()
+    industry_type = serializers.SerializerMethodField()
     created_date = serializers.DateTimeField()
     updated_date = serializers.DateTimeField()
     company_id = serializers.IntegerField(source="id")
@@ -336,6 +383,15 @@ class FindRecruiterListSerializer(serializers.ModelSerializer):
 
     def get_location(self, obj):
         return get_location_formatted(obj)
+
+    def get_posted_jobs_count(self, obj):
+        return JobInfo.objects.filter(user=obj.user).count()
+
+    def get_organization_type(self, obj):
+        return getattr(getattr(obj.user, "fi_fk_user", None), "organization_type", "")
+
+    def get_industry_type(self, obj):
+        return getattr(getattr(obj.user, "fi_fk_user", None), "industry_type", "")
 
 
 class WorkExperienceJobSeekerProfileSerializer(serializers.ModelSerializer):
@@ -618,6 +674,10 @@ class JobSeekerAdditionalProfileSerializer(serializers.ModelSerializer):
                     ],
                 )
 
+            StudentProfile.objects.filter(user=user).update(
+                experience=get_work_experience_total(user)
+            )
+
         return validated_data
 
     class Meta:
@@ -797,18 +857,139 @@ class JobSeekerDetailsSerializer(serializers.ModelSerializer):
         model = StudentProfile
         fields = JOB_SEEKER_DETAILS_FIELDS
 
-class AppliedApplicantSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(source='user.first_name')
-    city = serializers.CharField()
-    country = serializers.CharField()
-    experience = serializers.IntegerField()
+
+class AdminRecruiterListSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField()
+    industry_type = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
+    country = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    user = serializers.IntegerField(source="id", read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "first_name",
+            "industry_type",
+            "city",
+            "state",
+            "country",
+            "profile_image",
+            "user",
+            "email",
+            "is_active",
+            "status",
+            "phone_number",
+            "country_code",
+        ]
+
+    def get_profile_image(self, obj):
+        try:
+            return get_recruiter_profile_image(obj)
+        except Exception:
+            return None
+
+    def get_industry_type(self, obj):
+        try:
+            return obj.fi_fk_user.get_industry_type_display()
+        except Exception:
+            return None
+
+    def get_city(self, obj):
+        try:
+            return obj.oi_fk_user.city
+        except Exception:
+            return None
+
+    def get_state(self, obj):
+        try:
+            return obj.oi_fk_user.state
+        except Exception:
+            return None
+
+    def get_country(self, obj):
+        try:
+            return obj.oi_fk_user.country
+        except Exception:
+            return None
+
+    def get_status(self, obj):
+        return "Active" if obj.is_active else "Inactive"
+
+
+class AdminJobSeekerListSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField()
+    gender = serializers.SerializerMethodField()
+    date_of_birth = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
+    country = serializers.SerializerMethodField()
+    experience = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    user = serializers.IntegerField(source="id", read_only=True)
+
+    class Meta:
+        model = User
+        fields = JOB_SEEKER_DETAILS_FIELDS
+
+    def get_profile_image(self, obj):
+        try:
+            return get_job_seeker_profile_image(obj)
+        except Exception:
+            return None
+
+    def get_student_profile_field(self, obj, field):
+        try:
+            return getattr(obj.sp_fk_user, field)
+        except Exception:
+            return None
+
+    def get_gender(self, obj):
+        return self.get_student_profile_field(obj, "gender")
+
+    def get_date_of_birth(self, obj):
+        return self.get_student_profile_field(obj, "date_of_birth")
+
+    def get_city(self, obj):
+        return self.get_student_profile_field(obj, "city")
+
+    def get_state(self, obj):
+        return self.get_student_profile_field(obj, "state")
+
+    def get_country(self, obj):
+        return self.get_student_profile_field(obj, "country")
+
+    def get_experience(self, obj):
+        student_profile = getattr(obj, "sp_fk_user", None)
+        if not student_profile:
+            return None
+
+        return get_profile_experience(student_profile)
+
+    def get_status(self, obj):
+        return "Active" if obj.is_active else "Inactive"
+
+class AppliedApplicantSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+    is_active = serializers.BooleanField(source='user.is_active', read_only=True)
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True)
+    country_code = serializers.CharField(source='user.country_code', read_only=True)
+    user = serializers.IntegerField(source='user.id', read_only=True)
+    experience = serializers.SerializerMethodField()
+    profile_image = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     application_status = serializers.SerializerMethodField()
     application_id = serializers.SerializerMethodField()
 
     class Meta:
         model = StudentProfile
-        fields = JOB_SEEKER_DETAILS_FIELDS
+        fields = JOB_SEEKER_DETAILS_FIELDS + [
+            "application_id",
+            "application_status",
+        ]
 
     def get_profile_image(self, obj):
         try:
@@ -831,6 +1012,12 @@ class AppliedApplicantSerializer(serializers.ModelSerializer):
             return application.status
         except Exception:
             return None
+
+    def get_status(self, obj):
+        return "Active" if obj.user.is_active else "Inactive"
+
+    def get_experience(self, obj):
+        return get_profile_experience(obj)
 
 
 

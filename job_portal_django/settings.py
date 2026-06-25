@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import importlib.util
+import os
 from pathlib import Path
 from constants.env_data import *
 from firebase_admin import credentials, initialize_app
@@ -121,13 +123,13 @@ DATABASES = {
     #     "PORT": "5432",
     # },
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "postgres",  # dbname
-        "USER": "postgres.ybixgfoaplxaurbjohyc",  # from your user
-        "PASSWORD": "Avtechnosys123",  # put your actual password here
-        "HOST": "aws-1-ap-southeast-1.pooler.supabase.com",  # from your host
-        "PORT": "5432",  # stays the same
-    }
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "postgres",
+            "USER": "postgres.fgqjqliozikyzqnwxpho",
+            "PASSWORD": "Avtechnosys@123",
+            "HOST": "aws-1-ap-south-1.pooler.supabase.com",
+            "PORT": "6543",
+        }
 
     # "default": {
     #     "ENGINE": "django.db.backends.postgresql",
@@ -146,10 +148,34 @@ AUTH_USER_MODEL = "accounts.User"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "accounts.authentication.ActiveUserTokenAuthentication",
     ],
+    "EXCEPTION_HANDLER": "accounts.exception_handlers.custom_exception_handler",
     # Other settings...
 }
+
+PUBLIC_LIST_CACHE_TIMEOUT = 14 * 24 * 60 * 60
+
+REDIS_URL = os.getenv("REDIS_URL")
+REDIS_AVAILABLE = importlib.util.find_spec("redis") is not None
+
+if REDIS_URL and REDIS_AVAILABLE:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+            "KEY_PREFIX": os.getenv("CACHE_KEY_PREFIX", "job_portal"),
+            "TIMEOUT": PUBLIC_LIST_CACHE_TIMEOUT,
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "default-locmem",
+            "TIMEOUT": PUBLIC_LIST_CACHE_TIMEOUT,
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -192,13 +218,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Email settings
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = EMAIL_BACKEND
 EMAIL_HOST = EMAIL_HOST
 EMAIL_USE_TLS = EMAIL_USE_TLS
 EMAIL_PORT = EMAIL_PORT
 EMAIL_HOST_USER = EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
 DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL
+AWS_SES_REGION_NAME = AWS_SES_REGION_NAME
+SES_AWS_ACCESS_KEY_ID = SES_AWS_ACCESS_KEY_ID
+SES_AWS_SECRET_ACCESS_KEY = SES_AWS_SECRET_ACCESS_KEY
 
 # Audit Log
 AUDITLOG_INCLUDE_ALL_MODELS = True
